@@ -1,0 +1,131 @@
+:root {
+  /* Light Mode Colors */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --bg-hover: #f8fafc;
+  --bg-disabled: #f8fafc;
+
+  --text-primary: #0f172a;
+  --text-secondary: #1e293b;
+  --text-muted: #64748b;
+  --text-light: #cbd5e1;
+  --text-disabled: #64748b;
+  --text-label: #374151;
+  --text-placeholder: #94a3b8;
+
+  --sidebar-bg: #1e1c2a;
+  --sidebar-text: #ffffff;
+  --sidebar-text-muted: #cbd5e1;
+  --sidebar-hover: rgba(148, 163, 184, 0.1);
+  --sidebar-active: #2d2257;
+
+  --border-primary: #e2e8f0;
+  --border-secondary: #f1f5f9;
+  --border-muted: #e7e7e7;
+  --border-focus: #3b82f6;
+  --border-divider: #334155;
+
+  --accent-primary: #813afb;
+  --accent-primary-hover: #6a2fc9;
+  --accent-blue: #3b82f6;
+  --accent-amber: #f59e0b;
+  --accent-emerald: #10b981;
+  --accent-purple: #8b5cf6;
+  --accent-red: #ef4444;
+  --accent-red-hover: #dc2626;
+
+  /* Status Colors */
+  --status-todo-bg: #fef3c7;
+  --status-todo-text: #92400e;
+  --status-progress-bg: #dbeafe;
+  --status-progress-text: #1d4ed8;
+  --status-payment-bg: #fecaca;
+  --status-payment-text: #b91c1c;
+  --status-review-bg: #e0e7ff;
+  --status-review-text: #5b21b6;
+  --status-revision-bg: #fed7d7;
+  --status-revision-text: #c53030;
+  --status-done-bg: #d1fae5;
+  --status-done-text: #047857;
+
+  /* Alert Colors */
+  --alert-success-bg: #f0fdf4;
+  --alert-success-text: #166534;
+  --alert-success-border: #bbf7d0;
+  --alert-error-bg: #fef2f2;
+  --alert-error-text: #991b1b;
+  --alert-error-border: #fecaca;
+
+  --currency-color: #059669;
+  --empty-state-icon: #cbd5e1;
+  --empty-state-text: #475569;
+
+  /* Gradients */
+  --logo-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
+
+  /* Shadow */
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 20px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.01),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --modal-backdrop: rgba(0, 0, 0, 0.5);
+  --focus-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Dark Mode Variables */
+[data-theme="dark"] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --bg-hover: #1e293b;
+  --bg-disabled: #334155;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #e2e8f0;
+  --text-muted: #94a3b8;
+  --text-light: #64748b;
+  --text-disabled: #64748b;
+  --text-label: #cbd5e1;
+
+  --sidebar-bg: #0f172a;
+  --sidebar-text: #f8fafc;
+  --sidebar-text-muted: #94a3b8;
+  --sidebar-hover: rgba(148, 163, 184, 0.2);
+  --sidebar-active: #1e293b;
+
+  --border-primary: #334155;
+  --border-secondary: #475569;
+  --border-muted: #475569;
+  --border-focus: #3b82f6;
+  --border-divider: #475569;
+
+  /* Status Colors - Dark Mode Adjusted */
+  --status-todo-bg: rgba(254, 243, 199, 0.1);
+  --status-todo-text: #fbbf24;
+  --status-progress-bg: rgba(219, 234, 254, 0.1);
+  --status-progress-text: #60a5fa;
+  --status-payment-bg: rgba(254, 202, 202, 0.1);
+  --status-payment-text: #f87171;
+  --status-review-bg: rgba(224, 231, 255, 0.1);
+  --status-review-text: #a78bfa;
+  --status-revision-bg: rgba(254, 215, 215, 0.1);
+  --status-revision-text: #f87171;
+  --status-done-bg: rgba(209, 250, 229, 0.1);
+  --status-done-text: #34d399;
+
+  /* Alert Colors - Dark Mode Adjusted */
+  --alert-success-bg: rgba(240, 253, 244, 0.1);
+  --alert-success-text: #34d399;
+  --alert-success-border: rgba(187, 247, 208, 0.3);
+  --alert-error-bg: rgba(254, 242, 242, 0.1);
+  --alert-error-text: #f87171;
+  --alert-error-border: rgba(254, 202, 202, 0.3);
+
+  --currency-color: #34d399;
+  --empty-state-icon: #475569;
+  --empty-state-text: #94a3b8;
+
+  --modal-backdrop: rgba(0, 0, 0, 0.8);
+}

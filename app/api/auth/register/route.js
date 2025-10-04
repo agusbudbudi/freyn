@@ -1,0 +1,92 @@
+import dbConnect from "@/lib/db";
+import User from "@/models/User";
+import {
+  generateToken,
+  generateUniqueUserId,
+  isValidEmail,
+  validatePassword,
+  errorResponse,
+  successResponse,
+} from "@/lib/auth";
+
+export async function POST(request) {
+  try {
+    await dbConnect();
+
+    const body = await request.json();
+    const { fullName, email, password } = body;
+
+    // Validate required fields
+    if (!fullName || !email || !password) {
+      return errorResponse("All fields are required", 400);
+    }
+
+    // Validate full name
+    if (fullName.trim().length < 2) {
+      return errorResponse("Full name must be at least 2 characters long", 400);
+    }
+
+    if (!/^[a-zA-Z\s]+$/.test(fullName)) {
+      return errorResponse(
+        "Full name can only contain letters and spaces",
+        400
+      );
+    }
+
+    // Validate email
+    if (!isValidEmail(email)) {
+      return errorResponse("Please enter a valid email address", 400);
+    }
+
+    // Validate password
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      return errorResponse(passwordValidation.message, 400);
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return errorResponse("Email already exists", 400);
+    }
+
+    // Generate unique user ID
+    const userId = await generateUniqueUserId(User);
+
+    // Create new user
+    const user = new User({
+      userId,
+      fullName: fullName.trim(),
+      email: email.toLowerCase(),
+      password, // Will be hashed by the pre-save middleware
+    });
+
+    await user.save();
+
+    // Generate JWT token
+    const token = generateToken(user._id.toString());
+
+    return successResponse(
+      {
+        user: {
+          userId: user.userId,
+          fullName: user.fullName,
+          email: user.email,
+          createdAt: user.createdAt,
+        },
+        token,
+      },
+      "Account created successfully",
+      201
+    );
+  } catch (error) {
+    console.error("Registration error:", error);
+
+    // Handle duplicate key error (in case email uniqueness fails at DB level)
+    if (error.code === 11000) {
+      return errorResponse("Email already exists", 400);
+    }
+
+    return errorResponse("Registration failed. Please try again.", 500);
+  }
+}

@@ -1,0 +1,54 @@
+.form-label.required::after {
+  content: " *";
+  color: var(--danger-color);
+}
+
+/* Price input with currency symbol */
+.price-input-container {
+  position: relative;
+}
+
+.price-input-container::before {
+  content: "Rp";
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  font-weight: 500;
+  z-index: 1;
+}
+
+.price-input-container .form-control {
+  padding-left: 40px;
+}
+
+/* Revision checkbox container */
+.revision-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.revision-input-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.revision-checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.revision-checkbox {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.revision-checkbox-label {
+  font-size: 14px;
+  cursor: pointer;
+}

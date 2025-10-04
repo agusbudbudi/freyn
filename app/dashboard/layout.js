@@ -1,0 +1,386 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import "../../styles/dashboard.css";
+import "../../styles/mobile.css";
+import ProfileModal from "@/components/ProfileModal";
+
+export default function DashboardLayout({ children }) {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const closeSidebar = () => {
+    setIsSidebarOpen(false);
+  };
+
+  const toggleProfileMenu = () => {
+    setIsProfileMenuOpen(!isProfileMenuOpen);
+  };
+
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+    } catch (e) {}
+    setIsProfileMenuOpen(false);
+    router.push("/login");
+  };
+
+  // Load current user from storage
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("user");
+      if (raw) {
+        setCurrentUser(JSON.parse(raw));
+      }
+    } catch (e) {}
+  }, []);
+
+  // Auth guard: ensure token exists and is valid, otherwise redirect
+  useEffect(() => {
+    let cancelled = false;
+    const checkAuth = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          router.replace("/login");
+          return;
+        }
+        // Optional server verification
+        try {
+          const res = await fetch("/api/auth/verify-token", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await res.json();
+          if (!data?.success) {
+            localStorage.removeItem("user");
+            localStorage.removeItem("token");
+            router.replace("/login");
+            return;
+          }
+        } catch (e) {
+          // If verification endpoint fails, still allow based on local token
+        }
+      } finally {
+        if (!cancelled) setAuthChecked(true);
+      }
+    };
+    checkAuth();
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+
+  // Close menus when clicking outside and on Escape
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (!isProfileMenuOpen) return;
+      const inButton = e.target.closest(".profile-button");
+      const inMenu = e.target.closest(".profile-menu-dropdown");
+      if (!inButton && !inMenu) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+
+    const handleKey = (e) => {
+      if (e.key === "Escape") {
+        setIsProfileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("click", handleClick);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("click", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [isProfileMenuOpen]);
+
+  if (!authChecked) {
+    return null;
+  }
+
+  const avatarUrl = currentUser?.profileImage
+    ? currentUser.profileImage
+    : `https://api.dicebear.com/9.x/personas/svg?backgroundColor=b6e3f4&scale=100&seed=${encodeURIComponent(
+        currentUser?.email || currentUser?.fullName || "default"
+      )}`;
+
+  const firstName =
+    (currentUser?.fullName || currentUser?.name || "")
+      .trim()
+      .split(" ")
+      .filter(Boolean)[0] || null;
+
+  const navItems = [
+    {
+      section: "Overview",
+      items: [
+        { href: "/dashboard", icon: "uil-chart-line", label: "Dashboard" },
+        {
+          href: "/dashboard/projects",
+          icon: "uil-folder-open",
+          label: "Projects",
+        },
+        {
+          href: "/dashboard/clients",
+          icon: "uil-users-alt",
+          label: "Clients",
+        },
+        {
+          href: "/dashboard/services",
+          icon: "uil-package",
+          label: "Services",
+        },
+      ],
+    },
+    {
+      section: "Tools",
+      items: [
+        {
+          href: "https://splitbill-alpha.vercel.app/invoice.html",
+          icon: "uil-invoice",
+          label: "Invoice Split Bill",
+          external: true,
+        },
+        {
+          href: "#",
+          icon: "uil-palette",
+          label: "Portfolio",
+          badge: "Soon",
+        },
+        {
+          href: "#",
+          icon: "uil-calendar-alt",
+          label: "Calendar",
+          badge: "Soon",
+        },
+        { href: "#", icon: "uil-chart", label: "Reports", badge: "Soon" },
+        { href: "#", icon: "uil-setting", label: "Settings", badge: "Soon" },
+      ],
+    },
+  ];
+
+  return (
+    <div className="app-container">
+      {/* Sidebar */}
+      <div className={`sidebar ${isSidebarOpen ? "open" : ""}`}>
+        <div className="sidebar-header">
+          <div className="logo">
+            <div className="logo-icon">
+              <i className="fas fa-palette"></i>
+            </div>
+            <span>Freyn</span>
+          </div>
+          <button
+            className="sidebar-close-btn"
+            onClick={closeSidebar}
+            aria-label="Close sidebar"
+          >
+            <i className="uil uil-multiply"></i>
+          </button>
+        </div>
+
+        <div className="sidebar-nav">
+          {navItems.map((section, idx) => (
+            <div key={idx} className="nav-section">
+              <div className="nav-section-title">{section.section}</div>
+              {section.items.map((item, itemIdx) => {
+                const isActive = pathname === item.href;
+
+                if (item.external) {
+                  return (
+                    <a
+                      key={itemIdx}
+                      href={item.href}
+                      className="nav-item"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <i className={`uil ${item.icon}`}></i>
+                      {item.label}
+                      <i className="uil uil-external-link-alt"></i>
+                    </a>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={itemIdx}
+                    href={item.href}
+                    className={`nav-item ${isActive ? "active" : ""}`}
+                    onClick={closeSidebar}
+                  >
+                    <i className={`uil ${item.icon}`}></i>
+                    {item.label}
+                    {item.badge && (
+                      <span className="status-badge status-review">
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Mobile Overlay */}
+      <div
+        className={`mobile-overlay ${isSidebarOpen ? "active" : ""}`}
+        onClick={closeSidebar}
+      ></div>
+
+      {/* Main Content */}
+      <div className="main-content">
+        {/* Header */}
+        <div className="content-header">
+          <div className="header-top">
+            <div className="mobile-header">
+              <div className="header-title">
+                <button
+                  className="mobile-menu-btn"
+                  onClick={toggleSidebar}
+                  aria-label="Toggle sidebar"
+                >
+                  <i className="fas fa-bars"></i>
+                </button>
+                <div>
+                  <h1 className="page-title" id="page-title">
+                    {pathname === "/dashboard"
+                      ? "Dashboard"
+                      : pathname === "/dashboard/projects"
+                      ? "Projects"
+                      : pathname === "/dashboard/clients"
+                      ? "Clients"
+                      : "Services"}
+                  </h1>
+                  <p className="page-subtitle" id="page-subtitle">
+                    {pathname === "/dashboard"
+                      ? "Track your design projects 🚀"
+                      : pathname === "/dashboard/projects"
+                      ? "Manage all your projects 👨🏻‍💻"
+                      : pathname === "/dashboard/clients"
+                      ? "Manage your clients 👥"
+                      : "Manage your services 💼"}
+                  </p>
+                </div>
+              </div>
+              <div
+                className="profile-right"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                {firstName && (
+                  <span className="profile-greeting">
+                    Hi, <strong>{firstName}</strong>!
+                  </span>
+                )}
+                <div className="profile-menu profile-button">
+                  <img
+                    src={avatarUrl}
+                    className="avatar-profile"
+                    alt={
+                      currentUser?.fullName || currentUser?.name || "Profile"
+                    }
+                    onClick={toggleProfileMenu}
+                    style={{ cursor: "pointer" }}
+                  />
+                </div>
+              </div>
+
+              {/* Profile Menu Dropdown */}
+              {isProfileMenuOpen && (
+                <>
+                  <div className="profile-menu-dropdown show">
+                    <div className="profile-header">
+                      <div
+                        className="profile-image"
+                        style={{
+                          borderRadius: "50%",
+                          background: "#b6e3f4",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <img
+                          src={avatarUrl}
+                          alt={
+                            currentUser?.fullName ||
+                            currentUser?.name ||
+                            "Profile"
+                          }
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            borderRadius: "50%",
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <div className="profile-name">
+                          {currentUser?.fullName || currentUser?.name || "User"}
+                        </div>
+                        <div className="profile-email">
+                          {currentUser?.email || "user@example.com"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="profile-menu-items">
+                      <button
+                        className="profile-menu-item"
+                        onClick={() => {
+                          setIsProfileMenuOpen(false);
+                          setIsProfileModalOpen(true);
+                        }}
+                      >
+                        <i className="uil uil-user"></i>
+                        View Profile
+                      </button>
+                      <button
+                        className="profile-menu-item logout"
+                        onClick={handleLogout}
+                      >
+                        <i className="uil uil-sign-out-alt"></i>
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                  <div className="profile-overlay show"></div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Profile Modal */}
+        <ProfileModal
+          isOpen={isProfileModalOpen}
+          onClose={() => setIsProfileModalOpen(false)}
+          onSaved={(u) => setCurrentUser(u)}
+        />
+
+        {/* Page Content */}
+        {children}
+      </div>
+    </div>
+  );
+}
