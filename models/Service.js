@@ -51,6 +51,40 @@ const serviceSchema = new mongoose.Schema({
   },
 });
 
+/**
+ * Generate unique service ID with prefix 'S' + 5 random digits
+ * Ensures uniqueness by checking the database, retries up to 10 times.
+ */
+async function generateUniqueServiceId(ServiceModel) {
+  const maxAttempts = 10;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const random = Math.floor(Math.random() * 90000) + 10000; // 10000-99999
+    const candidate = `S${random}`;
+    const exists = await ServiceModel.exists({ id: candidate });
+    if (!exists) {
+      return candidate;
+    }
+  }
+  throw new Error(
+    "Unable to generate unique service ID after multiple attempts"
+  );
+}
+
+/**
+ * Ensure service id exists before validation so required validator passes
+ * and format stays 'S' + 5 digits.
+ */
+serviceSchema.pre("validate", async function (next) {
+  if (!this.id) {
+    try {
+      this.id = await generateUniqueServiceId(this.constructor);
+    } catch (err) {
+      return next(err);
+    }
+  }
+  next();
+});
+
 // Update timestamps on save
 serviceSchema.pre("save", function (next) {
   this.updatedAt = Date.now();
@@ -63,5 +97,11 @@ serviceSchema.pre("findOneAndUpdate", function (next) {
   next();
 });
 
-export default mongoose.models.Service ||
-  mongoose.model("Service", serviceSchema);
+/**
+ * In dev/hot-reload, ensure schema changes (hooks, indexes) are applied
+ * by removing previously compiled model before redefining it.
+ */
+if (mongoose.models.Service) {
+  delete mongoose.models.Service;
+}
+export default mongoose.model("Service", serviceSchema);

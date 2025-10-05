@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import { toast } from "@/components/ui/toast";
@@ -26,6 +26,8 @@ export default function ServiceModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [previewServiceId, setPreviewServiceId] = useState("");
+  const [closing, setClosing] = useState(false);
+  const closeTimerRef = useRef(null);
 
   useEffect(() => {
     if (editService) {
@@ -53,10 +55,18 @@ export default function ServiceModal({
         deliverables: "",
       });
       setIsUnlimitedRevision(false);
-      // Generate preview Service ID for new services
-      setPreviewServiceId(`S${Date.now()}`);
+      // Generate preview Service ID for new services (S + 5 random digits)
+      const rand = Math.floor(Math.random() * 90000) + 10000;
+      setPreviewServiceId(`S${rand}`);
     }
   }, [editService, isOpen]);
+
+  useEffect(() => {
+    if (isOpen) setClosing(false);
+    return () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    };
+  }, [isOpen]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -77,6 +87,15 @@ export default function ServiceModal({
     if (checked) {
       setFormData((prev) => ({ ...prev, totalRevision: 0 }));
     }
+  };
+
+  const handleStartClose = () => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    setClosing(true);
+    closeTimerRef.current = setTimeout(() => {
+      setClosing(false);
+      onClose();
+    }, 220);
   };
 
   const handleSubmit = async (e) => {
@@ -118,7 +137,7 @@ export default function ServiceModal({
             : "Service created successfully"
         );
         onSave();
-        onClose();
+        handleStartClose();
       } else {
         toast.error(data.message || "Failed to save service");
         setError(data.message || "Failed to save service");
@@ -145,16 +164,22 @@ export default function ServiceModal({
     []
   );
 
-  if (!isOpen) return null;
+  if (!isOpen && !closing) return null;
 
   return (
-    <div className="modal" style={{ display: "block" }}>
-      <div className="modal-content" style={{ maxWidth: "800px" }}>
+    <div
+      className={`modal ${closing ? "closing" : ""}`}
+      style={{ display: "block" }}
+    >
+      <div
+        className={`modal-content ${closing ? "closing" : ""}`}
+        style={{ maxWidth: "800px" }}
+      >
         <div className="modal-header">
           <h2 className="modal-title">
             {editService ? "Edit Service" : "Add New Service"}
           </h2>
-          <button className="close" onClick={onClose}>
+          <button className="close" onClick={handleStartClose}>
             <i className="uil uil-times"></i>
           </button>
         </div>
@@ -168,15 +193,17 @@ export default function ServiceModal({
 
           <form id="service-form" onSubmit={handleSubmit}>
             <div className="form-grid" style={{ gap: "20px" }}>
-              <div className="form-group">
-                <label className="form-label">Service ID</label>
-                <input
-                  type="text"
-                  className="form-control readonly"
-                  value={editService ? editService.id : previewServiceId}
-                  readOnly
-                />
-              </div>
+              {editService && (
+                <div className="form-group">
+                  <label className="form-label">Service ID</label>
+                  <input
+                    type="text"
+                    className="form-control readonly"
+                    value={editService.id}
+                    readOnly
+                  />
+                </div>
+              )}
 
               <div className="form-group">
                 <label className="form-label">Service Name *</label>
@@ -306,7 +333,7 @@ export default function ServiceModal({
               <button
                 type="button"
                 className="btn btn-secondary"
-                onClick={onClose}
+                onClick={handleStartClose}
                 disabled={loading}
               >
                 Cancel

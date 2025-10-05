@@ -28,6 +28,10 @@ export async function PUT(request, { params }) {
 
     const { id } = params;
     const serviceData = await request.json();
+    // Do not allow changing primary identifier
+    if ("id" in serviceData) {
+      delete serviceData.id;
+    }
     serviceData.updatedAt = new Date();
 
     const updatedService = await Service.findOneAndUpdate({ id }, serviceData, {

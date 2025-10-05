@@ -23,9 +23,9 @@ export async function POST(request) {
 
     const serviceData = await request.json();
 
-    // Generate unique ID if not provided
-    if (!serviceData.id) {
-      serviceData.id = Date.now().toString();
+    // Ignore client-supplied id; model hook will generate 'S' + 5 digits
+    if ("id" in serviceData) {
+      delete serviceData.id;
     }
 
     // Validate required fields
@@ -33,7 +33,8 @@ export async function POST(request) {
       return errorResponse("Service name is required", 400);
     }
 
-    if (!serviceData.servicePrice || serviceData.servicePrice < 0) {
+    // Allow price = 0 (only reject null/undefined or negative)
+    if (serviceData.servicePrice == null || serviceData.servicePrice < 0) {
       return errorResponse("Valid service price is required", 400);
     }
 

@@ -81,7 +81,7 @@ export default function LoginPage() {
     if (/[A-Z]/.test(password)) strength++;
     if (/[a-z]/.test(password)) strength++;
     if (/\d/.test(password)) strength++;
-    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++;
+    if (/[!@#$%^&*(),.?\":{}|<>]/.test(password)) strength++;
 
     let level = "";
     let text = "";
@@ -260,312 +260,356 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="login-wrapper">
-      <div className="auth-container">
-        <div className="auth-container-header">
-          <div className="logo">
-            <div className="logo-icon">
-              <i className="fas fa-palette"></i>
+    <div className="auth-shell">
+      <div className="auth-grid">
+        {/* Left: Hero Onboarding */}
+        <aside className="auth-hero">
+          <img
+            className="hero-illus"
+            src="/images/hero-login.png"
+            alt="Freyn dashboard preview"
+          />
+          <h2 className="hero-title">
+            {isLogin
+              ? "Welcome back to your workspace 👋"
+              : "Empower your freelance journey 🚀"}
+          </h2>
+          <p className="hero-subtitle">
+            Kelola proyek dan klien Anda lebih cepat, rapi, dan aman.
+          </p>
+
+          <ul className="hero-points">
+            <li>Progress proyek lebih terpantau</li>
+            <li>Data aman, privat, dan terenkripsi</li>
+            <li>Dashboard ringkas untuk insight cepat</li>
+          </ul>
+        </aside>
+
+        {/* Right: Auth Panel (Forms) */}
+        <section className="auth-panel">
+          <div className="auth-panel-inner">
+            <div className="hero-brand logo">
+              <div className="logo-icon">
+                <i className="fas fa-palette"></i>
+              </div>
+              <span className="logo-text">Freyn</span>
             </div>
-            <span className="logo-text">Freyn</span>
-          </div>
-        </div>
+            {/* Login Form */}
+            <div className={`form-page ${isLogin ? "active" : ""}`}>
+              <div className="auth-header">
+                <h1 className="auth-title">Welcome Back 😎</h1>
+                <p className="auth-subtitle">
+                  Sign in to your account to continue
+                </p>
+              </div>
 
-        {/* Login Form */}
-        <div className={`form-page ${isLogin ? "active" : ""}`}>
-          <div className="auth-header">
-            <h1 className="auth-title">Welcome Back 😎</h1>
-            <p className="auth-subtitle">Sign in to your account to continue</p>
-          </div>
-
-          {alert.show && isLogin && (
-            <div className={`alert alert-${alert.type}`}>
-              <i
-                className={`fas fa-${
-                  alert.type === "error" ? "exclamation-circle" : "check-circle"
-                }`}
-              ></i>
-              {alert.message}
-            </div>
-          )}
-
-          <form onSubmit={handleLoginSubmit}>
-            <div className="form-group auth">
-              <label className="form-label" htmlFor="login-email">
-                Email Address
-              </label>
-              <input
-                type="email"
-                id="login-email"
-                className={`form-control ${errors.loginEmail ? "error" : ""}`}
-                placeholder="Enter your email"
-                value={loginData.email}
-                onChange={(e) => {
-                  setLoginData({ ...loginData, email: e.target.value });
-                  setErrors({ ...errors, loginEmail: "" });
-                }}
-              />
-              {errors.loginEmail && (
-                <div className="form-error" style={{ display: "block" }}>
-                  {errors.loginEmail}
-                </div>
-              )}
-            </div>
-
-            <div className="form-group auth">
-              <label className="form-label" htmlFor="login-password">
-                Password
-              </label>
-              <div className="input-wrapper">
-                <input
-                  type={showPassword.login ? "text" : "password"}
-                  id="login-password"
-                  className={`form-control ${
-                    errors.loginPassword ? "error" : ""
-                  }`}
-                  placeholder="Enter your password"
-                  value={loginData.password}
-                  onChange={(e) => {
-                    setLoginData({ ...loginData, password: e.target.value });
-                    setErrors({ ...errors, loginPassword: "" });
-                  }}
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() =>
-                    setShowPassword({
-                      ...showPassword,
-                      login: !showPassword.login,
-                    })
-                  }
-                >
+              {alert.show && isLogin && (
+                <div className={`alert alert-${alert.type}`}>
                   <i
-                    className={`input-icon ${
-                      showPassword.login ? "uil-eye-slash" : "uil-eye"
+                    className={`fas fa-${
+                      alert.type === "error"
+                        ? "exclamation-circle"
+                        : "check-circle"
                     }`}
                   ></i>
-                </button>
-              </div>
-              {errors.loginPassword && (
-                <div className="form-error" style={{ display: "block" }}>
-                  {errors.loginPassword}
+                  {alert.message}
                 </div>
               )}
-            </div>
 
-            <button
-              type="submit"
-              className={`btn btn-primary btn-full ${
-                loading ? "btn-loading" : ""
-              }`}
-              disabled={loading}
-            >
-              <div className="btn-spinner"></div>
-              <span className="btn-text">Sign In</span>
-            </button>
-          </form>
-
-          <div className="auth-switch">
-            <p className="auth-switch-text">Don't have an account?</p>
-            <a href="#" className="auth-switch-link" onClick={switchForm}>
-              Create an account
-            </a>
-          </div>
-        </div>
-
-        {/* Register Form */}
-        <div className={`form-page ${!isLogin ? "active" : ""}`}>
-          <div className="auth-header">
-            <h1 className="auth-title">Create Account 👋🏻</h1>
-            <p className="auth-subtitle">
-              Join us to start managing your design projects
-            </p>
-          </div>
-
-          {alert.show && !isLogin && (
-            <div className={`alert alert-${alert.type}`}>
-              <i
-                className={`fas fa-${
-                  alert.type === "error" ? "exclamation-circle" : "check-circle"
-                }`}
-              ></i>
-              {alert.message}
-            </div>
-          )}
-
-          <form onSubmit={handleRegisterSubmit}>
-            <div className="form-group auth">
-              <label className="form-label" htmlFor="register-fullname">
-                Full Name
-              </label>
-              <input
-                type="text"
-                id="register-fullname"
-                className={`form-control ${
-                  errors.registerFullName ? "error" : ""
-                }`}
-                placeholder="Enter your full name"
-                value={registerData.fullName}
-                onChange={(e) => {
-                  setRegisterData({
-                    ...registerData,
-                    fullName: e.target.value,
-                  });
-                  setErrors({ ...errors, registerFullName: "" });
-                }}
-              />
-              {errors.registerFullName && (
-                <div className="form-error" style={{ display: "block" }}>
-                  {errors.registerFullName}
-                </div>
-              )}
-            </div>
-
-            <div className="form-group auth">
-              <label className="form-label" htmlFor="register-email">
-                Email Address
-              </label>
-              <input
-                type="email"
-                id="register-email"
-                className={`form-control ${
-                  errors.registerEmail ? "error" : ""
-                }`}
-                placeholder="Enter your email"
-                value={registerData.email}
-                onChange={(e) => {
-                  setRegisterData({ ...registerData, email: e.target.value });
-                  setErrors({ ...errors, registerEmail: "" });
-                }}
-              />
-              {errors.registerEmail && (
-                <div className="form-error" style={{ display: "block" }}>
-                  {errors.registerEmail}
-                </div>
-              )}
-            </div>
-
-            <div className="form-group auth">
-              <label className="form-label" htmlFor="register-password">
-                Password
-              </label>
-              <div className="input-wrapper">
-                <input
-                  type={showPassword.register ? "text" : "password"}
-                  id="register-password"
-                  className={`form-control ${
-                    errors.registerPassword ? "error" : ""
-                  }`}
-                  placeholder="Create a password"
-                  value={registerData.password}
-                  onChange={(e) => {
-                    setRegisterData({
-                      ...registerData,
-                      password: e.target.value,
-                    });
-                    setErrors({ ...errors, registerPassword: "" });
-                    checkPasswordStrength(e.target.value);
-                  }}
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() =>
-                    setShowPassword({
-                      ...showPassword,
-                      register: !showPassword.register,
-                    })
-                  }
-                >
-                  <i
-                    className={`input-icon ${
-                      showPassword.register ? "uil-eye-slash" : "uil-eye"
+              <form onSubmit={handleLoginSubmit}>
+                <div className="form-group auth">
+                  <label className="form-label" htmlFor="login-email">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    id="login-email"
+                    className={`form-control ${
+                      errors.loginEmail ? "error" : ""
                     }`}
-                  ></i>
-                </button>
-              </div>
-              {errors.registerPassword && (
-                <div className="form-error" style={{ display: "block" }}>
-                  {errors.registerPassword}
+                    placeholder="you@example.com"
+                    value={loginData.email}
+                    onChange={(e) => {
+                      setLoginData({ ...loginData, email: e.target.value });
+                      setErrors({ ...errors, loginEmail: "" });
+                    }}
+                  />
+                  {errors.loginEmail && (
+                    <div className="form-error" style={{ display: "block" }}>
+                      {errors.loginEmail}
+                    </div>
+                  )}
                 </div>
-              )}
-              {passwordStrength.show && (
-                <div
-                  className={`password-strength strength-${passwordStrength.level}`}
-                >
-                  <div className="strength-bar">
-                    <div className="strength-fill"></div>
+
+                <div className="form-group auth">
+                  <label className="form-label" htmlFor="login-password">
+                    Password
+                  </label>
+                  <div className="input-wrapper">
+                    <input
+                      type={showPassword.login ? "text" : "password"}
+                      id="login-password"
+                      className={`form-control ${
+                        errors.loginPassword ? "error" : ""
+                      }`}
+                      placeholder="At least 8 characters"
+                      value={loginData.password}
+                      onChange={(e) => {
+                        setLoginData({
+                          ...loginData,
+                          password: e.target.value,
+                        });
+                        setErrors({ ...errors, loginPassword: "" });
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() =>
+                        setShowPassword({
+                          ...showPassword,
+                          login: !showPassword.login,
+                        })
+                      }
+                    >
+                      <i
+                        className={`input-icon ${
+                          showPassword.login ? "uil-eye-slash" : "uil-eye"
+                        }`}
+                      ></i>
+                    </button>
                   </div>
-                  <div className="strength-text">{passwordStrength.text}</div>
+                  {errors.loginPassword && (
+                    <div className="form-error" style={{ display: "block" }}>
+                      {errors.loginPassword}
+                    </div>
+                  )}
                 </div>
-              )}
+
+                <button
+                  type="submit"
+                  className={`btn btn-primary btn-full ${
+                    loading ? "btn-loading" : ""
+                  }`}
+                  disabled={loading}
+                >
+                  <div className="btn-spinner"></div>
+                  <span className="btn-text">Login</span>
+                </button>
+              </form>
+
+              <div className="auth-switch">
+                <p className="auth-switch-text">Don't have an account?</p>
+                <a href="#" className="auth-switch-link" onClick={switchForm}>
+                  Create an account
+                </a>
+              </div>
             </div>
 
-            <div className="form-group  auth">
-              <label className="form-label" htmlFor="register-confirm-password">
-                Confirm Password
-              </label>
-              <div className="input-wrapper">
-                <input
-                  type={showPassword.confirm ? "text" : "password"}
-                  id="register-confirm-password"
-                  className={`form-control ${
-                    errors.registerConfirmPassword ? "error" : ""
-                  }`}
-                  placeholder="Confirm your password"
-                  value={registerData.confirmPassword}
-                  onChange={(e) => {
-                    setRegisterData({
-                      ...registerData,
-                      confirmPassword: e.target.value,
-                    });
-                    setErrors({ ...errors, registerConfirmPassword: "" });
-                  }}
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() =>
-                    setShowPassword({
-                      ...showPassword,
-                      confirm: !showPassword.confirm,
-                    })
-                  }
-                >
+            {/* Register Form */}
+            <div className={`form-page ${!isLogin ? "active" : ""}`}>
+              <div className="auth-header">
+                <h1 className="auth-title">Create Account 👋🏻</h1>
+                <p className="auth-subtitle">
+                  Join us to start managing your design projects
+                </p>
+              </div>
+
+              {alert.show && !isLogin && (
+                <div className={`alert alert-${alert.type}`}>
                   <i
-                    className={`input-icon ${
-                      showPassword.confirm ? "uil-eye-slash" : "uil-eye"
+                    className={`fas fa-${
+                      alert.type === "error"
+                        ? "exclamation-circle"
+                        : "check-circle"
                     }`}
                   ></i>
-                </button>
-              </div>
-              {errors.registerConfirmPassword && (
-                <div className="form-error" style={{ display: "block" }}>
-                  {errors.registerConfirmPassword}
+                  {alert.message}
                 </div>
               )}
+
+              <form onSubmit={handleRegisterSubmit}>
+                <div className="form-group auth">
+                  <label className="form-label" htmlFor="register-fullname">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    id="register-fullname"
+                    className={`form-control ${
+                      errors.registerFullName ? "error" : ""
+                    }`}
+                    placeholder="Your full name"
+                    value={registerData.fullName}
+                    onChange={(e) => {
+                      setRegisterData({
+                        ...registerData,
+                        fullName: e.target.value,
+                      });
+                      setErrors({ ...errors, registerFullName: "" });
+                    }}
+                  />
+                  {errors.registerFullName && (
+                    <div className="form-error" style={{ display: "block" }}>
+                      {errors.registerFullName}
+                    </div>
+                  )}
+                </div>
+
+                <div className="form-group auth">
+                  <label className="form-label" htmlFor="register-email">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    id="register-email"
+                    className={`form-control ${
+                      errors.registerEmail ? "error" : ""
+                    }`}
+                    placeholder="you@example.com"
+                    value={registerData.email}
+                    onChange={(e) => {
+                      setRegisterData({
+                        ...registerData,
+                        email: e.target.value,
+                      });
+                      setErrors({ ...errors, registerEmail: "" });
+                    }}
+                  />
+                  {errors.registerEmail && (
+                    <div className="form-error" style={{ display: "block" }}>
+                      {errors.registerEmail}
+                    </div>
+                  )}
+                </div>
+
+                <div className="form-group auth">
+                  <label className="form-label" htmlFor="register-password">
+                    Password
+                  </label>
+                  <div className="input-wrapper">
+                    <input
+                      type={showPassword.register ? "text" : "password"}
+                      id="register-password"
+                      className={`form-control ${
+                        errors.registerPassword ? "error" : ""
+                      }`}
+                      placeholder="At least 8 characters"
+                      value={registerData.password}
+                      onChange={(e) => {
+                        setRegisterData({
+                          ...registerData,
+                          password: e.target.value,
+                        });
+                        setErrors({ ...errors, registerPassword: "" });
+                        checkPasswordStrength(e.target.value);
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() =>
+                        setShowPassword({
+                          ...showPassword,
+                          register: !showPassword.register,
+                        })
+                      }
+                    >
+                      <i
+                        className={`input-icon ${
+                          showPassword.register ? "uil-eye-slash" : "uil-eye"
+                        }`}
+                      ></i>
+                    </button>
+                  </div>
+                  {errors.registerPassword && (
+                    <div className="form-error" style={{ display: "block" }}>
+                      {errors.registerPassword}
+                    </div>
+                  )}
+                  {passwordStrength.show && (
+                    <div
+                      className={`password-strength strength-${passwordStrength.level}`}
+                    >
+                      <div className="strength-bar">
+                        <div className="strength-fill"></div>
+                      </div>
+                      <div className="strength-text">
+                        {passwordStrength.text}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="form-group  auth">
+                  <label
+                    className="form-label"
+                    htmlFor="register-confirm-password"
+                  >
+                    Confirm Password
+                  </label>
+                  <div className="input-wrapper">
+                    <input
+                      type={showPassword.confirm ? "text" : "password"}
+                      id="register-confirm-password"
+                      className={`form-control ${
+                        errors.registerConfirmPassword ? "error" : ""
+                      }`}
+                      placeholder="Re-type your password"
+                      value={registerData.confirmPassword}
+                      onChange={(e) => {
+                        setRegisterData({
+                          ...registerData,
+                          confirmPassword: e.target.value,
+                        });
+                        setErrors({ ...errors, registerConfirmPassword: "" });
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() =>
+                        setShowPassword({
+                          ...showPassword,
+                          confirm: !showPassword.confirm,
+                        })
+                      }
+                    >
+                      <i
+                        className={`input-icon ${
+                          showPassword.confirm ? "uil-eye-slash" : "uil-eye"
+                        }`}
+                      ></i>
+                    </button>
+                  </div>
+                  {errors.registerConfirmPassword && (
+                    <div className="form-error" style={{ display: "block" }}>
+                      {errors.registerConfirmPassword}
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  className={`btn btn-primary btn-full ${
+                    loading ? "btn-loading" : ""
+                  }`}
+                  disabled={loading}
+                >
+                  <div className="btn-spinner"></div>
+                  <span className="btn-text">Create Account</span>
+                </button>
+              </form>
+
+              <div className="auth-switch">
+                <p className="auth-switch-text">Already have an account?</p>
+                <a href="#" className="auth-switch-link" onClick={switchForm}>
+                  Sign in here
+                </a>
+              </div>
             </div>
-
-            <button
-              type="submit"
-              className={`btn btn-primary btn-full ${
-                loading ? "btn-loading" : ""
-              }`}
-              disabled={loading}
-            >
-              <div className="btn-spinner"></div>
-              <span className="btn-text">Create Account</span>
-            </button>
-          </form>
-
-          <div className="auth-switch">
-            <p className="auth-switch-text">Already have an account?</p>
-            <a href="#" className="auth-switch-link" onClick={switchForm}>
-              Sign in here
-            </a>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );

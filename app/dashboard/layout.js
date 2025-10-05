@@ -178,7 +178,7 @@ export default function DashboardLayout({ children }) {
       {/* Sidebar */}
       <div className={`sidebar ${isSidebarOpen ? "open" : ""}`}>
         <div className="sidebar-header">
-          <div className="logo">
+          <div className="logo sidebar-logo">
             <div className="logo-icon">
               <i className="fas fa-palette"></i>
             </div>

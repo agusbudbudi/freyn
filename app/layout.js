@@ -3,7 +3,7 @@ import "../styles/global.css";
 import "../styles/theme.css";
 
 export const metadata = {
-  title: "FMS - Freelance Management System",
+  title: "Freyn - Freelance Management System",
   description: "Your All-in-One Freelance Management System",
 };
 

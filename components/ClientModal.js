@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "@/components/ui/toast";
 
 export default function ClientModal({
@@ -21,6 +21,8 @@ export default function ClientModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [previewClientId, setPreviewClientId] = useState("");
+  const [closing, setClosing] = useState(false);
+  const closeTimerRef = useRef(null);
 
   useEffect(() => {
     if (editClient) {
@@ -47,9 +49,25 @@ export default function ClientModal({
     }
   }, [editClient, isOpen]);
 
+  useEffect(() => {
+    if (isOpen) setClosing(false);
+    return () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    };
+  }, [isOpen]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleStartClose = () => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    setClosing(true);
+    closeTimerRef.current = setTimeout(() => {
+      setClosing(false);
+      onClose();
+    }, 220);
   };
 
   const handleSubmit = async (e) => {
@@ -80,7 +98,7 @@ export default function ClientModal({
             : "Client created successfully"
         );
         onSave();
-        onClose();
+        handleStartClose();
       } else {
         toast.error(data.message || "Failed to save client");
         setError(data.message || "Failed to save client");
@@ -94,16 +112,22 @@ export default function ClientModal({
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen && !closing) return null;
 
   return (
-    <div className="modal" style={{ display: "block" }}>
-      <div className="modal-content" style={{ maxWidth: "600px" }}>
+    <div
+      className={`modal ${closing ? "closing" : ""}`}
+      style={{ display: "block" }}
+    >
+      <div
+        className={`modal-content ${closing ? "closing" : ""}`}
+        style={{ maxWidth: "600px" }}
+      >
         <div className="modal-header">
           <h2 className="modal-title">
             {editClient ? "Edit Client" : "Add New Client"}
           </h2>
-          <button className="close" onClick={onClose}>
+          <button className="close" onClick={handleStartClose}>
             <i className="uil uil-times"></i>
           </button>
         </div>
@@ -117,15 +141,17 @@ export default function ClientModal({
 
           <form id="client-form" onSubmit={handleSubmit}>
             <div className="form-grid" style={{ gap: "20px" }}>
-              <div className="form-group">
-                <label className="form-label">Client ID</label>
-                <input
-                  type="text"
-                  className="form-control readonly"
-                  value={editClient ? editClient.clientId : previewClientId}
-                  readOnly
-                />
-              </div>
+              {editClient && (
+                <div className="form-group">
+                  <label className="form-label">Client ID</label>
+                  <input
+                    type="text"
+                    className="form-control readonly"
+                    value={editClient.clientId}
+                    readOnly
+                  />
+                </div>
+              )}
 
               <div className="form-group">
                 <label className="form-label">Client Name *</label>
@@ -186,7 +212,7 @@ export default function ClientModal({
                   className="form-control"
                   value={formData.address}
                   onChange={handleInputChange}
-                  rows="3"
+                  rows="2"
                   placeholder="Enter client address"
                   style={{
                     resize: "vertical",
@@ -202,7 +228,7 @@ export default function ClientModal({
                   className="form-control"
                   value={formData.notes}
                   onChange={handleInputChange}
-                  rows="3"
+                  rows="2"
                   placeholder="Additional notes about the client"
                   style={{
                     resize: "vertical",
@@ -216,7 +242,7 @@ export default function ClientModal({
               <button
                 type="button"
                 className="btn btn-secondary"
-                onClick={onClose}
+                onClick={handleStartClose}
                 disabled={loading}
               >
                 Cancel

@@ -141,7 +141,6 @@
 
 .btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
 }
 
 .btn:active {
@@ -277,7 +276,7 @@
 
 .form-page {
   display: none;
-  padding: 30px;
+  padding: 20px;
 }
 
 .form-page.active {
@@ -295,5 +294,125 @@
 
   .form-page {
     padding: 20px;
+  }
+}
+
+/* ================================
+   New 2-column Auth Layout (Hero + Form)
+   ================================ */
+
+/* Full viewport container */
+.auth-shell {
+  width: 100vw; /* full width viewport */
+  height: 100dvh; /* full height including mobile dynamic bars */
+  display: flex;
+  align-items: stretch; /* stretch child to full height */
+  justify-content: center; /* child can be centered if not full width */
+  overflow-x: hidden; /* prevent horizontal scroll */
+}
+
+/* Two-column grid filling the shell */
+.auth-grid {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.06);
+  background-color: var(--bg-primary);
+}
+
+/* Left column: Hero */
+.auth-hero {
+  position: relative;
+  padding: 0 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  background-color: var(--bg-secondary);
+
+  margin: 20px;
+  border-radius: 20px;
+}
+
+/* center brand row */
+.hero-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-inline: auto; /* ensure block is centered within the column */
+  margin-bottom: 1rem;
+}
+
+.hero-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--accent-primary);
+  margin: 8px 0 4px;
+}
+
+.hero-subtitle {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.hero-points {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.hero-points li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.hero-points li::before {
+  content: "•";
+  color: #667eea;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.hero-illus {
+  width: 100%;
+  max-width: 480px;
+}
+
+/* Right column: Form panel */
+.auth-panel {
+  padding: 40px;
+  display: grid;
+  place-items: center;
+  background: var(--bg-primary);
+}
+
+.auth-panel-inner {
+  width: 100%;
+  max-width: 460px;
+}
+
+/* Responsive: hide hero on mobile/tablet and stack */
+@media (max-width: 900px) {
+  .auth-grid {
+    grid-template-columns: 1fr;
+  }
+  .auth-hero {
+    display: none;
+  }
+  .auth-panel {
+    padding: 24px;
+  }
+  /* reduce double padding when inside panel on mobile */
+  .auth-panel .form-page {
+    padding: 0;
   }
 }

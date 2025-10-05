@@ -187,7 +187,11 @@ export default function ClientsPage() {
                             <>
                               <br />
                               <span
-                                style={{ fontSize: "11px", color: "#9ca3af" }}
+                                style={{
+                                  fontSize: "11px",
+                                  color: "#9ca3af",
+                                  whiteSpace: "nowrap",
+                                }}
                               >
                                 <i className="uil uil-envelope"></i>{" "}
                                 {client.email}
