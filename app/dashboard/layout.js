@@ -130,6 +130,12 @@ export default function DashboardLayout({ children }) {
       items: [
         { href: "/dashboard", icon: "uil-chart-line", label: "Dashboard" },
         {
+          href: "/dashboard/projects/calendar",
+          icon: "uil-calendar-alt",
+          label: "Calendar",
+          badge: "New",
+        },
+        {
           href: "/dashboard/projects",
           icon: "uil-folder-open",
           label: "Projects",
@@ -159,12 +165,6 @@ export default function DashboardLayout({ children }) {
           href: "#",
           icon: "uil-palette",
           label: "Portfolio",
-          badge: "Soon",
-        },
-        {
-          href: "#",
-          icon: "uil-calendar-alt",
-          label: "Calendar",
           badge: "Soon",
         },
         { href: "#", icon: "uil-chart", label: "Reports", badge: "Soon" },
@@ -262,6 +262,8 @@ export default function DashboardLayout({ children }) {
                   <h1 className="page-title" id="page-title">
                     {pathname === "/dashboard"
                       ? "Dashboard"
+                      : pathname === "/dashboard/projects/calendar"
+                      ? "Projects Calendar"
                       : pathname === "/dashboard/projects"
                       ? "Projects"
                       : pathname === "/dashboard/clients"
@@ -271,6 +273,8 @@ export default function DashboardLayout({ children }) {
                   <p className="page-subtitle" id="page-subtitle">
                     {pathname === "/dashboard"
                       ? "Track your design projects 🚀"
+                      : pathname === "/dashboard/projects/calendar"
+                      ? "View project timelines by day, week, or month 📅"
                       : pathname === "/dashboard/projects"
                       ? "Manage all your projects 👨🏻‍💻"
                       : pathname === "/dashboard/clients"

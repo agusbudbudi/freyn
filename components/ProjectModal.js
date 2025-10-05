@@ -149,7 +149,7 @@ export default function ProjectModal({
         clientName: editProject.clientName || "",
         clientPhone: editProject.clientPhone || "",
         deadline: editProject.deadline
-          ? editProject.deadline.split("T")[0]
+          ? toDatetimeLocal(editProject.deadline)
           : "",
         brief: editProject.brief || "",
         price: editProject.price || 0,
@@ -260,6 +260,10 @@ export default function ProjectModal({
         return svc ? String(svc._id) : formData.serviceId;
       })();
 
+      const isoDeadline = formData.deadline
+        ? new Date(formData.deadline).toISOString()
+        : "";
+
       const payload = {
         ...formData,
         serviceId: normalizedServiceId,
@@ -267,6 +271,7 @@ export default function ProjectModal({
         quantity: qtyNum,
         discount: discNum,
         totalPrice: submitTotal,
+        deadline: isoDeadline,
       };
 
       const response = await fetch(url, {
@@ -294,6 +299,20 @@ export default function ProjectModal({
     } finally {
       setLoading(false);
     }
+  };
+
+  // Convert any Date/string to "YYYY-MM-DDTHH:mm" in local time for <input type="datetime-local">
+  const toDatetimeLocal = (value) => {
+    if (!value) return "";
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return "";
+    const pad = (n) => String(n).padStart(2, "0");
+    const year = d.getFullYear();
+    const month = pad(d.getMonth() + 1);
+    const day = pad(d.getDate());
+    const hours = pad(d.getHours());
+    const minutes = pad(d.getMinutes());
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
   const formatCurrency = (amount) => {
@@ -774,8 +793,9 @@ export default function ProjectModal({
                   <div className="form-group">
                     <label className="form-label">Due Date *</label>
                     <input
-                      type="date"
+                      type="datetime-local"
                       name="deadline"
+                      step="60"
                       className="form-control"
                       value={formData.deadline}
                       onChange={handleInputChange}

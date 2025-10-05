@@ -1,0 +1,320 @@
+/* ============================================
+   Calendar Styles (react-big-calendar overrides)
+   Uses theme variables from styles/theme.css
+   ============================================ */
+
+/* Loading spinner keyframes (used by calendar page) */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.rbc-label {
+  font-size: 12px;
+  padding: 0 12px;
+}
+
+/* Calendar container */
+.rbc-calendar {
+  /* background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary); */
+  border-radius: 12px;
+  position: relative;
+  padding: 0 20px 20px 20px;
+}
+
+/* Ensure toolbar is clickable and above grid */
+.rbc-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  background: var(--bg-secondary);
+  /* border-bottom: 1px solid var(--border-secondary); */
+  position: relative;
+  z-index: 2;
+  border-radius: 0;
+}
+
+.rbc-toolbar .rbc-toolbar-label {
+  flex: 1;
+  text-align: center;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 18px;
+}
+
+/* Toolbar buttons */
+.rbc-toolbar button {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-muted);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: 600;
+  line-height: 1;
+  box-shadow: none;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rbc-toolbar button:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-focus);
+  box-shadow: var(--focus-shadow);
+  transform: translateY(-1px);
+}
+
+.rbc-toolbar button:active,
+.rbc-toolbar button.rbc-active {
+  background: var(--accent-primary) !important;
+  color: #fff !important;
+  border-color: var(--accent-primary) !important;
+  box-shadow: var(--focus-shadow);
+  box-shadow: none;
+  transform: none;
+}
+
+/* Month/Week/Day switch buttons grouped */
+.rbc-btn-group {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.rbc-btn-group button {
+  border: 1px solid var(--border-muted);
+  border-radius: 8px !important;
+}
+
+.rbc-btn-group button + button {
+  margin-left: 0 !important;
+}
+
+/* Ensure all grouped buttons retain full radius (override library defaults) */
+.rbc-btn-group > button:first-child:not(:last-child),
+.rbc-btn-group > button:last-child:not(:first-child),
+.rbc-btn-group > button:not(:first-child):not(:last-child) {
+  border-radius: 8px !important;
+}
+
+/* Header row (days of week) */
+.rbc-header {
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 12px;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.rbc-header + .rbc-header {
+  border-left: 1px solid var(--border-secondary);
+}
+
+/* Month grid and time grid backgrounds */
+.rbc-month-view,
+.rbc-time-view {
+  border: 1px solid var(--border-secondary);
+}
+
+.rbc-month-row + .rbc-month-row {
+  border-top: 1px solid var(--border-secondary);
+}
+
+.rbc-row-bg .rbc-day-bg + .rbc-day-bg {
+  border-left: 1px solid var(--border-secondary);
+}
+
+/* Off range days (other months) */
+.rbc-off-range {
+  color: var(--text-light);
+}
+
+.rbc-off-range-bg {
+  background: var(--bg-primary);
+}
+
+/* Today highlighting */
+.rbc-today {
+  background-color: rgba(59, 130, 246, 0.08); /* accent-blue @ 8% */
+}
+
+/* Date numbers */
+.rbc-date-cell {
+  padding: 6px 8px;
+}
+
+.rbc-date-cell.rbc-now {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.rbc-date-cell > a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Events */
+.rbc-event,
+.rbc-day-slot .rbc-background-event {
+  border: none;
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+}
+
+.rbc-event {
+  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+  opacity: 0.95;
+}
+
+.rbc-event:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+  opacity: 1;
+}
+
+.rbc-event-content {
+  font-weight: 600;
+  font-size: 11px;
+}
+
+/* Custom event content layout (used by Custom event renderer) */
+.project-event-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+}
+
+.project-event-title {
+  font-weight: 600;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-event-time {
+  font-weight: 400; /* not bold */
+  font-size: 11px; /* same size as title */
+  white-space: nowrap;
+  margin-left: 8px;
+}
+
+/* Hide built-in left time label to avoid duplication; we render time on the right */
+.rbc-month-view .rbc-event-label,
+.rbc-time-view .rbc-event-label,
+.rbc-day-slot .rbc-event-label {
+  display: none !important;
+}
+
+/* All-day row spacing */
+.rbc-allday-cell,
+.rbc-allday-events {
+  background: var(--bg-secondary);
+}
+
+/* Show more link */
+.rbc-show-more {
+  color: var(--accent-primary);
+  font-weight: 600;
+  background: transparent;
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+
+.rbc-show-more:hover,
+.rbc-show-more:focus {
+  color: var(--accent-primary);
+  text-decoration: underline;
+}
+
+/* Agenda view tweaks */
+.rbc-agenda-view {
+  background: var(--bg-secondary);
+}
+
+.rbc-agenda-view table.rbc-agenda-table thead > tr > th {
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.rbc-agenda-view table.rbc-agenda-table tbody > tr + tr {
+  border-top: 1px solid var(--border-secondary);
+}
+
+/* Popup overlay for “show more” */
+.rbc-overlay {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  padding: 10px;
+}
+
+/* Improve affordance for project events (class added via eventPropGetter) */
+.project-event {
+  cursor: pointer;
+}
+
+/* Ensure main card body doesn't overlay toolbar */
+.content-card .card-body {
+  position: relative;
+}
+
+/* Buttons and links must accept pointer events */
+.rbc-toolbar button,
+.rbc-btn,
+.rbc-button-link {
+  pointer-events: auto;
+}
+
+/* Prevent label from intercepting clicks; ensure groups are above */
+.rbc-toolbar .rbc-toolbar-label {
+  pointer-events: none;
+}
+
+.rbc-toolbar .rbc-btn-group {
+  position: relative;
+  z-index: 3;
+}
+
+/* Mobile layout improvements */
+@media (max-width: 767px) {
+  .rbc-toolbar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap; /* allow wrapping to next line */
+    overflow: visible;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px 0;
+  }
+  .rbc-toolbar .rbc-toolbar-label {
+    order: 0; /* ensure label is first */
+    flex: 0 0 100%; /* take full width on first line */
+    text-align: center;
+    font-size: 18px;
+    white-space: nowrap;
+    margin-bottom: 20px;
+  }
+  .rbc-btn-group {
+    white-space: nowrap;
+    flex-shrink: 0;
+    order: 1; /* ensure groups appear after label on second line */
+  }
+  .rbc-toolbar button {
+    padding: 6px 10px;
+  }
+}

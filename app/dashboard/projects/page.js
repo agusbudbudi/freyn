@@ -236,10 +236,19 @@ export default function ProjectsPage() {
       <div className="content-card">
         <div className="card-header">
           <h2 className="card-title">All Projects</h2>
-          <button className="btn btn-primary" onClick={() => openModal()}>
-            <i className="uil uil-plus"></i>
-            Add Project
-          </button>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <Link
+              href="/dashboard/projects/calendar"
+              className="btn btn-outline"
+            >
+              <i className="uil uil-schedule"></i>
+              Calendar
+            </Link>
+            <button className="btn btn-primary" onClick={() => openModal()}>
+              <i className="uil uil-plus"></i>
+              Add Project
+            </button>
+          </div>
         </div>
 
         <div className="card-header-search">

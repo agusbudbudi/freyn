@@ -172,6 +172,7 @@
     z-index: 1001;
     margin: 0;
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+    border-radius: 0;
   }
 
   #project-form,
