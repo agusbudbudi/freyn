@@ -246,7 +246,7 @@ export default function ProjectsPage() {
             </Link>
             <button className="btn btn-primary" onClick={() => openModal()}>
               <i className="uil uil-plus"></i>
-              Add Project
+              Add
             </button>
           </div>
         </div>

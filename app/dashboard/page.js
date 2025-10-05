@@ -283,6 +283,70 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Shortcuts */}
+      <div className="card-header">
+        <div
+          className="card-title"
+          style={{ display: "flex", alignItems: "center", gap: "8px" }}
+        >
+          <span>⚡ Quick Actions</span>
+          <span className="badge-new" aria-label="New">
+            New
+          </span>
+        </div>
+      </div>
+      <div className="shortcut-grid">
+        <Link
+          href="/dashboard/projects"
+          className="shortcut-card highlight"
+          aria-label="Go to All Projects"
+        >
+          <span className="shortcut-icon icon-projects">
+            <i className="uil uil-folder-open"></i>
+          </span>
+          <div className="shortcut-content">
+            <div className="shortcut-title">All Projects</div>
+            <div className="shortcut-desc">Browse, and manage all projects</div>
+          </div>
+          <i className="uil uil-angle-right-b shortcut-arrow"></i>
+        </Link>
+
+        <Link
+          href="/dashboard/projects/calendar"
+          className="shortcut-card"
+          aria-label="Go to Calendar View"
+        >
+          <span className="shortcut-icon icon-calendar">
+            <i className="uil uil-schedule"></i>
+          </span>
+          <div className="shortcut-content">
+            <div className="shortcut-title">Calendar View</div>
+            <div className="shortcut-desc">
+              See upcoming deadlines in a calendar
+            </div>
+          </div>
+          <i className="uil uil-angle-right-b shortcut-arrow"></i>
+        </Link>
+
+        <Link
+          href="https://splitbill-alpha.vercel.app/invoice.html"
+          target="_blank"
+          className="shortcut-card highlight"
+          aria-label="Open Invoice Generator"
+        >
+          <span className="shortcut-icon title-icon--trophy">
+            <i className="uil uil-invoice"></i>
+          </span>
+          <div className="shortcut-content">
+            <div className="shortcut-title">Create Invoice</div>
+            <div className="shortcut-desc">
+              Make an invoice with SplitBill App
+            </div>
+          </div>
+          <i className="uil uil-angle-right-b shortcut-arrow"></i>
+        </Link>
+      </div>
+
       {/* Charts Grid */}
       <div
         style={{

@@ -183,9 +183,9 @@ export default function ProjectsCalendarPage() {
   return (
     <div className="content-body">
       <div className="content-card">
-        <div className="card-header">
+        {/* <div className="card-header">
           <h2 className="card-title">Projects Calendar</h2>
-        </div>
+        </div> */}
         <div className="card-body" style={{ height: "78vh" }}>
           {!loading && (
             <Calendar

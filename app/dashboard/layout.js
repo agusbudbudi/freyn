@@ -274,7 +274,7 @@ export default function DashboardLayout({ children }) {
                     {pathname === "/dashboard"
                       ? "Track your design projects 🚀"
                       : pathname === "/dashboard/projects/calendar"
-                      ? "View project timelines by day, week, or month 📅"
+                      ? "View by day, week, or month 📅"
                       : pathname === "/dashboard/projects"
                       ? "Manage all your projects 👨🏻‍💻"
                       : pathname === "/dashboard/clients"
