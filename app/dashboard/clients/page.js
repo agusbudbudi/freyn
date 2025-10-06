@@ -12,6 +12,16 @@ export default function ClientsPage() {
   const [editingClient, setEditingClient] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
+  const getAuthHeaders = () => {
+    if (typeof window === "undefined") return {};
+    const token = localStorage.getItem("token");
+    return token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : {};
+  };
+
   useEffect(() => {
     fetchClients();
   }, []);
@@ -19,7 +29,11 @@ export default function ClientsPage() {
   const fetchClients = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/clients");
+      const response = await fetch("/api/clients", {
+        headers: {
+          ...getAuthHeaders(),
+        },
+      });
       const data = await response.json();
 
       if (data.success) {
@@ -54,6 +68,9 @@ export default function ClientsPage() {
     try {
       const response = await fetch(`/api/clients/${client.clientId}`, {
         method: "DELETE",
+        headers: {
+          ...getAuthHeaders(),
+        },
       });
 
       const data = await response.json();

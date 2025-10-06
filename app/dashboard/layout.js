@@ -32,6 +32,7 @@ export default function DashboardLayout({ children }) {
     try {
       localStorage.removeItem("user");
       localStorage.removeItem("token");
+      localStorage.removeItem("workspace");
       document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
     } catch (e) {}
     setIsProfileMenuOpen(false);
@@ -67,8 +68,19 @@ export default function DashboardLayout({ children }) {
           if (!data?.success) {
             localStorage.removeItem("user");
             localStorage.removeItem("token");
+            localStorage.removeItem("workspace");
             router.replace("/login");
             return;
+          }
+          if (data?.data?.user) {
+            localStorage.setItem("user", JSON.stringify(data.data.user));
+            setCurrentUser(data.data.user);
+          }
+          if (data?.data?.workspace) {
+            localStorage.setItem(
+              "workspace",
+              JSON.stringify(data.data.workspace)
+            );
           }
         } catch (e) {
           // If verification endpoint fails, still allow based on local token
@@ -180,7 +192,12 @@ export default function DashboardLayout({ children }) {
         <div className="sidebar-header">
           <div className="logo sidebar-logo">
             <div className="logo-icon">
-              <i className="fas fa-palette"></i>
+              {/* <i className="fas fa-palette"></i> */}
+              <img
+                src="/images/logo-freyn.png"
+                alt="Logo"
+                className="logo-img"
+              />
             </div>
             <span>Freyn</span>
           </div>

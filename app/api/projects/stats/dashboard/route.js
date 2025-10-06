@@ -1,13 +1,24 @@
 import dbConnect from "@/lib/db";
 import Project from "@/models/Project";
-import { errorResponse, successResponse } from "@/lib/auth";
+import {
+  authenticateRequest,
+  errorResponse,
+  successResponse,
+} from "@/lib/auth";
 
 // GET /api/projects/stats/dashboard - Get dashboard statistics
 export async function GET(request) {
   try {
     await dbConnect();
 
-    const projects = await Project.find().sort({ createdAt: -1 });
+    const authUser = await authenticateRequest(request);
+    if (!authUser?.workspaceId) {
+      return errorResponse("Unauthorized", 401);
+    }
+
+    const projects = await Project.find({
+      workspaceId: authUser.workspaceId,
+    }).sort({ createdAt: -1 });
 
     // Basic stats
     const stats = {

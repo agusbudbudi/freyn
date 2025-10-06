@@ -1,6 +1,10 @@
 import dbConnect from "@/lib/db";
 import Service from "@/models/Service";
-import { errorResponse, successResponse } from "@/lib/auth";
+import {
+  authenticateRequest,
+  errorResponse,
+  successResponse,
+} from "@/lib/auth";
 
 // GET /api/services/[id] - Get a single service
 export async function GET(request, { params }) {
@@ -8,7 +12,15 @@ export async function GET(request, { params }) {
     await dbConnect();
 
     const { id } = params;
-    const service = await Service.findOne({ id });
+    const authUser = await authenticateRequest(request);
+    if (!authUser?.workspaceId) {
+      return errorResponse("Unauthorized", 401);
+    }
+
+    const service = await Service.findOne({
+      id,
+      workspaceId: authUser.workspaceId,
+    });
 
     if (!service) {
       return errorResponse("Service not found", 404);
@@ -27,17 +39,27 @@ export async function PUT(request, { params }) {
     await dbConnect();
 
     const { id } = params;
+    const authUser = await authenticateRequest(request);
+    if (!authUser?.workspaceId) {
+      return errorResponse("Unauthorized", 401);
+    }
+
     const serviceData = await request.json();
     // Do not allow changing primary identifier
     if ("id" in serviceData) {
       delete serviceData.id;
     }
     serviceData.updatedAt = new Date();
+    serviceData.workspaceId = authUser.workspaceId;
 
-    const updatedService = await Service.findOneAndUpdate({ id }, serviceData, {
-      new: true,
-      runValidators: true,
-    });
+    const updatedService = await Service.findOneAndUpdate(
+      { id, workspaceId: authUser.workspaceId },
+      serviceData,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
     if (!updatedService) {
       return errorResponse("Service not found", 404);
@@ -77,7 +99,15 @@ export async function DELETE(request, { params }) {
     await dbConnect();
 
     const { id } = params;
-    const deletedService = await Service.findOneAndDelete({ id });
+    const authUser = await authenticateRequest(request);
+    if (!authUser?.workspaceId) {
+      return errorResponse("Unauthorized", 401);
+    }
+
+    const deletedService = await Service.findOneAndDelete({
+      id,
+      workspaceId: authUser.workspaceId,
+    });
 
     if (!deletedService) {
       return errorResponse("Service not found", 404);

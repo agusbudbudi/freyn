@@ -1,6 +1,10 @@
 import dbConnect from "@/lib/db";
 import Client from "@/models/Client";
-import { errorResponse, successResponse } from "@/lib/auth";
+import {
+  authenticateRequest,
+  errorResponse,
+  successResponse,
+} from "@/lib/auth";
 
 // GET /api/clients/[id] - Get a single client
 export async function GET(request, { params }) {
@@ -8,7 +12,15 @@ export async function GET(request, { params }) {
     await dbConnect();
 
     const { id } = params;
-    const client = await Client.findOne({ clientId: id });
+    const authUser = await authenticateRequest(request);
+    if (!authUser?.workspaceId) {
+      return errorResponse("Unauthorized", 401);
+    }
+
+    const client = await Client.findOne({
+      clientId: id,
+      workspaceId: authUser.workspaceId,
+    });
 
     if (!client) {
       return errorResponse("Client not found", 404);
@@ -27,11 +39,17 @@ export async function PUT(request, { params }) {
     await dbConnect();
 
     const { id } = params;
+    const authUser = await authenticateRequest(request);
+    if (!authUser?.workspaceId) {
+      return errorResponse("Unauthorized", 401);
+    }
+
     const clientData = await request.json();
     clientData.updatedAt = new Date();
+    clientData.workspaceId = authUser.workspaceId;
 
     const updatedClient = await Client.findOneAndUpdate(
-      { clientId: id },
+      { clientId: id, workspaceId: authUser.workspaceId },
       clientData,
       {
         new: true,
@@ -77,7 +95,15 @@ export async function DELETE(request, { params }) {
     await dbConnect();
 
     const { id } = params;
-    const deletedClient = await Client.findOneAndDelete({ clientId: id });
+    const authUser = await authenticateRequest(request);
+    if (!authUser?.workspaceId) {
+      return errorResponse("Unauthorized", 401);
+    }
+
+    const deletedClient = await Client.findOneAndDelete({
+      clientId: id,
+      workspaceId: authUser.workspaceId,
+    });
 
     if (!deletedClient) {
       return errorResponse("Client not found", 404);

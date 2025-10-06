@@ -70,11 +70,25 @@ export default function ProjectsCalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState(Views.MONTH);
 
+  const getAuthHeaders = () => {
+    if (typeof window === "undefined") return {};
+    const token = localStorage.getItem("token");
+    return token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : {};
+  };
+
   const loadProjects = async (opts = {}) => {
     const silent = opts?.silent === true;
     try {
       if (!silent) setLoading(true);
-      const res = await fetch("/api/projects");
+      const res = await fetch("/api/projects", {
+        headers: {
+          ...getAuthHeaders(),
+        },
+      });
       const data = await res.json();
       if (data.success) {
         setProjects(data.data.projects || []);

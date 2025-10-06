@@ -1,5 +1,6 @@
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
+import Workspace from "@/models/Workspace";
 import {
   getTokenFromRequest,
   verifyToken,
@@ -28,13 +29,25 @@ export async function POST(request) {
       return errorResponse("User not found", 404);
     }
 
+    const workspace = await Workspace.findById(user.workspaceId);
+
     return successResponse(
       {
         user: {
           userId: user.userId,
           fullName: user.fullName,
           email: user.email,
+          workspaceId: user.workspaceId?.toString() || null,
         },
+        workspace: workspace
+          ? {
+              id: workspace._id.toString(),
+              name: workspace.name,
+              slug: workspace.slug,
+              plan: workspace.plan,
+              status: workspace.status,
+            }
+          : null,
       },
       "Token is valid"
     );

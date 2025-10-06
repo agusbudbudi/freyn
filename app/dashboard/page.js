@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { toast } from "@/components/ui/toast";
 import PieChart from "@/components/charts/PieChart";
+import DoughnutChart from "@/components/charts/DoughnutChart";
 import LineChart from "@/components/charts/LineChart";
 import BarChart from "@/components/charts/BarChart";
 import ProjectModal from "@/components/ProjectModal";
@@ -22,7 +23,19 @@ export default function DashboardPage() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/projects/stats/dashboard");
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      if (!token) {
+        setError("Authentication required");
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch("/api/projects/stats/dashboard", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const data = await response.json();
 
       if (data.success) {
@@ -40,7 +53,17 @@ export default function DashboardPage() {
 
   const handleProjectClick = async (project) => {
     try {
-      const res = await fetch(`/api/projects/${project.id}`);
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const headers = token
+        ? {
+            Authorization: `Bearer ${token}`,
+          }
+        : undefined;
+
+      const res = await fetch(`/api/projects/${project.id}`, {
+        headers,
+      });
       const data = await res.json();
       if (data.success && data.data?.project) {
         setSelectedProject(data.data.project);
@@ -186,6 +209,54 @@ export default function DashboardPage() {
             "#f59e0b",
           ],
           borderRadius: 8,
+        },
+      ],
+    };
+  };
+
+  const getTopClientsRevenueChartData = () => {
+    if (!dashboardData?.topClients) return null;
+
+    const hasRevenue = dashboardData.topClients.some((c) => c.revenue);
+    if (!hasRevenue) {
+      return null;
+    }
+
+    return {
+      labels: dashboardData.topClients.map((c) => c.name),
+      datasets: [
+        {
+          label: "Revenue (Rp)",
+          data: dashboardData.topClients.map((c) => c.revenue || 0),
+          backgroundColor: [
+            "#6366f1",
+            "#14b8a6",
+            "#f97316",
+            "#8b5cf6",
+            "#22d3ee",
+          ],
+          borderRadius: 8,
+        },
+      ],
+    };
+  };
+
+  const getRevenueSplitChartData = () => {
+    const ongoing = dashboardData?.stats?.ongoingRevenue || 0;
+    const completed = dashboardData?.stats?.completedRevenue || 0;
+
+    if (!ongoing && !completed) {
+      return null;
+    }
+
+    return {
+      labels: ["Ongoing Revenue", "Completed Revenue"],
+      datasets: [
+        {
+          data: [ongoing, completed],
+          backgroundColor: ["#06b6d4", "#10b981"],
+          borderColor: "#fff",
+          borderWidth: 2,
         },
       ],
     };
@@ -404,6 +475,133 @@ export default function DashboardPage() {
                         beginAtZero: true,
                         ticks: {
                           stepSize: 1,
+                        },
+                      },
+                    },
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Top Clients by Revenue */}
+        <div className="content-card">
+          <div className="card-header">
+            <div className="card-header-title">
+              <h3 className="card-title">
+                <span className="title-icon title-icon--wallet">
+                  <i className="uil uil-chart-growth"></i>
+                </span>
+                Top Clients by Revenue
+              </h3>
+              <p className="card-subtitle">
+                Lima klien dengan pendapatan terbesar.
+              </p>
+            </div>
+          </div>
+          <div className="card-body" style={{ padding: "24px" }}>
+            <div style={{ height: "200px" }}>
+              {getTopClientsRevenueChartData() && (
+                <BarChart
+                  data={getTopClientsRevenueChartData()}
+                  options={{
+                    scales: {
+                      y: {
+                        ticks: {
+                          callback: (value) =>
+                            "Rp " + Number(value).toLocaleString("id-ID"),
+                        },
+                      },
+                    },
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Revenue Split */}
+        <div className="content-card">
+          <div className="card-header">
+            <div className="card-header-title">
+              <h3 className="card-title">
+                <span className="title-icon title-icon--money">
+                  <i className="uil uil-money-withdraw"></i>
+                </span>
+                Revenue Breakdown
+              </h3>
+              <p className="card-subtitle">
+                Perbandingan pendapatan proyek selesai dan masih berjalan.
+              </p>
+            </div>
+          </div>
+          <div className="card-body" style={{ padding: "24px" }}>
+            <div style={{ height: "200px" }}>
+              {getRevenueSplitChartData() && (
+                <DoughnutChart
+                  data={getRevenueSplitChartData()}
+                  options={{
+                    plugins: {
+                      legend: {
+                        position: "bottom",
+                        labels: {
+                          usePointStyle: true,
+                          pointStyle: "circle",
+                          padding: 15,
+                          font: {
+                            size: 12,
+                            family: "'Poppins', sans-serif",
+                          },
+                          generateLabels: (chart) => {
+                            const data = chart?.data;
+                            const datasets = data?.datasets;
+                            if (!data?.labels?.length || !datasets?.length) {
+                              return [];
+                            }
+
+                            const dataset = datasets[0];
+                            const meta = chart.getDatasetMeta(0);
+                            return data.labels.map((label, index) => {
+                              const value = dataset.data?.[index] || 0;
+                              const style = meta.controller.getStyle(index);
+                              const backgroundColor = Array.isArray(
+                                dataset.backgroundColor
+                              )
+                                ? dataset.backgroundColor[index]
+                                : dataset.backgroundColor;
+                              const borderColor = Array.isArray(
+                                dataset.borderColor
+                              )
+                                ? dataset.borderColor[index]
+                                : style.borderColor;
+
+                              return {
+                                text: `${label} ${formatCurrency(value)}`,
+                                fillStyle: backgroundColor,
+                                strokeStyle: borderColor,
+                                lineWidth: style.borderWidth,
+                                hidden: !chart.getDataVisibility(index),
+                                index,
+                              };
+                            });
+                          },
+                        },
+                      },
+                      tooltip: {
+                        callbacks: {
+                          label: (context) => {
+                            const value = context.raw || 0;
+                            return (
+                              context.label +
+                              ": " +
+                              value.toLocaleString("id-ID", {
+                                style: "currency",
+                                currency: "IDR",
+                                minimumFractionDigits: 0,
+                              })
+                            );
+                          },
                         },
                       },
                     },

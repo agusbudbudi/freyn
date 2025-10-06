@@ -374,7 +374,21 @@ export default function ResultPage() {
 
       {/* Social Media Section */}
       <div className="social-section">
-        <h3 className="social-title">Gous Studio</h3>
+        <div
+          className="logo sidebar-logo"
+          style={{
+            marginBottom: "1rem",
+            justifyContent: "center",
+            color: "white",
+          }}
+        >
+          <div className="logo-icon">
+            {/* <i className="fas fa-palette"></i> */}
+            <img src="/images/logo-freyn.png" alt="Logo" className="logo-img" />
+          </div>
+          <h3 className="social-title">Freyn</h3>
+        </div>
+
         <div className="footer">Follow Us on Social Media</div>
         <div className="social-grid">
           <a href="mailto:agdesign.official@gmail.com" className="social-link">

@@ -1,6 +1,10 @@
 import dbConnect from "@/lib/db";
 import Project from "@/models/Project";
-import { errorResponse, successResponse } from "@/lib/auth";
+import {
+  authenticateRequest,
+  errorResponse,
+  successResponse,
+} from "@/lib/auth";
 
 // GET /api/projects/[id] - Get a single project
 export async function GET(request, { params }) {
@@ -8,7 +12,14 @@ export async function GET(request, { params }) {
     await dbConnect();
 
     const { id } = params;
-    const project = await Project.findOne({ _id: id });
+    const authUser = await authenticateRequest(request);
+
+    const filter = { _id: id };
+    if (authUser?.workspaceId) {
+      filter.workspaceId = authUser.workspaceId;
+    }
+
+    const project = await Project.findOne(filter);
 
     if (!project) {
       return errorResponse("Project not found", 404);
@@ -27,11 +38,17 @@ export async function PUT(request, { params }) {
     await dbConnect();
 
     const { id } = params;
+    const authUser = await authenticateRequest(request);
+    if (!authUser?.workspaceId) {
+      return errorResponse("Unauthorized", 401);
+    }
+
     const projectData = await request.json();
     projectData.updatedAt = new Date();
+    projectData.workspaceId = authUser.workspaceId;
 
     const updatedProject = await Project.findOneAndUpdate(
-      { _id: id },
+      { _id: id, workspaceId: authUser.workspaceId },
       projectData,
       {
         new: true,
@@ -77,7 +94,15 @@ export async function DELETE(request, { params }) {
     await dbConnect();
 
     const { id } = params;
-    const deletedProject = await Project.findOneAndDelete({ _id: id });
+    const authUser = await authenticateRequest(request);
+    if (!authUser?.workspaceId) {
+      return errorResponse("Unauthorized", 401);
+    }
+
+    const deletedProject = await Project.findOneAndDelete({
+      _id: id,
+      workspaceId: authUser.workspaceId,
+    });
 
     if (!deletedProject) {
       return errorResponse("Project not found", 404);
