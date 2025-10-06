@@ -24,6 +24,16 @@ export default function ClientModal({
   const [closing, setClosing] = useState(false);
   const closeTimerRef = useRef(null);
 
+  const getAuthHeaders = () => {
+    if (typeof window === "undefined") return {};
+    const token = localStorage.getItem("token");
+    return token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : {};
+  };
+
   useEffect(() => {
     if (editClient) {
       setFormData({
@@ -85,6 +95,7 @@ export default function ClientModal({
         method,
         headers: {
           "Content-Type": "application/json",
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(formData),
       });

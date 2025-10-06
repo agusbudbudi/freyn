@@ -29,6 +29,16 @@ export default function ServiceModal({
   const [closing, setClosing] = useState(false);
   const closeTimerRef = useRef(null);
 
+  const getAuthHeaders = () => {
+    if (typeof window === "undefined") return {};
+    const token = localStorage.getItem("token");
+    return token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : {};
+  };
+
   useEffect(() => {
     if (editService) {
       const isUnlimited =
@@ -124,6 +134,7 @@ export default function ServiceModal({
         method,
         headers: {
           "Content-Type": "application/json",
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(submitData),
       });

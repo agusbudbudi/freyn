@@ -13,6 +13,16 @@ export default function ProjectsPage() {
   const [editingProject, setEditingProject] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
+  const getAuthHeaders = () => {
+    if (typeof window === "undefined") return {};
+    const token = localStorage.getItem("token");
+    return token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : {};
+  };
+
   // Fetch projects from API
   useEffect(() => {
     fetchProjects();
@@ -21,7 +31,11 @@ export default function ProjectsPage() {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/projects");
+      const response = await fetch("/api/projects", {
+        headers: {
+          ...getAuthHeaders(),
+        },
+      });
       const data = await response.json();
 
       if (data.success) {
@@ -130,6 +144,9 @@ export default function ProjectsPage() {
     try {
       const response = await fetch(`/api/projects/${projectId}`, {
         method: "DELETE",
+        headers: {
+          ...getAuthHeaders(),
+        },
       });
 
       const data = await response.json();

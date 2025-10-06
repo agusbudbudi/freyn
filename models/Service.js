@@ -1,6 +1,12 @@
 const mongoose = require("mongoose");
 
 const serviceSchema = new mongoose.Schema({
+  workspaceId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Workspace",
+    required: true,
+    index: true,
+  },
   id: {
     type: String,
     required: true,

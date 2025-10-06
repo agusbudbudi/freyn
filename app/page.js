@@ -110,7 +110,11 @@ export default function HomePage() {
         <nav className="nav-container">
           <div className="logo">
             <div className="logo-icon">
-              <i className="fas fa-palette"></i>
+              <img
+                src="/images/logo-freyn.png"
+                alt="Logo"
+                className="logo-img"
+              />
             </div>
             <span>Freyn</span>
           </div>
@@ -573,7 +577,11 @@ export default function HomePage() {
         <div className="footer-bottom">
           <div className="footer-logo">
             <div className="logo-icon">
-              <i className="fas fa-palette"></i>
+              <img
+                src="/images/logo-freyn.png"
+                alt="Freyn Logo"
+                className="logo-image"
+              />
             </div>
             <span>Freyn</span>
           </div>

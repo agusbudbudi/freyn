@@ -31,16 +31,18 @@
 .logo {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 5px;
   /* margin-bottom: 24px; */
 }
 
 .logo-icon {
   color: white;
+  width: 28px;
+  height: 28px;
 }
 
 .logo-text {
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 800;
   background: linear-gradient(135deg, #667eea, #764ba2);
   -webkit-background-clip: text;

@@ -29,7 +29,7 @@
 .logo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 5px;
   font-size: 26px;
   font-weight: 700;
   color: var(--sidebar-text);
@@ -39,12 +39,7 @@
 .logo-icon {
   width: 32px;
   height: 32px;
-  background: var(--logo-gradient);
-  border-radius: 50%;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
 }
 
 .sidebar-logo {
@@ -315,6 +310,14 @@
 
 .title-icon--schedule {
   background: linear-gradient(135deg, #10b981, #3b82f6);
+}
+
+.title-icon--wallet {
+  background: linear-gradient(135deg, #22d3ee, #0ea5e9);
+}
+
+.title-icon--money {
+  background: linear-gradient(135deg, #a855f7, #f97316);
 }
 
 .card-body {

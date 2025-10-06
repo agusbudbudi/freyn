@@ -40,7 +40,17 @@ export default function ProjectModal({
   const [closing, setClosing] = useState(false);
   const closeTimerRef = useRef(null);
 
-  // Generate unique project number (frontend generation like original)
+  const getAuthHeaders = () => {
+    if (typeof window === "undefined") return {};
+    const token = localStorage.getItem("token");
+    return token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : {};
+  };
+
+  // Generate unique project number using random suffix to avoid cross-workspace collisions
   const generateProjectNumber = () => {
     const now = new Date();
     const day = String(now.getDate()).padStart(2, "0");
@@ -48,19 +58,21 @@ export default function ProjectModal({
     const year = String(now.getFullYear()).slice(-2);
     const dateStr = `${day}${month}${year}`;
 
-    // Find highest increment for today
-    const todayProjects = projects.filter((p) =>
-      p.numberOrder?.includes(dateStr)
+    const existingNumbers = new Set(
+      (projects || []).map((p) => p.numberOrder).filter(Boolean)
     );
-    const maxIncrement =
-      todayProjects.length > 0
-        ? Math.max(
-            ...todayProjects.map((p) => parseInt(p.numberOrder.split("-")[2]))
-          )
-        : 0;
 
-    const increment = String(maxIncrement + 1).padStart(3, "0");
-    return `FM-${dateStr}-${increment}`;
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const randomSuffix = Math.floor(Math.random() * 90000) + 10000; // 10000-99999
+      const candidate = `FM-${dateStr}-${randomSuffix}`;
+      if (!existingNumbers.has(candidate)) {
+        return candidate;
+      }
+    }
+
+    // Fallback: use timestamp-based suffix if random attempts fail
+    const fallbackSuffix = String(Date.now()).slice(-5).padStart(5, "0");
+    return `FM-${dateStr}-${fallbackSuffix}`;
   };
 
   // Fetch clients and projects for dropdown
@@ -104,7 +116,11 @@ export default function ProjectModal({
 
   const fetchClients = async () => {
     try {
-      const response = await fetch("/api/clients");
+      const response = await fetch("/api/clients", {
+        headers: {
+          ...getAuthHeaders(),
+        },
+      });
       const data = await response.json();
       if (data.success) {
         setClients(data.data.clients);
@@ -116,7 +132,11 @@ export default function ProjectModal({
 
   const fetchServices = async () => {
     try {
-      const response = await fetch("/api/services");
+      const response = await fetch("/api/services", {
+        headers: {
+          ...getAuthHeaders(),
+        },
+      });
       const data = await response.json();
       if (data.success) {
         setServices(
@@ -130,7 +150,11 @@ export default function ProjectModal({
 
   const fetchProjects = async () => {
     try {
-      const response = await fetch("/api/projects");
+      const response = await fetch("/api/projects", {
+        headers: {
+          ...getAuthHeaders(),
+        },
+      });
       const data = await response.json();
       if (data.success) {
         setProjects(data.data.projects);
@@ -278,6 +302,7 @@ export default function ProjectModal({
         method,
         headers: {
           "Content-Type": "application/json",
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(payload),
       });
@@ -405,7 +430,10 @@ export default function ProjectModal({
         `/api/projects/${editProject._id}/comments`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders(),
+          },
           body: JSON.stringify(commentData),
         }
       );

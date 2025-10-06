@@ -1,5 +1,6 @@
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
+import Workspace from "@/models/Workspace";
 import {
   generateToken,
   generateUniqueUserId,
@@ -63,8 +64,36 @@ export async function POST(request) {
 
     await user.save();
 
+    // Create workspace for the user
+    const workspaceName = `${fullName.trim()}'s Workspace`;
+    const workspaceSlug = `workspace-${user.userId.toLowerCase()}`;
+
+    let workspace;
+    try {
+      workspace = await Workspace.create({
+        name: workspaceName,
+        owner: user._id,
+        slug: workspaceSlug,
+      });
+    } catch (workspaceError) {
+      console.error("Workspace creation error:", workspaceError);
+      await User.findByIdAndDelete(user._id);
+      return errorResponse(
+        "Failed to initialize workspace. Please try registering again.",
+        500
+      );
+    }
+
+    // Link workspace to user
+    await User.findByIdAndUpdate(user._id, {
+      workspaceId: workspace._id,
+    });
+
     // Generate JWT token
-    const token = generateToken(user._id.toString());
+    const token = generateToken({
+      userId: user._id.toString(),
+      workspaceId: workspace._id.toString(),
+    });
 
     return successResponse(
       {
@@ -73,6 +102,13 @@ export async function POST(request) {
           fullName: user.fullName,
           email: user.email,
           createdAt: user.createdAt,
+          workspaceId: workspace._id.toString(),
+        },
+        workspace: {
+          id: workspace._id.toString(),
+          name: workspace.name,
+          slug: workspace.slug,
+          plan: workspace.plan,
         },
         token,
       },

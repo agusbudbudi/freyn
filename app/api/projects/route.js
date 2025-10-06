@@ -1,13 +1,45 @@
 import dbConnect from "@/lib/db";
 import Project from "@/models/Project";
-import { errorResponse, successResponse } from "@/lib/auth";
+import {
+  authenticateRequest,
+  errorResponse,
+  successResponse,
+} from "@/lib/auth";
+
+async function generateUniqueNumberOrder() {
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const year = String(now.getFullYear()).slice(-2);
+  const dateStr = `${day}${month}${year}`;
+
+  for (let attempt = 0; attempt < 25; attempt++) {
+    const randomSuffix = Math.floor(Math.random() * 90000) + 10000; // 10000-99999
+    const candidate = `FM-${dateStr}-${randomSuffix}`;
+    const exists = await Project.exists({ numberOrder: candidate });
+    if (!exists) {
+      return candidate;
+    }
+  }
+
+  // As a last resort, append timestamp segment to guarantee uniqueness
+  const fallbackSuffix = String(Date.now()).slice(-5).padStart(5, "0");
+  return `FM-${dateStr}-${fallbackSuffix}`;
+}
 
 // GET /api/projects - Get all projects
 export async function GET(request) {
   try {
     await dbConnect();
 
-    const projects = await Project.find().sort({ createdAt: -1 });
+    const authUser = await authenticateRequest(request);
+    if (!authUser?.workspaceId) {
+      return errorResponse("Unauthorized", 401);
+    }
+
+    const projects = await Project.find({
+      workspaceId: authUser.workspaceId,
+    }).sort({ createdAt: -1 });
 
     return successResponse({ projects }, "Projects fetched successfully");
   } catch (error) {
@@ -21,7 +53,14 @@ export async function POST(request) {
   try {
     await dbConnect();
 
+    const authUser = await authenticateRequest(request);
+    if (!authUser?.workspaceId) {
+      return errorResponse("Unauthorized", 401);
+    }
+
     const projectData = await request.json();
+
+    projectData.workspaceId = authUser.workspaceId;
 
     // Normalize numeric fields to numbers (allow 0 as valid)
     if (projectData.price !== undefined) {
@@ -57,6 +96,17 @@ export async function POST(request) {
     const totalPrice = projectData.totalPrice;
     if (!Number.isFinite(totalPrice) || totalPrice < 0) {
       return errorResponse("Valid total price is required", 400);
+    }
+
+    if (!projectData.numberOrder) {
+      projectData.numberOrder = await generateUniqueNumberOrder();
+    } else {
+      const existingNumberOrder = await Project.exists({
+        numberOrder: projectData.numberOrder,
+      });
+      if (existingNumberOrder) {
+        projectData.numberOrder = await generateUniqueNumberOrder();
+      }
     }
 
     const project = new Project(projectData);

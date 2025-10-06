@@ -1,13 +1,24 @@
 import dbConnect from "@/lib/db";
 import Client from "@/models/Client";
-import { errorResponse, successResponse } from "@/lib/auth";
+import {
+  authenticateRequest,
+  errorResponse,
+  successResponse,
+} from "@/lib/auth";
 
 // GET /api/clients - Get all clients
 export async function GET(request) {
   try {
     await dbConnect();
 
-    const clients = await Client.find().sort({ createdAt: -1 });
+    const authUser = await authenticateRequest(request);
+    if (!authUser?.workspaceId) {
+      return errorResponse("Unauthorized", 401);
+    }
+
+    const clients = await Client.find({
+      workspaceId: authUser.workspaceId,
+    }).sort({ createdAt: -1 });
 
     return successResponse({ clients }, "Clients fetched successfully");
   } catch (error) {
@@ -21,7 +32,14 @@ export async function POST(request) {
   try {
     await dbConnect();
 
+    const authUser = await authenticateRequest(request);
+    if (!authUser?.workspaceId) {
+      return errorResponse("Unauthorized", 401);
+    }
+
     const clientData = await request.json();
+
+    clientData.workspaceId = authUser.workspaceId;
 
     // Generate unique ID and clientId if not provided
     if (!clientData.id || !clientData.clientId) {

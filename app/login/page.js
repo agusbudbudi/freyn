@@ -140,6 +140,12 @@ export default function LoginPage() {
       if (data.success) {
         localStorage.setItem("user", JSON.stringify(data.data.user));
         localStorage.setItem("token", data.data.token);
+        if (data.data.workspace) {
+          localStorage.setItem(
+            "workspace",
+            JSON.stringify(data.data.workspace)
+          );
+        }
         toast.success("Login successful! Redirecting...");
         setAlert({
           show: true,
@@ -290,7 +296,11 @@ export default function LoginPage() {
           <div className="auth-panel-inner">
             <div className="hero-brand logo">
               <div className="logo-icon">
-                <i className="fas fa-palette"></i>
+                <img
+                  src="/images/logo-freyn.png"
+                  alt="Freyn logo"
+                  className="logo-img"
+                />
               </div>
               <span className="logo-text">Freyn</span>
             </div>

@@ -1,5 +1,6 @@
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
+import Workspace from "@/models/Workspace";
 import {
   generateToken,
   isValidEmail,
@@ -36,8 +37,36 @@ export async function POST(request) {
       return errorResponse("Invalid email or password", 401);
     }
 
+    // Ensure workspace exists
+    let workspace = null;
+    if (user.workspaceId) {
+      workspace = await Workspace.findById(user.workspaceId);
+    }
+
+    if (!workspace) {
+      workspace = await Workspace.findOne({ owner: user._id });
+    }
+
+    if (!workspace) {
+      workspace = await Workspace.create({
+        name: `${user.fullName}'s Workspace`,
+        owner: user._id,
+        slug: `workspace-${user.userId.toLowerCase()}`,
+      });
+      await User.findByIdAndUpdate(user._id, {
+        workspaceId: workspace._id,
+      });
+    } else if (!user.workspaceId) {
+      await User.findByIdAndUpdate(user._id, {
+        workspaceId: workspace._id,
+      });
+    }
+
     // Generate JWT token
-    const token = generateToken(user._id.toString());
+    const token = generateToken({
+      userId: user._id.toString(),
+      workspaceId: workspace._id.toString(),
+    });
 
     return successResponse(
       {
@@ -46,6 +75,13 @@ export async function POST(request) {
           fullName: user.fullName,
           email: user.email,
           createdAt: user.createdAt,
+          workspaceId: workspace._id.toString(),
+        },
+        workspace: {
+          id: workspace._id.toString(),
+          name: workspace.name,
+          slug: workspace.slug,
+          plan: workspace.plan,
         },
         token,
       },

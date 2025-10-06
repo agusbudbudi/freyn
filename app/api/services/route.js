@@ -1,13 +1,24 @@
 import dbConnect from "@/lib/db";
 import Service from "@/models/Service";
-import { errorResponse, successResponse } from "@/lib/auth";
+import {
+  authenticateRequest,
+  errorResponse,
+  successResponse,
+} from "@/lib/auth";
 
 // GET /api/services - Get all services
 export async function GET(request) {
   try {
     await dbConnect();
 
-    const services = await Service.find().sort({ createdAt: -1 });
+    const authUser = await authenticateRequest(request);
+    if (!authUser?.workspaceId) {
+      return errorResponse("Unauthorized", 401);
+    }
+
+    const services = await Service.find({
+      workspaceId: authUser.workspaceId,
+    }).sort({ createdAt: -1 });
 
     return successResponse({ services }, "Services fetched successfully");
   } catch (error) {
@@ -21,12 +32,19 @@ export async function POST(request) {
   try {
     await dbConnect();
 
+    const authUser = await authenticateRequest(request);
+    if (!authUser?.workspaceId) {
+      return errorResponse("Unauthorized", 401);
+    }
+
     const serviceData = await request.json();
 
     // Ignore client-supplied id; model hook will generate 'S' + 5 digits
     if ("id" in serviceData) {
       delete serviceData.id;
     }
+
+    serviceData.workspaceId = authUser.workspaceId;
 
     // Validate required fields
     if (!serviceData.serviceName) {

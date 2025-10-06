@@ -12,6 +12,16 @@ export default function ServicesPage() {
   const [editingService, setEditingService] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
+  const getAuthHeaders = () => {
+    if (typeof window === "undefined") return {};
+    const token = localStorage.getItem("token");
+    return token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : {};
+  };
+
   useEffect(() => {
     fetchServices();
   }, []);
@@ -19,7 +29,11 @@ export default function ServicesPage() {
   const fetchServices = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/services");
+      const response = await fetch("/api/services", {
+        headers: {
+          ...getAuthHeaders(),
+        },
+      });
       const data = await response.json();
 
       if (data.success) {
@@ -54,6 +68,9 @@ export default function ServicesPage() {
     try {
       const response = await fetch(`/api/services/${service.id}`, {
         method: "DELETE",
+        headers: {
+          ...getAuthHeaders(),
+        },
       });
 
       const data = await response.json();
