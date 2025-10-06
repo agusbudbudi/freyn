@@ -59,7 +59,7 @@ export default function DashboardPage() {
     setSelectedProject(null);
   };
 
-  const handleSaveProject = (updatedProject, meta) => {
+  const handleSaveProject = async (updatedProject, meta) => {
     // If comment was added from modal, refresh only the comment list in the modal
     if (meta?.source === "comment") {
       if (updatedProject) {
@@ -67,11 +67,10 @@ export default function DashboardPage() {
       }
       return; // avoid full dashboard refetch
     }
-    // For other saves (create/update project fields), refresh dashboard data
-    fetchDashboardData();
-    if (updatedProject) {
-      setSelectedProject(updatedProject);
-    }
+    // Close modal immediately on successful save, then refresh dashboard data
+    setIsProjectModalOpen(false);
+    setSelectedProject(null);
+    await fetchDashboardData();
   };
 
   const formatCurrency = (amount) => {

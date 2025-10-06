@@ -1069,7 +1069,7 @@
 }
 
 .chart-placeholder {
-  height: 270px;
+  /* height: 270px; */
   /* background: linear-gradient(
     135deg,
     rgba(102, 126, 234, 0.1) 0%,
