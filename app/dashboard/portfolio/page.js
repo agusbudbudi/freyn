@@ -153,7 +153,20 @@ export default function PortfolioPage() {
                     </button>
                   )}
                   <div className="portfolio-content">
-                    <h3 className="portfolio-title">{item.title}</h3>
+                    <div className="portfolio-title-row">
+                      <h3 className="portfolio-title">{item.title}</h3>
+                      {item.slug && (
+                        <a
+                          href={`/portfolio/${item.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="portfolio-see-button"
+                        >
+                          See Portfolio
+                          <i className="uil uil-external-link-alt"></i>
+                        </a>
+                      )}
+                    </div>
                     {item.slug && (
                       <div className="text-sm" style={{ marginTop: "4px" }}>
                         Public URL slug:{" "}
@@ -297,6 +310,39 @@ export default function PortfolioPage() {
           font-size: 18px;
           font-weight: 600;
           color: var(--text-primary);
+          flex: 1;
+          min-width: 0;
+        }
+        .portfolio-title-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+        .portfolio-see-button {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          border: 1px solid var(--border-secondary);
+          background: transparent;
+          color: var(--text-primary);
+          border-radius: 10px;
+          padding: 6px 12px;
+          font-size: 13px;
+          font-weight: 500;
+          text-decoration: none;
+          transition: background 0.2s ease, color 0.2s ease,
+            border-color 0.2s ease;
+          flex-shrink: 0;
+        }
+        .portfolio-see-button:hover {
+          background: var(--bg-tertiary);
+          border-color: var(--border-primary);
+        }
+        .portfolio-see-button:focus-visible {
+          outline: 2px solid var(--border-primary);
+          outline-offset: 2px;
         }
         .portfolio-description {
           margin: 0;
