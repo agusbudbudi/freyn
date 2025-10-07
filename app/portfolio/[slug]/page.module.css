@@ -15,7 +15,7 @@
 
 .coverImage {
   width: 100%;
-  height: clamp(220px, 40vw, 320px);
+  height: clamp(180px, 40vw, 300px);
   border-radius: 24px;
   object-fit: cover;
 }
@@ -154,18 +154,18 @@
 .portfolioSection {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .portfolioTitle {
-  font-size: clamp(26px, 4vw, 34px);
+  font-size: clamp(20px, 4vw, 28px);
   font-weight: 600;
   color: #1e293b;
 }
 
 .description {
   color: #334155;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1.75;
   display: flex;
   flex-direction: column;
@@ -391,8 +391,8 @@
   }
 
   .avatarWrapper {
-    width: 128px;
-    height: 128px;
+    width: 100px;
+    height: 100px;
     bottom: -64px;
   }
 
