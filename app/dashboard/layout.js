@@ -165,6 +165,22 @@ export default function DashboardLayout({ children }) {
       ],
     },
     {
+      section: "Settings",
+      items: [
+        {
+          href: "/dashboard/workspace",
+          icon: "uil-window",
+          label: "Workspace",
+        },
+        {
+          href: "/dashboard/portfolio",
+          icon: "uil-palette",
+          label: "Portfolio",
+          badge: "New",
+        },
+      ],
+    },
+    {
       section: "Tools",
       items: [
         {
@@ -173,17 +189,44 @@ export default function DashboardLayout({ children }) {
           label: "Invoice Split Bill",
           external: true,
         },
-        {
-          href: "#",
-          icon: "uil-palette",
-          label: "Portfolio",
-          badge: "Soon",
-        },
         { href: "#", icon: "uil-chart", label: "Reports", badge: "Soon" },
-        { href: "#", icon: "uil-setting", label: "Settings", badge: "Soon" },
       ],
     },
   ];
+
+  const pageMetadata = {
+    "/dashboard": {
+      title: "Dashboard",
+      subtitle: "Track your design projects 🚀",
+    },
+    "/dashboard/projects/calendar": {
+      title: "Projects Calendar",
+      subtitle: "View by day, week, or month 📅",
+    },
+    "/dashboard/projects": {
+      title: "Projects",
+      subtitle: "Manage all your projects 👨🏻‍💻",
+    },
+    "/dashboard/clients": {
+      title: "Clients",
+      subtitle: "Manage your clients 👥",
+    },
+    "/dashboard/services": {
+      title: "Services",
+      subtitle: "Manage your services 💼",
+    },
+    "/dashboard/workspace": {
+      title: "Workspace",
+      subtitle: "Manage your workspace details 🛠️",
+    },
+    "/dashboard/portfolio": {
+      title: "Portfolio",
+      subtitle: "Build and publish your public portfolio ✨",
+    },
+  };
+
+  const currentPageMeta =
+    pageMetadata[pathname] || pageMetadata["/dashboard/services"];
 
   return (
     <div className="app-container">
@@ -277,26 +320,10 @@ export default function DashboardLayout({ children }) {
                 </button>
                 <div>
                   <h1 className="page-title" id="page-title">
-                    {pathname === "/dashboard"
-                      ? "Dashboard"
-                      : pathname === "/dashboard/projects/calendar"
-                      ? "Projects Calendar"
-                      : pathname === "/dashboard/projects"
-                      ? "Projects"
-                      : pathname === "/dashboard/clients"
-                      ? "Clients"
-                      : "Services"}
+                    {currentPageMeta.title}
                   </h1>
                   <p className="page-subtitle" id="page-subtitle">
-                    {pathname === "/dashboard"
-                      ? "Track your design projects 🚀"
-                      : pathname === "/dashboard/projects/calendar"
-                      ? "View by day, week, or month 📅"
-                      : pathname === "/dashboard/projects"
-                      ? "Manage all your projects 👨🏻‍💻"
-                      : pathname === "/dashboard/clients"
-                      ? "Manage your clients 👥"
-                      : "Manage your services 💼"}
+                    {currentPageMeta.subtitle}
                   </p>
                 </div>
               </div>
