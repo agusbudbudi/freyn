@@ -98,7 +98,7 @@ select.form-control {
 }
 
 .btn-secondary {
-  background: var(--bg-tertiary);
+  background: var(--bg-secondary);
   color: var(--text-muted);
   border: 1px solid var(--border-primary);
 }
@@ -111,6 +111,10 @@ select.form-control {
   background: transparent;
   color: var(--accent-primary);
   border: 1px solid var(--accent-primary);
+}
+
+.btn-outline:hover {
+  background: var(--bg-hover);
 }
 
 .btn-share {

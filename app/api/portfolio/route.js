@@ -19,6 +19,8 @@ function toPortfolioResponse(portfolio, workspace, owner) {
     return null;
   }
 
+  const socials = portfolio.socials || {};
+
   return {
     id: portfolio._id.toString(),
     workspaceId: portfolio.workspaceId.toString(),
@@ -31,9 +33,82 @@ function toPortfolioResponse(portfolio, workspace, owner) {
       url: link.url,
       icon: link.icon || "",
     })),
+    socials: {
+      email: socials.email || "",
+      whatsapp: socials.whatsapp || "",
+      youtube: socials.youtube || "",
+      instagram: socials.instagram || "",
+      tiktok: socials.tiktok || "",
+      linkedin: socials.linkedin || "",
+      facebook: socials.facebook || "",
+      x: socials.x || "",
+      threads: socials.threads || "",
+    },
     workspaceName: workspace?.name || "",
     ownerName: owner?.fullName || "",
   };
+}
+
+function sanitizeSocials(rawSocials) {
+  if (!rawSocials || typeof rawSocials !== "object") {
+    return {};
+  }
+
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const phonePattern = /^\+?[0-9()\s-]{5,}$/;
+  const urlKeys = [
+    "youtube",
+    "instagram",
+    "tiktok",
+    "linkedin",
+    "facebook",
+    "x",
+    "threads",
+  ];
+
+  const sanitized = {};
+
+  if (rawSocials.email && rawSocials.email.trim()) {
+    const email = rawSocials.email.trim();
+    if (!emailPattern.test(email)) {
+      throw new Error("Please enter a valid email address");
+    }
+    sanitized.email = email.toLowerCase();
+  }
+
+  if (rawSocials.whatsapp && rawSocials.whatsapp.trim()) {
+    const whatsapp = rawSocials.whatsapp.trim();
+    if (phonePattern.test(whatsapp)) {
+      sanitized.whatsapp = whatsapp;
+    } else {
+      try {
+        const parsed = new URL(whatsapp);
+        if (!parsed.protocol.startsWith("http")) {
+          throw new Error("Invalid WhatsApp URL");
+        }
+        sanitized.whatsapp = whatsapp;
+      } catch (error) {
+        throw new Error("Please enter a valid WhatsApp number or URL");
+      }
+    }
+  }
+
+  for (const key of urlKeys) {
+    const value = rawSocials[key];
+    if (!value || !value.trim()) continue;
+    const trimmed = value.trim();
+    try {
+      const parsed = new URL(trimmed);
+      if (!parsed.protocol.startsWith("http")) {
+        throw new Error("Invalid protocol");
+      }
+    } catch (error) {
+      throw new Error("Please enter valid URLs for your social media profiles");
+    }
+    sanitized[key] = trimmed;
+  }
+
+  return sanitized;
 }
 
 export async function GET(request) {
@@ -82,6 +157,9 @@ export async function PUT(request) {
     const coverImage = body?.coverImage || "";
     const slug = normalizeSlug(body?.slug || "");
     const links = Array.isArray(body?.links) ? body.links : [];
+    const socials = body?.socials && typeof body.socials === "object"
+      ? body.socials
+      : {};
 
     if (!title) {
       return errorResponse("Portfolio title is required", 400);
@@ -141,6 +219,8 @@ export async function PUT(request) {
         };
       });
 
+    const sanitizedSocials = sanitizeSocials(socials);
+
     let portfolio = await Portfolio.findOne({
       workspaceId: authUser.workspaceId,
     });
@@ -153,6 +233,7 @@ export async function PUT(request) {
         coverImage,
         slug,
         links: sanitizedLinks,
+        socials: sanitizedSocials,
       });
     } else {
       portfolio.title = title;
@@ -160,6 +241,7 @@ export async function PUT(request) {
       portfolio.coverImage = coverImage;
       portfolio.slug = slug;
       portfolio.links = sanitizedLinks;
+      portfolio.socials = sanitizedSocials;
       await portfolio.save();
     }
 
@@ -178,6 +260,10 @@ export async function PUT(request) {
     console.error("Error saving portfolio:", error);
 
     if (error.message?.includes("Each link")) {
+      return errorResponse(error.message, 400);
+    }
+
+    if (error.message?.startsWith("Please enter")) {
       return errorResponse(error.message, 400);
     }
 

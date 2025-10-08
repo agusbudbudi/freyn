@@ -47,6 +47,64 @@ const DESCRIPTION_SANITIZE_OPTIONS = {
 
 const FREYN_LANDING_URL = "https://freyn.vercel.app";
 
+const SOCIAL_CONFIG = [
+  {
+    key: "email",
+    icon: "uil uil-envelope",
+    label: "Email",
+    buildHref: (value) =>
+      value.startsWith("mailto:") ? value : `mailto:${value.trim()}`,
+  },
+  {
+    key: "whatsapp",
+    icon: "uil uil-whatsapp",
+    label: "WhatsApp",
+    buildHref: (value) => {
+      const trimmed = value.trim();
+      if (/^https?:/i.test(trimmed)) {
+        return trimmed;
+      }
+      const digits = trimmed.replace(/[^0-9+]/g, "");
+      return digits ? `https://wa.me/${digits.replace(/^[+]/, "")}` : null;
+    },
+  },
+  {
+    key: "youtube",
+    icon: "uil uil-youtube",
+    label: "YouTube",
+  },
+  {
+    key: "instagram",
+    icon: "uil uil-instagram",
+    label: "Instagram",
+  },
+  {
+    key: "tiktok",
+    icon: "fa-brands fa-tiktok",
+    label: "TikTok",
+  },
+  {
+    key: "linkedin",
+    icon: "uil uil-linkedin",
+    label: "LinkedIn",
+  },
+  {
+    key: "facebook",
+    icon: "uil uil-facebook",
+    label: "Facebook",
+  },
+  {
+    key: "x",
+    icon: "uil uil-twitter",
+    label: "X",
+  },
+  {
+    key: "threads",
+    icon: "uil uil-at",
+    label: "Threads",
+  },
+];
+
 export async function generateMetadata({ params }) {
   const portfolio = await getPublicPortfolioBySlug(params?.slug || "");
 
@@ -122,10 +180,17 @@ function formatLinkUrl(url) {
   try {
     const parsed = new URL(url);
     const pathname = parsed.pathname === "/" ? "" : parsed.pathname;
-    return `${parsed.hostname}${pathname}`;
+    const search = parsed.search ? parsed.search : "";
+    return `${parsed.hostname}${pathname}${search}`;
   } catch (error) {
     return url;
   }
+}
+
+function truncateText(value, maxLength = 32) {
+  if (!value) return "";
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, maxLength - 1)}…`;
 }
 
 function getLinkInitial(name, url) {
@@ -138,6 +203,37 @@ function getLinkInitial(name, url) {
   } catch (error) {
     return "";
   }
+}
+
+function buildSocialLinks(rawSocials) {
+  if (!rawSocials || typeof rawSocials !== "object") {
+    return [];
+  }
+
+  const result = [];
+
+  for (const config of SOCIAL_CONFIG) {
+    const value = rawSocials[config.key];
+    if (!value || !value.trim()) continue;
+
+    const trimmed = value.trim();
+    let href = trimmed;
+
+    if (config.buildHref) {
+      href = config.buildHref(trimmed);
+    }
+
+    if (!href) continue;
+
+    result.push({
+      key: config.key,
+      href,
+      icon: config.icon,
+      label: config.label,
+    });
+  }
+
+  return result;
 }
 
 export default async function PortfolioPublicPage({ params }) {
@@ -153,6 +249,7 @@ export default async function PortfolioPublicPage({ params }) {
   const sanitizedDescription = sanitizeDescription(portfolio.description);
   const profileImage = getProfileImage(portfolio, displayName);
   const firstName = displayName?.split(" ").filter(Boolean)[0] || displayName;
+  const socialLinks = buildSocialLinks(portfolio.socials);
 
   return (
     <div className={styles.page}>
@@ -187,6 +284,24 @@ export default async function PortfolioPublicPage({ params }) {
             <h1 className={styles.name}>{displayName}</h1>
           </div>
           {bio && <p className={styles.bio}>{bio}</p>}
+          {socialLinks.length > 0 && (
+            <div className={styles.socialSection}>
+              <div className={styles.socialList}>
+                {socialLinks.map((social) => (
+                  <a
+                    key={social.key}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.socialButton}
+                    aria-label={social.label}
+                  >
+                    <i className={`${social.icon} ${styles.socialIcon}`}></i>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         </header>
 
         <section className={styles.portfolioSection}>
@@ -224,12 +339,28 @@ export default async function PortfolioPublicPage({ params }) {
                     )}
                   </div>
                   <div className={styles.linkContent}>
-                    <span className={styles.linkName}>
-                      {link.name || formatLinkUrl(link.url)}
-                    </span>
-                    <span className={styles.linkUrl}>
-                      {formatLinkUrl(link.url)}
-                    </span>
+                    {(() => {
+                      const normalizedName = link.name || formatLinkUrl(link.url);
+                      const displayName = truncateText(normalizedName, 28);
+                      const displayUrl = formatLinkUrl(link.url);
+                      const truncatedUrl = truncateText(displayUrl, 34);
+                      return (
+                        <>
+                          <span
+                            className={styles.linkName}
+                            title={normalizedName}
+                          >
+                            {displayName}
+                          </span>
+                          <span
+                            className={styles.linkUrl}
+                            title={displayUrl}
+                          >
+                            {truncatedUrl}
+                          </span>
+                        </>
+                      );
+                    })()}
                   </div>
                   <i
                     className={`uil uil-external-link-alt ${styles.linkExternal}`}

@@ -151,6 +151,47 @@
   line-height: 1.7;
 }
 
+.socialSection {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.socialList {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+}
+
+.socialButton {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(99, 102, 241, 0.08);
+  color: #4f46e5;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease,
+    color 0.2s ease;
+}
+
+.socialButton:hover {
+  transform: translateY(-2px);
+  background: #4f46e5;
+  color: #ffffff;
+  box-shadow: 0 5px 10px rgba(79, 70, 229, 0.18);
+}
+
+.socialIcon {
+  font-size: 20px;
+}
+
 .portfolioSection {
   display: flex;
   flex-direction: column;
@@ -387,7 +428,7 @@
 
 @media (max-width: 640px) {
   .page {
-    padding: 24px 12px 24px;
+    padding: 12px;
   }
 
   .avatarWrapper {
@@ -403,6 +444,10 @@
 
   .bio {
     font-size: 15px;
+  }
+
+  .socialList {
+    gap: 10px;
   }
 
   .linksGrid {

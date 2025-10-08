@@ -7,12 +7,82 @@ import { toast } from "@/components/ui/toast";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
+const defaultSocials = {
+  email: "",
+  whatsapp: "",
+  youtube: "",
+  instagram: "",
+  tiktok: "",
+  linkedin: "",
+  facebook: "",
+  x: "",
+  threads: "",
+};
+
+const socialPlatforms = [
+  {
+    key: "email",
+    label: "Email",
+    type: "email",
+    placeholder: "you@example.com",
+  },
+  {
+    key: "whatsapp",
+    label: "WhatsApp",
+    type: "text",
+    placeholder: "https://wa.me/",
+  },
+  {
+    key: "youtube",
+    label: "YouTube",
+    type: "url",
+    placeholder: "https://youtube.com/@username",
+  },
+  {
+    key: "instagram",
+    label: "Instagram",
+    type: "url",
+    placeholder: "https://instagram.com/username",
+  },
+  {
+    key: "tiktok",
+    label: "TikTok",
+    type: "url",
+    placeholder: "https://www.tiktok.com/@username",
+  },
+  {
+    key: "linkedin",
+    label: "LinkedIn",
+    type: "url",
+    placeholder: "https://linkedin.com/in/username",
+  },
+  {
+    key: "facebook",
+    label: "Facebook",
+    type: "url",
+    placeholder: "https://facebook.com/username",
+  },
+  {
+    key: "x",
+    label: "X (Twitter)",
+    type: "url",
+    placeholder: "https://x.com/username",
+  },
+  {
+    key: "threads",
+    label: "Threads",
+    type: "url",
+    placeholder: "https://www.threads.net/@username",
+  },
+];
+
 const defaultForm = {
   title: "",
   description: "",
   coverImage: "",
   slug: "",
   links: [{ name: "", url: "", icon: "" }],
+  socials: { ...defaultSocials },
 };
 
 function ensureLinks(links) {
@@ -24,6 +94,17 @@ function ensureLinks(links) {
     url: link?.url || "",
     icon: link?.icon || "",
   }));
+}
+
+function ensureSocials(socials) {
+  if (!socials || typeof socials !== "object") {
+    return { ...defaultSocials };
+  }
+
+  return Object.keys(defaultSocials).reduce((acc, key) => {
+    acc[key] = socials[key] || "";
+    return acc;
+  }, {});
 }
 
 function slugify(value = "") {
@@ -70,10 +151,12 @@ export default function PortfolioModal({
           coverImage: initialData.coverImage || "",
           slug: initialData.slug || "",
           links: ensureLinks(initialData.links),
+          socials: ensureSocials(initialData.socials),
         }
       : {
           ...defaultForm,
           links: defaultForm.links,
+          socials: { ...defaultSocials },
         };
 
     if (!initialData) {
@@ -124,6 +207,16 @@ export default function PortfolioModal({
 
   const handleDescriptionChange = (value) => {
     setFormData((prev) => ({ ...prev, description: value }));
+  };
+
+  const handleSocialChange = (key, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      socials: {
+        ...prev.socials,
+        [key]: value,
+      },
+    }));
   };
 
   const handleCoverUpload = async (event) => {
@@ -316,6 +409,55 @@ export default function PortfolioModal({
       }
     }
 
+    const socials = formData.socials || {};
+    if (socials.email && socials.email.trim()) {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(socials.email.trim())) {
+        setError("Please enter a valid email address");
+        return false;
+      }
+    }
+
+    const socialUrlKeys = [
+      "youtube",
+      "instagram",
+      "tiktok",
+      "linkedin",
+      "facebook",
+      "x",
+      "threads",
+    ];
+
+    for (const key of socialUrlKeys) {
+      const value = socials[key];
+      if (!value || !value.trim()) continue;
+      try {
+        const parsed = new URL(value.trim());
+        if (!parsed.protocol.startsWith("http")) {
+          throw new Error("Invalid protocol");
+        }
+      } catch (err) {
+        setError("Please enter valid URLs for your social media profiles");
+        return false;
+      }
+    }
+
+    if (socials.whatsapp && socials.whatsapp.trim()) {
+      const value = socials.whatsapp.trim();
+      const phonePattern = /^\+?[0-9()\s-]{5,}$/;
+      if (!phonePattern.test(value)) {
+        try {
+          const parsed = new URL(value);
+          if (!parsed.protocol.startsWith("http")) {
+            throw new Error("Invalid WhatsApp");
+          }
+        } catch (err) {
+          setError("Please enter a valid WhatsApp number or URL");
+          return false;
+        }
+      }
+    }
+
     setError("");
     return true;
   };
@@ -350,6 +492,13 @@ export default function PortfolioModal({
             url: link.url.trim(),
             icon: link.icon || "",
           })),
+        socials: Object.keys(defaultSocials).reduce((acc, key) => {
+          const value = formData.socials?.[key]?.trim?.();
+          if (value) {
+            acc[key] = value;
+          }
+          return acc;
+        }, {}),
       };
 
       const res = await fetch("/api/portfolio", {
@@ -518,6 +667,35 @@ export default function PortfolioModal({
                       "Customize your public portfolio URL"}
                 </div>
               </div>
+
+            <div className="form-group">
+              <label className="form-label">Social Media</label>
+              <p className="text-sm" style={{ color: "#6b7280", marginBottom: "12px" }}>
+                Add optional profiles to showcase where people can reach you.
+              </p>
+              <div
+                style={{
+                  display: "grid",
+                  gap: "12px",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+                }}
+              >
+                {socialPlatforms.map((platform) => (
+                  <div key={platform.key} className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">{platform.label}</label>
+                    <input
+                      type={platform.type}
+                      className="form-control"
+                      value={formData.socials?.[platform.key] || ""}
+                      onChange={(event) =>
+                        handleSocialChange(platform.key, event.target.value)
+                      }
+                      placeholder={platform.placeholder}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
 
               <div className="form-group">
                 <label className="form-label">Links</label>

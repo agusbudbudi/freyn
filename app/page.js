@@ -202,7 +202,7 @@ export default function HomePage() {
             </p>
 
             <div className="hero-buttons">
-              <Link href="/login" className="btn-primary">
+              <Link href="/login" className="btn-hero">
                 <i className="fas fa-rocket"></i>
                 Get Started Free
               </Link>

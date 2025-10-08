@@ -21,6 +21,21 @@ const portfolioLinkSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const portfolioSocialSchema = new mongoose.Schema(
+  {
+    email: { type: String, default: "", trim: true },
+    whatsapp: { type: String, default: "", trim: true },
+    youtube: { type: String, default: "", trim: true },
+    instagram: { type: String, default: "", trim: true },
+    tiktok: { type: String, default: "", trim: true },
+    linkedin: { type: String, default: "", trim: true },
+    facebook: { type: String, default: "", trim: true },
+    x: { type: String, default: "", trim: true },
+    threads: { type: String, default: "", trim: true },
+  },
+  { _id: false }
+);
+
 const portfolioSchema = new mongoose.Schema(
   {
     workspaceId: {
@@ -55,6 +70,10 @@ const portfolioSchema = new mongoose.Schema(
     links: {
       type: [portfolioLinkSchema],
       default: [],
+    },
+    socials: {
+      type: portfolioSocialSchema,
+      default: () => ({}),
     },
   },
   {
