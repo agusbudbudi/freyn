@@ -107,6 +107,16 @@ select.form-control {
   background: var(--bg-hover);
 }
 
+.btn-delete {
+  color: var(--accent-red);
+  border: 1px solid var(--accent-red);
+  background-color: transparent;
+}
+
+.btn-delete:hover {
+  background: var(--bg-hover);
+}
+
 .btn-outline {
   background: transparent;
   color: var(--accent-primary);

@@ -296,6 +296,10 @@ export default function DashboardLayout({ children }) {
             </div>
           ))}
         </div>
+
+        <div className="sidebar-footer">
+          © 2025 Freyn | Freelance Management
+        </div>
       </div>
 
       {/* Mobile Overlay */}

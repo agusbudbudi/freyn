@@ -41,7 +41,7 @@
     left: 0 !important;
     top: 0 !important;
     height: 100vh !important;
-    width: 260px !important;
+    width: 220px !important;
     transform: translateX(-100%) !important;
     transition: transform 0.3s ease !important;
     z-index: 1000 !important;

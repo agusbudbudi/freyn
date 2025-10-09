@@ -601,9 +601,7 @@ export default function PortfolioModal({
           <button
             className="close"
             onClick={handleStartClose}
-            disabled={
-              loading || uploadingCover || uploadingLinkIndex !== null
-            }
+            disabled={loading || uploadingCover || uploadingLinkIndex !== null}
           >
             <i className="uil uil-times"></i>
           </button>
@@ -670,7 +668,7 @@ export default function PortfolioModal({
                     {formData.coverImage && (
                       <button
                         type="button"
-                        className="btn btn-secondary"
+                        className="btn btn-delete"
                         disabled={loading || uploadingCover}
                         onClick={() =>
                           setFormData((prev) => ({
@@ -869,19 +867,15 @@ export default function PortfolioModal({
                             }
                             className="file-input"
                             style={{ maxWidth: "250px" }}
-                        disabled={
-                          loading || uploadingLinkIndex === index
-                        }
+                            disabled={loading || uploadingLinkIndex === index}
                           />
                         </div>
 
                         <div className="link-actions">
                           <button
                             type="button"
-                            className="btn btn-secondary"
-                        disabled={
-                          loading || uploadingLinkIndex === index
-                        }
+                            className="btn btn-delete"
+                            disabled={loading || uploadingLinkIndex === index}
                             onClick={() => handleDeleteLink(index)}
                           >
                             <i className="uil uil-trash-alt"></i>
@@ -891,9 +885,7 @@ export default function PortfolioModal({
                             <button
                               type="button"
                               className="btn btn-primary"
-                          disabled={
-                            loading || uploadingLinkIndex !== null
-                          }
+                              disabled={loading || uploadingLinkIndex !== null}
                               onClick={handleAddLink}
                             >
                               Add Link
