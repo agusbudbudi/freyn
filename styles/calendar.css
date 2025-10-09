@@ -86,7 +86,7 @@
 /* Month/Week/Day switch buttons grouped */
 .rbc-btn-group {
   display: inline-flex;
-  gap: 8px;
+  gap: 5px;
 }
 
 .rbc-btn-group button {
@@ -226,16 +226,21 @@
 /* Show more link */
 .rbc-show-more {
   color: var(--accent-primary);
-  font-weight: 600;
+  font-weight: 500;
   background: transparent;
   border-radius: 6px;
   padding: 2px 6px;
+  font-size: 10px;
 }
 
 .rbc-show-more:hover,
 .rbc-show-more:focus {
   color: var(--accent-primary);
   text-decoration: underline;
+}
+
+.rbc-overlay-header {
+  font-size: 12px;
 }
 
 /* Agenda view tweaks */
@@ -257,7 +262,7 @@
 .rbc-overlay {
   background: var(--bg-secondary);
   border: 1px solid var(--border-secondary);
-  border-radius: 12px;
+  border-radius: 8px;
   box-shadow: var(--shadow-lg);
   padding: 10px;
 }

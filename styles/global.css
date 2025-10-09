@@ -244,3 +244,40 @@ select.form-control {
     max-width: 100vw !important;
   }
 }
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  padding: 2rem 1rem;
+  color: var(--text-muted);
+}
+
+.loading-spinner {
+  color: var(--accent-primary);
+  animation: loading-spin 1s linear infinite;
+}
+
+.loading-message {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.loading-description {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-light);
+}
+
+@keyframes loading-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import PortfolioModal from "@/components/PortfolioModal";
+import LoadingState from "@/components/LoadingState";
 import { toast } from "@/components/ui/toast";
 
 const stripHtml = (html = "") => {
@@ -109,19 +110,7 @@ export default function PortfolioPage() {
 
         <div className="card-body" style={{ padding: "16px" }}>
           {loading ? (
-            <div style={{ textAlign: "center", padding: "2rem 0" }}>
-              <i
-                className="uil uil-spinner-alt"
-                style={{
-                  fontSize: "3rem",
-                  color: "#4f46e5",
-                  animation: "spin 1s linear infinite",
-                }}
-              ></i>
-              <p style={{ marginTop: "1rem", color: "#6b7280" }}>
-                Loading portfolio...
-              </p>
-            </div>
+            <LoadingState message="Loading portfolio..." />
           ) : portfolioItems.length > 0 ? (
             <div className="portfolio-grid">
               {portfolioItems.map((item, idx) => (
@@ -170,7 +159,7 @@ export default function PortfolioPage() {
                     {item.slug && (
                       <div className="text-sm" style={{ marginTop: "4px" }}>
                         Public URL slug:{" "}
-                        <strong className="portfolio-slug">{item.slug}</strong>
+                        <span className="portfolio-slug">{item.slug}</span>
                       </div>
                     )}
                     {item.description && (
@@ -233,14 +222,6 @@ export default function PortfolioPage() {
       )}
 
       <style jsx>{`
-        @keyframes spin {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
         .portfolio-grid {
           display: grid;
           gap: 20px;
@@ -257,7 +238,7 @@ export default function PortfolioPage() {
         }
         .portfolio-cover {
           width: 100%;
-          height: 260px;
+          max-height: 260px;
           object-fit: cover;
         }
         .portfolio-cover-button {
@@ -298,6 +279,9 @@ export default function PortfolioPage() {
           gap: 8px;
           color: var(--text-muted);
           background: var(--bg-tertiary);
+        }
+        .portfolio-cover-button.placeholder i {
+          font-size: 40px;
         }
         .portfolio-content {
           padding: 16px;

@@ -134,6 +134,8 @@ export default function PortfolioModal({
   const [checkingSlug, setCheckingSlug] = useState(false);
   const [originalSlug, setOriginalSlug] = useState("");
   const [closing, setClosing] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingLinkIndex, setUploadingLinkIndex] = useState(null);
   const closeTimerRef = useRef(null);
 
   useEffect(() => {
@@ -225,15 +227,41 @@ export default function PortfolioModal({
 
     if (!file.type.startsWith("image/")) {
       toast.error("Cover image must be an image file");
+      if (event.target) {
+        event.target.value = "";
+      }
       return;
     }
 
+    if (file.size > 6 * 1024 * 1024) {
+      toast.error("Cover image must be smaller than 6MB");
+      return;
+    }
+
+    setUploadingCover(true);
+
     try {
-      const dataUrl = await readFileAsDataUrl(file);
+      const dataUrl = await optimizeImageFile(file, {
+        maxWidth: 1280,
+        maxHeight: 640,
+        quality: 0.82,
+        mimeType: "image/webp",
+      });
+
+      if (estimateDataUrlBytes(dataUrl) > 900 * 1024) {
+        toast.error("Optimized cover image is still too large (max 900KB)");
+        return;
+      }
+
       setFormData((prev) => ({ ...prev, coverImage: dataUrl }));
     } catch (err) {
       console.error(err);
-      toast.error("Failed to read image file");
+      toast.error("Failed to process image file");
+    } finally {
+      setUploadingCover(false);
+      if (event.target) {
+        event.target.value = "";
+      }
     }
   };
 
@@ -254,15 +282,43 @@ export default function PortfolioModal({
 
     if (!file.type.startsWith("image/")) {
       toast.error("Link icon must be an image file");
+      if (event.target) {
+        event.target.value = "";
+      }
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Icon must be smaller than 2MB");
+      if (event.target) {
+        event.target.value = "";
+      }
       return;
     }
 
     try {
-      const dataUrl = await readFileAsDataUrl(file);
+      setUploadingLinkIndex(index);
+      const dataUrl = await optimizeImageFile(file, {
+        maxWidth: 256,
+        maxHeight: 256,
+        quality: 0.85,
+        mimeType: file.type === "image/png" ? "image/png" : "image/webp",
+      });
+
+      if (estimateDataUrlBytes(dataUrl) > 220 * 1024) {
+        toast.error("Optimized icon is still too large (max 220KB)");
+        return;
+      }
+
       handleLinkChange(index, "icon", dataUrl);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to read icon file");
+      toast.error("Failed to process icon file");
+    } finally {
+      setUploadingLinkIndex(null);
+      if (event.target) {
+        event.target.value = "";
+      }
     }
   };
 
@@ -545,7 +601,9 @@ export default function PortfolioModal({
           <button
             className="close"
             onClick={handleStartClose}
-            disabled={loading}
+            disabled={
+              loading || uploadingCover || uploadingLinkIndex !== null
+            }
           >
             <i className="uil uil-times"></i>
           </button>
@@ -570,20 +628,34 @@ export default function PortfolioModal({
                   }}
                 >
                   {formData.coverImage ? (
-                    <img
-                      src={formData.coverImage}
-                      alt="Portfolio Cover"
-                      style={{
-                        width: "240px",
-                        height: "140px",
-                        objectFit: "cover",
-                        borderRadius: "12px",
-                        border: "1px solid var(--border-secondary)",
-                      }}
-                    />
+                    <>
+                      <img
+                        src={formData.coverImage}
+                        alt="Portfolio Cover"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          borderRadius: "12px",
+                          border: "1px solid var(--border-secondary)",
+                        }}
+                      />
+                      <span
+                        className="text-sm"
+                        style={{
+                          color: "#6b7280",
+                          gap: "5px",
+                          display: "flex",
+                        }}
+                      >
+                        <i className="uil uil-info-circle"></i>
+                        <p>Best size 960×300</p>
+                      </span>
+                    </>
                   ) : (
                     <p className="text-sm" style={{ color: "#6b7280" }}>
-                      Upload a cover image to highlight your work (PNG, JPG).
+                      Add a cover image to make your work stand out. (Use PNG or
+                      JPG, best size 960×300)
                     </p>
                   )}
                   <div className="file-input-row">
@@ -593,11 +665,13 @@ export default function PortfolioModal({
                       onChange={handleCoverUpload}
                       className="file-input"
                       style={{ maxWidth: "260px" }}
+                      disabled={loading || uploadingCover}
                     />
                     {formData.coverImage && (
                       <button
                         type="button"
                         className="btn btn-secondary"
+                        disabled={loading || uploadingCover}
                         onClick={() =>
                           setFormData((prev) => ({
                             ...prev,
@@ -668,34 +742,41 @@ export default function PortfolioModal({
                 </div>
               </div>
 
-            <div className="form-group">
-              <label className="form-label">Social Media</label>
-              <p className="text-sm" style={{ color: "#6b7280", marginBottom: "12px" }}>
-                Add optional profiles to showcase where people can reach you.
-              </p>
-              <div
-                style={{
-                  display: "grid",
-                  gap: "12px",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-                }}
-              >
-                {socialPlatforms.map((platform) => (
-                  <div key={platform.key} className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label">{platform.label}</label>
-                    <input
-                      type={platform.type}
-                      className="form-control"
-                      value={formData.socials?.[platform.key] || ""}
-                      onChange={(event) =>
-                        handleSocialChange(platform.key, event.target.value)
-                      }
-                      placeholder={platform.placeholder}
-                    />
-                  </div>
-                ))}
+              <div className="form-group">
+                <label className="form-label">Social Media</label>
+                <p
+                  className="text-sm"
+                  style={{ color: "#6b7280", marginBottom: "12px" }}
+                >
+                  Add optional profiles to showcase where people can reach you.
+                </p>
+                <div
+                  style={{
+                    display: "grid",
+                    gap: "12px",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+                  }}
+                >
+                  {socialPlatforms.map((platform) => (
+                    <div
+                      key={platform.key}
+                      className="form-group"
+                      style={{ marginBottom: 0 }}
+                    >
+                      <label className="form-label">{platform.label}</label>
+                      <input
+                        type={platform.type}
+                        className="form-control"
+                        value={formData.socials?.[platform.key] || ""}
+                        onChange={(event) =>
+                          handleSocialChange(platform.key, event.target.value)
+                        }
+                        placeholder={platform.placeholder}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
 
               <div className="form-group">
                 <label className="form-label">Links</label>
@@ -788,6 +869,9 @@ export default function PortfolioModal({
                             }
                             className="file-input"
                             style={{ maxWidth: "250px" }}
+                        disabled={
+                          loading || uploadingLinkIndex === index
+                        }
                           />
                         </div>
 
@@ -795,6 +879,9 @@ export default function PortfolioModal({
                           <button
                             type="button"
                             className="btn btn-secondary"
+                        disabled={
+                          loading || uploadingLinkIndex === index
+                        }
                             onClick={() => handleDeleteLink(index)}
                           >
                             <i className="uil uil-trash-alt"></i>
@@ -804,6 +891,9 @@ export default function PortfolioModal({
                             <button
                               type="button"
                               className="btn btn-primary"
+                          disabled={
+                            loading || uploadingLinkIndex !== null
+                          }
                               onClick={handleAddLink}
                             >
                               Add Link
@@ -822,14 +912,18 @@ export default function PortfolioModal({
                 type="button"
                 className="btn btn-secondary"
                 onClick={handleStartClose}
-                disabled={loading}
+                disabled={
+                  loading || uploadingCover || uploadingLinkIndex !== null
+                }
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 className="btn btn-primary"
-                disabled={loading}
+                disabled={
+                  loading || uploadingCover || uploadingLinkIndex !== null
+                }
               >
                 <i className="uil uil-save"></i>
                 {loading ? "Saving..." : "Save Portfolio"}
@@ -919,6 +1013,49 @@ export default function PortfolioModal({
   );
 }
 
+async function optimizeImageFile(file, options = {}) {
+  const { maxWidth, maxHeight, quality = 0.85, mimeType } = options;
+  const originalDataUrl = await readFileAsDataUrl(file);
+
+  if (!maxWidth && !maxHeight && !mimeType) {
+    return originalDataUrl;
+  }
+
+  const image = await loadImage(originalDataUrl);
+  const originalWidth = image.width || 1;
+  const originalHeight = image.height || 1;
+
+  const widthRatio = maxWidth ? maxWidth / originalWidth : 1;
+  const heightRatio = maxHeight ? maxHeight / originalHeight : 1;
+  const scale = Math.min(widthRatio, heightRatio, 1);
+
+  const targetWidth = Math.max(1, Math.round(originalWidth * scale));
+  const targetHeight = Math.max(1, Math.round(originalHeight * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+  const ctx = canvas.getContext("2d");
+
+  ctx.drawImage(image, 0, 0, targetWidth, targetHeight);
+
+  const preferredType =
+    mimeType || (file.type === "image/png" ? "image/png" : "image/webp");
+  const normalizedType =
+    preferredType === "image/jpg" ? "image/jpeg" : preferredType;
+  const outputQuality =
+    normalizedType === "image/png" ? undefined : quality ?? 0.85;
+
+  const optimizedDataUrl = canvas.toDataURL(normalizedType, outputQuality);
+
+  const originalSize = estimateDataUrlBytes(originalDataUrl);
+  const optimizedSize = estimateDataUrlBytes(optimizedDataUrl);
+
+  return optimizedSize > 0 && optimizedSize < originalSize
+    ? optimizedDataUrl
+    : originalDataUrl;
+}
+
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -926,4 +1063,21 @@ function readFileAsDataUrl(file) {
     reader.onerror = (error) => reject(error);
     reader.readAsDataURL(file);
   });
+}
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+function estimateDataUrlBytes(dataUrl = "") {
+  if (!dataUrl) return 0;
+  const base64 = dataUrl.split(",")[1] || "";
+  if (!base64) return 0;
+  const padding = (base64.match(/=+$/) || [""])[0].length;
+  return Math.floor((base64.length * 3) / 4) - padding;
 }

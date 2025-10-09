@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import ProjectModal from "../../../components/ProjectModal";
+import LoadingState from "@/components/LoadingState";
 import { toast } from "@/components/ui/toast";
 
 export default function ProjectsPage() {
@@ -204,19 +205,7 @@ export default function ProjectsPage() {
   if (loading) {
     return (
       <div className="content-body">
-        <div style={{ textAlign: "center", padding: "3rem" }}>
-          <i
-            className="uil uil-spinner-alt"
-            style={{
-              fontSize: "3rem",
-              color: "#4f46e5",
-              animation: "spin 1s linear infinite",
-            }}
-          ></i>
-          <p style={{ marginTop: "1rem", color: "#6b7280" }}>
-            Loading projects...
-          </p>
-        </div>
+        <LoadingState message="Loading projects..." />
       </div>
     );
   }
@@ -428,17 +417,6 @@ export default function ProjectsPage() {
         onSave={handleSave}
         editProject={editingProject}
       />
-
-      <style jsx>{`
-        @keyframes spin {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-      `}</style>
     </div>
   );
 }

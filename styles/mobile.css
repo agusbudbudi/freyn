@@ -176,7 +176,10 @@
   }
 
   #project-form,
-  #service-form {
+  #service-form,
+  #client-form,
+  #user-form,
+  #portfolio-form {
     margin-bottom: 80px;
   }
 
@@ -254,7 +257,7 @@
   .comment-textarea {
     min-height: 70px;
     padding: 14px 45px 14px 14px;
-    font-size: 13px;
+    font-size: 16px;
     border-radius: 14px;
   }
 

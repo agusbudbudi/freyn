@@ -9,6 +9,8 @@ import {
 } from "@/lib/auth";
 
 const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const MAX_COVER_BYTES = 900 * 1024; // ~900KB after optimization
+const MAX_ICON_BYTES = 220 * 1024; // ~220KB per icon
 
 function normalizeSlug(slug = "") {
   return slug.trim().toLowerCase();
@@ -121,14 +123,13 @@ export async function GET(request) {
     }
 
     const [portfolio, workspace] = await Promise.all([
-      Portfolio.findOne({ workspaceId: authUser.workspaceId }),
-      Workspace.findById(authUser.workspaceId),
+      Portfolio.findOne({ workspaceId: authUser.workspaceId }).lean(),
+      Workspace.findById(authUser.workspaceId).select("name owner").lean(),
     ]);
 
-    let owner = null;
-    if (workspace?.owner) {
-      owner = await User.findById(workspace.owner);
-    }
+    const owner = workspace?.owner
+      ? await User.findById(workspace.owner).select("fullName").lean()
+      : null;
 
     return successResponse(
       {
@@ -192,6 +193,10 @@ export async function PUT(request) {
       return errorResponse("Slug is already in use", 400);
     }
 
+    if (coverImage && estimateDataUrlBytes(coverImage) > MAX_COVER_BYTES) {
+      return errorResponse("Cover image is too large", 400);
+    }
+
     const sanitizedLinks = links
       .filter((link) => link && (link.name || link.url))
       .map((link) => {
@@ -210,6 +215,10 @@ export async function PUT(request) {
         const urlPattern = /^(https?:\/\/)([\w.-]+)(:[0-9]+)?(\/.*)?$/i;
         if (!urlPattern.test(url)) {
           throw new Error("Each link URL must be a valid URL");
+        }
+
+        if (icon && estimateDataUrlBytes(icon) > MAX_ICON_BYTES) {
+          throw new Error("Each link icon must be smaller than 220KB");
         }
 
         return {
@@ -246,8 +255,10 @@ export async function PUT(request) {
     }
 
     const [workspace, owner] = await Promise.all([
-      Workspace.findById(authUser.workspaceId),
-      User.findById(authUser.userId),
+      Workspace.findById(authUser.workspaceId)
+        .select("name owner")
+        .lean(),
+      User.findById(authUser.userId).select("fullName").lean(),
     ]);
 
     return successResponse(
@@ -273,4 +284,12 @@ export async function PUT(request) {
 
     return errorResponse("Failed to save portfolio", 500);
   }
+}
+
+function estimateDataUrlBytes(dataUrl = "") {
+  if (!dataUrl) return 0;
+  const base64 = dataUrl.split(",")[1] || "";
+  if (!base64) return 0;
+  const padding = (base64.match(/=+$/) || [""])[0].length;
+  return Math.floor((base64.length * 3) / 4) - padding;
 }

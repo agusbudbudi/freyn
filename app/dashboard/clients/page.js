@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import ClientModal from "@/components/ClientModal";
+import LoadingState from "@/components/LoadingState";
 import { toast } from "@/components/ui/toast";
 
 export default function ClientsPage() {
@@ -102,19 +103,7 @@ export default function ClientsPage() {
   if (loading) {
     return (
       <div className="content-body">
-        <div style={{ textAlign: "center", padding: "3rem" }}>
-          <i
-            className="uil uil-spinner-alt"
-            style={{
-              fontSize: "3rem",
-              color: "#4f46e5",
-              animation: "spin 1s linear infinite",
-            }}
-          ></i>
-          <p style={{ marginTop: "1rem", color: "#6b7280" }}>
-            Loading clients...
-          </p>
-        </div>
+        <LoadingState message="Loading clients..." />
       </div>
     );
   }
@@ -274,17 +263,6 @@ export default function ClientsPage() {
           editClient={editingClient}
         />
       )}
-
-      <style jsx>{`
-        @keyframes spin {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-      `}</style>
     </div>
   );
 }

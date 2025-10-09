@@ -14,19 +14,17 @@ const getBaseUrl = () => {
   return "";
 };
 
-const faviconPath = "/images/logo-freyn.png";
 const baseUrl = getBaseUrl();
-const faviconUrl = baseUrl
-  ? new URL(faviconPath, baseUrl).toString()
-  : faviconPath;
+const faviconPath = "/icon.png";
 
 export const metadata = {
   title: "Freyn - Freelance Management System",
   description: "Your All-in-One Freelance Management System",
+  metadataBase: baseUrl ? new URL(baseUrl) : undefined,
   icons: {
-    icon: faviconUrl,
-    shortcut: faviconUrl,
-    apple: faviconUrl,
+    icon: faviconPath,
+    shortcut: faviconPath,
+    apple: faviconPath,
   },
 };
 

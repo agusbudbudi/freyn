@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Calendar, dateFnsLocalizer, Views } from "react-big-calendar";
 import { format, parse, startOfWeek as dfStartOfWeek, getDay } from "date-fns";
 import enUS from "date-fns/locale/en-US";
+import LoadingState from "@/components/LoadingState";
 import ProjectModal from "@/components/ProjectModal";
 
 const locales = { "en-US": enUS };
@@ -200,7 +201,7 @@ export default function ProjectsCalendarPage() {
         {/* <div className="card-header">
           <h2 className="card-title">Projects Calendar</h2>
         </div> */}
-        <div className="card-body" style={{ height: "78vh" }}>
+        <div className="card-body" style={{ height: "88dvh" }}>
           {!loading && (
             <Calendar
               localizer={localizer}
@@ -233,21 +234,7 @@ export default function ProjectsCalendarPage() {
               dayLayoutAlgorithm="no-overlap"
             />
           )}
-          {loading && (
-            <div style={{ textAlign: "center", padding: "2rem" }}>
-              <i
-                className="uil uil-spinner-alt"
-                style={{
-                  fontSize: "3rem",
-                  color: "#4f46e5",
-                  animation: "spin 1s linear infinite",
-                }}
-              ></i>
-              <p style={{ marginTop: "1rem", color: "#6b7280" }}>
-                Loading calendar...
-              </p>
-            </div>
-          )}
+          {loading && <LoadingState message="Loading calendar..." />}
         </div>
       </div>
 
