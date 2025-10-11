@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -257,10 +258,13 @@ export default function DashboardLayout({ children }) {
           <div className="logo sidebar-logo">
             <div className="logo-icon">
               {/* <i className="fas fa-palette"></i> */}
-              <img
+              <Image
                 src="/images/logo-freyn.png"
                 alt="Logo"
+                width={32}
+                height={32}
                 className="logo-img"
+                priority
               />
             </div>
             <span>Freyn</span>
@@ -366,15 +370,31 @@ export default function DashboardLayout({ children }) {
                   </span>
                 )}
                 <div className="profile-menu profile-button">
-                  <img
-                    src={avatarUrl}
-                    className="avatar-profile"
-                    alt={
-                      currentUser?.fullName || currentUser?.name || "Profile"
-                    }
+                  <button
+                    type="button"
+                    className="avatar-button"
                     onClick={toggleProfileMenu}
-                    style={{ cursor: "pointer" }}
-                  />
+                    aria-label="Toggle profile menu"
+                    style={{
+                      padding: 0,
+                      border: "none",
+                      background: "transparent",
+                      display: "flex",
+                    }}
+                  >
+                    <Image
+                      src={avatarUrl}
+                      className="avatar-profile"
+                      alt={
+                        currentUser?.fullName ||
+                        currentUser?.name ||
+                        "Profile"
+                      }
+                      width={40}
+                      height={40}
+                      unoptimized
+                    />
+                  </button>
                 </div>
               </div>
 
@@ -393,18 +413,17 @@ export default function DashboardLayout({ children }) {
                           justifyContent: "center",
                         }}
                       >
-                        <img
+                        <Image
                           src={avatarUrl}
                           alt={
                             currentUser?.fullName ||
                             currentUser?.name ||
                             "Profile"
                           }
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            borderRadius: "50%",
-                          }}
+                          fill
+                          sizes="64px"
+                          style={{ objectFit: "cover" }}
+                          unoptimized
                         />
                       </div>
                       <div>
