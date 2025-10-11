@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ClientModal from "@/components/ClientModal";
 import LoadingState from "@/components/LoadingState";
 import { toast } from "@/components/ui/toast";
@@ -13,7 +13,7 @@ export default function ClientsPage() {
   const [editingClient, setEditingClient] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const getAuthHeaders = () => {
+  const getAuthHeaders = useCallback(() => {
     if (typeof window === "undefined") return {};
     const token = localStorage.getItem("token");
     return token
@@ -21,13 +21,9 @@ export default function ClientsPage() {
           Authorization: `Bearer ${token}`,
         }
       : {};
-  };
-
-  useEffect(() => {
-    fetchClients();
   }, []);
 
-  const fetchClients = async () => {
+  const fetchClients = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch("/api/clients", {
@@ -49,7 +45,11 @@ export default function ClientsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getAuthHeaders]);
+
+  useEffect(() => {
+    fetchClients();
+  }, [fetchClients]);
 
   const handleAddClient = () => {
     setEditingClient(null);
