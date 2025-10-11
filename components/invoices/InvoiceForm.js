@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
@@ -719,7 +720,14 @@ export default function InvoiceForm({
             <div className="invoice-logo-upload" style={{ marginTop: "12px" }}>
               {logo ? (
                 <>
-                  <img src={logo} alt="Invoice logo preview" />
+                  <Image
+                    src={logo}
+                    alt="Invoice logo preview"
+                    width={160}
+                    height={120}
+                    className="invoice-logo-preview"
+                    unoptimized
+                  />
                   <div style={{ display: "flex", gap: "12px" }}>
                     <label className="btn btn-secondary">
                       <i className="uil uil-upload"></i>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import Image from "next/image";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import { toast } from "@/components/ui/toast";
@@ -40,7 +41,7 @@ export default function ProjectModal({
   const [closing, setClosing] = useState(false);
   const closeTimerRef = useRef(null);
 
-  const getAuthHeaders = () => {
+  const getAuthHeaders = useCallback(() => {
     if (typeof window === "undefined") return {};
     const token = localStorage.getItem("token");
     return token
@@ -48,10 +49,10 @@ export default function ProjectModal({
           Authorization: `Bearer ${token}`,
         }
       : {};
-  };
+  }, []);
 
   // Generate unique project number using random suffix to avoid cross-workspace collisions
-  const generateProjectNumber = () => {
+  const generateProjectNumber = useCallback(() => {
     const now = new Date();
     const day = String(now.getDate()).padStart(2, "0");
     const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -73,16 +74,7 @@ export default function ProjectModal({
     // Fallback: use timestamp-based suffix if random attempts fail
     const fallbackSuffix = String(Date.now()).slice(-5).padStart(5, "0");
     return `FM-${dateStr}-${fallbackSuffix}`;
-  };
-
-  // Fetch clients and projects for dropdown
-  useEffect(() => {
-    if (isOpen) {
-      fetchClients();
-      fetchProjects();
-      fetchServices();
-    }
-  }, [isOpen]);
+  }, [projects]);
 
   // Normalize serviceId loaded from existing project to match option values (String(_id))
   useEffect(() => {
@@ -114,7 +106,7 @@ export default function ProjectModal({
     };
   }, [isOpen]);
 
-  const fetchClients = async () => {
+  const fetchClients = useCallback(async () => {
     try {
       const response = await fetch("/api/clients", {
         headers: {
@@ -128,9 +120,9 @@ export default function ProjectModal({
     } catch (err) {
       console.error("Failed to fetch clients:", err);
     }
-  };
+  }, [getAuthHeaders]);
 
-  const fetchServices = async () => {
+  const fetchServices = useCallback(async () => {
     try {
       const response = await fetch("/api/services", {
         headers: {
@@ -146,9 +138,9 @@ export default function ProjectModal({
     } catch (err) {
       console.error("Failed to fetch services:", err);
     }
-  };
+  }, [getAuthHeaders]);
 
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     try {
       const response = await fetch("/api/projects", {
         headers: {
@@ -162,7 +154,16 @@ export default function ProjectModal({
     } catch (err) {
       console.error("Failed to fetch projects:", err);
     }
-  };
+  }, [getAuthHeaders]);
+
+  // Fetch clients and projects for dropdown
+  useEffect(() => {
+    if (isOpen) {
+      fetchClients();
+      fetchProjects();
+      fetchServices();
+    }
+  }, [isOpen, fetchClients, fetchProjects, fetchServices]);
 
   // Populate form if editing or generate new numberOrder
   useEffect(() => {
@@ -185,8 +186,7 @@ export default function ProjectModal({
         serviceId: editProject.serviceId ? String(editProject.serviceId) : "",
         status: editProject.status || "to do",
       });
-    } else if (isOpen && projects.length >= 0) {
-      // Generate new numberOrder for new project
+    } else if (isOpen) {
       const newNumberOrder = generateProjectNumber();
       setFormData({
         numberOrder: newNumberOrder,
@@ -203,12 +203,9 @@ export default function ProjectModal({
         invoice: "",
         serviceId: "",
         status: "to do",
-        invoice: "",
-        serviceId: "",
-        status: "to do",
       });
     }
-  }, [editProject, isOpen, projects]);
+  }, [editProject, isOpen, generateProjectNumber]);
 
   // Calculate total price
   useEffect(() => {
@@ -715,13 +712,16 @@ export default function ProjectModal({
                               key={comment.id || comment.createdAt || index}
                               className="comment-item"
                             >
-                              <img
+                              <Image
                                 src={generateAvatar(
                                   comment.authorName,
                                   comment.authorEmail
                                 )}
-                                alt={comment.authorName}
+                                alt={comment.authorName || "Comment author"}
+                                width={32}
+                                height={32}
                                 className="comment-avatar"
+                                unoptimized
                               />
                               <div className="comment-content">
                                 <div className="comment-header">
