@@ -1,7 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { forwardRef } from "react";
-import { formatCurrency, formatDateHuman, cleanDeliverables } from "./utils";
+import { formatCurrency, formatDateHuman } from "./utils";
 
 const BANK_LOGOS = {
   bca: "/images/payment-providers/bank-bca.svg",
@@ -91,7 +92,15 @@ const InvoicePreview = forwardRef(function InvoicePreview(
       <div className="invoice-preview__header">
         <div className="invoice-preview__logo">
           {logo ? (
-            <img src={logo} alt="Invoice logo" />
+            <Image
+              src={logo}
+              alt="Invoice logo"
+              fill
+              sizes="140px"
+              className="invoice-preview__logo-img"
+              unoptimized
+              style={{ objectFit: "contain", padding: 8 }}
+            />
           ) : (
             <div className="invoice-preview__logo-placeholder">Logo</div>
           )}
@@ -208,7 +217,14 @@ const InvoicePreview = forwardRef(function InvoicePreview(
       <div className="invoice-payment-card">
         <div className="invoice-payment-card__logo">
           {logoSrc ? (
-            <img src={logoSrc} alt={`${providerName} logo`} />
+            <Image
+              src={logoSrc}
+              alt={`${providerName} logo`}
+              fill
+              sizes="64px"
+              className="invoice-payment-card__logo-img"
+              style={{ objectFit: "cover" }}
+            />
           ) : (
             <span className="invoice-payment-card__logo-fallback">
               {fallbackInitials}
@@ -271,7 +287,7 @@ const InvoicePreview = forwardRef(function InvoicePreview(
               <h4>Terms &amp; Conditions</h4>
               <div
                 className="invoice-preview__richtext"
-            dangerouslySetInnerHTML={{ __html: terms }}
+                dangerouslySetInnerHTML={{ __html: terms }}
               ></div>
             </div>
           )}
@@ -288,13 +304,15 @@ const InvoicePreview = forwardRef(function InvoicePreview(
       )}
 
       <div className="invoice-preview__footnote">
-        <span>Smart invoicing powered by </span>
-        <img
+        <span>Smart invoicing powered by</span>
+        <Image
           src="/images/logo-freyn.png"
           alt="Freyn logo"
+          width={24}
+          height={24}
           className="invoice-preview__footnote-logo"
         />
-        <span style={{ fontWeight: "bold" }}>Freyn</span>
+        <span className="invoice-preview__footnote-brand">Freyn</span>
       </div>
     </div>
   );
