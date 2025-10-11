@@ -74,6 +74,7 @@ export async function POST(request) {
           userId: user.userId,
           fullName: user.fullName,
           email: user.email,
+          phone: user.phone || "",
           createdAt: user.createdAt,
           workspaceId: workspace._id.toString(),
         },

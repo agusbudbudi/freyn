@@ -533,19 +533,25 @@ export default function ProjectModal({
                   <h3 className="project-section-title">Pricing</h3>
                   <div className="form-group">
                     <label className="form-label">Service (optional)</label>
-                    <select
-                      name="serviceId"
-                      className="form-control"
-                      value={formData.serviceId}
-                      onChange={handleInputChange}
-                    >
-                      <option value="">Select service</option>
-                      {services.map((s) => (
-                        <option key={String(s._id)} value={String(s._id)}>
-                          {s.serviceName}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="select-wrapper">
+                      <select
+                        name="serviceId"
+                        className="form-control"
+                        value={formData.serviceId}
+                        onChange={handleInputChange}
+                      >
+                        <option value="">Select service</option>
+                        {services.map((s) => (
+                          <option key={String(s._id)} value={String(s._id)}>
+                            {s.serviceName}
+                          </option>
+                        ))}
+                      </select>
+                      <i
+                        className="uil uil-angle-down select-icon"
+                        aria-hidden="true"
+                      ></i>
+                    </div>
                   </div>
                   <div className="form-row">
                     <div className="form-group">
@@ -765,7 +771,7 @@ export default function ProjectModal({
                   </div>
                   <div className="form-group">
                     <label className="form-label">Status</label>
-                    <div className="status-select-wrapper">
+                    <div className="status-select-wrapper select-wrapper">
                       <span
                         className={`status-badge ${getStatusClass(
                           formData.status
@@ -788,24 +794,34 @@ export default function ProjectModal({
                         <option value="revision">Revision</option>
                         <option value="done">Done</option>
                       </select>
+                      <i
+                        className="uil uil-angle-down select-icon"
+                        aria-hidden="true"
+                      ></i>
                     </div>
                   </div>
                   <div className="form-group">
                     <label className="form-label">Client Name *</label>
-                    <select
-                      name="clientName"
-                      className="form-control"
-                      value={formData.clientName}
-                      onChange={handleInputChange}
-                      required
-                    >
-                      <option value="">Select client</option>
-                      {clients.map((client) => (
-                        <option key={client._id} value={client.clientName}>
-                          {client.clientName}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="select-wrapper">
+                      <select
+                        name="clientName"
+                        className="form-control"
+                        value={formData.clientName}
+                        onChange={handleInputChange}
+                        required
+                      >
+                        <option value="">Select client</option>
+                        {clients.map((client) => (
+                          <option key={client._id} value={client.clientName}>
+                            {client.clientName}
+                          </option>
+                        ))}
+                      </select>
+                      <i
+                        className="uil uil-angle-down select-icon"
+                        aria-hidden="true"
+                      ></i>
+                    </div>
                   </div>
                   <div className="form-group">
                     <label className="form-label">Client Phone</label>

@@ -59,6 +59,32 @@ select.form-control {
   appearance: none;
 }
 
+.select-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.select-wrapper select.form-control {
+  padding-right: 48px;
+  width: 100%;
+}
+
+.select-wrapper .select-icon {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--text-muted);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.select-wrapper select.form-control:disabled ~ .select-icon {
+  color: var(--text-disabled);
+}
+
 .form-control.readonly {
   font-weight: 600;
   border: none;
@@ -107,6 +133,16 @@ select.form-control {
   background: var(--bg-hover);
 }
 
+.btn-warning {
+  background: rgba(245, 158, 11, 0.18);
+  color: #92400e;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.btn-warning:hover {
+  background: rgba(245, 158, 11, 0.28);
+}
+
 .btn-delete {
   color: var(--accent-red);
   border: 1px solid var(--accent-red);
@@ -124,6 +160,19 @@ select.form-control {
 }
 
 .btn-outline:hover {
+  background: var(--bg-hover);
+}
+
+.btn-back {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  border: 1px solid var(--border-primary);
+  border-radius: 50%;
+  padding: 0 5px;
+  font-size: 20px;
+}
+
+.btn-back:hover {
   background: var(--bg-hover);
 }
 
@@ -187,6 +236,19 @@ select.form-control {
   display: flex;
 }
 
+/* status label */
+.status-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+  white-space: nowrap;
+  gap: 5px;
+}
+
 /* Status Badges */
 .status-badge {
   display: inline-flex;
@@ -219,6 +281,16 @@ select.form-control {
 .status-review {
   background: var(--status-review-bg);
   color: var(--status-review-text);
+}
+
+.status-pending {
+  background: rgba(251, 191, 36, 0.16);
+  color: #b45309;
+}
+
+.status-success {
+  background: rgba(34, 197, 94, 0.18);
+  color: #047857;
 }
 .status-revision {
   background: var(--status-revision-bg);

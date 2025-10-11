@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import "../../styles/dashboard.css";
 import "../../styles/mobile.css";
+import "../../styles/invoices.css";
 import ProfileModal from "@/components/ProfileModal";
 
 export default function DashboardLayout({ children }) {
@@ -162,6 +163,12 @@ export default function DashboardLayout({ children }) {
           icon: "uil-package",
           label: "Services",
         },
+        {
+          href: "/dashboard/invoices",
+          icon: "uil-invoice",
+          label: "Invoices",
+          badge: "New",
+        },
       ],
     },
     {
@@ -215,6 +222,14 @@ export default function DashboardLayout({ children }) {
       title: "Services",
       subtitle: "Manage your services 💼",
     },
+    "/dashboard/invoices": {
+      title: "Invoices",
+      subtitle: "Track and manage invoices 💳",
+    },
+    "/dashboard/invoices/add": {
+      title: "Create Invoice",
+      subtitle: "Generate a new invoice 📄",
+    },
     "/dashboard/workspace": {
       title: "Workspace",
       subtitle: "Manage your workspace details 🛠️",
@@ -225,8 +240,14 @@ export default function DashboardLayout({ children }) {
     },
   };
 
+  const defaultPageMeta = pageMetadata["/dashboard"];
+
   const currentPageMeta =
-    pageMetadata[pathname] || pageMetadata["/dashboard/services"];
+    pageMetadata[pathname] ||
+    Object.entries(pageMetadata)
+      .sort((a, b) => b[0].length - a[0].length)
+      .find(([key]) => pathname.startsWith(key))?.[1] ||
+    defaultPageMeta;
 
   return (
     <div className="app-container">

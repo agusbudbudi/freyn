@@ -37,6 +37,7 @@ export async function POST(request) {
           userId: user.userId,
           fullName: user.fullName,
           email: user.email,
+          phone: user.phone || "",
           workspaceId: user.workspaceId?.toString() || null,
         },
         workspace: workspace
