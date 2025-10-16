@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import ProjectModal from "../../../components/ProjectModal";
 import LoadingState from "@/components/LoadingState";
@@ -13,6 +13,9 @@ export default function ProjectsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [openActionId, setOpenActionId] = useState(null);
+  const actionMenuRef = useRef(null);
+  const actionTriggerRef = useRef(null);
 
   const getAuthHeaders = () => {
     if (typeof window === "undefined") return {};
@@ -114,6 +117,40 @@ export default function ProjectsPage() {
     setEditingProject(null);
   };
 
+  useEffect(() => {
+    if (!openActionId) return;
+
+    const handleClickOutside = (event) => {
+      if (
+        actionMenuRef.current &&
+        actionMenuRef.current.contains(event.target)
+      ) {
+        return;
+      }
+      if (
+        actionTriggerRef.current &&
+        actionTriggerRef.current.contains(event.target)
+      ) {
+        return;
+      }
+      setOpenActionId(null);
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setOpenActionId(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [openActionId]);
+
   const handleSave = (updatedProject, meta) => {
     if (meta?.source === "comment") {
       if (updatedProject) {
@@ -163,6 +200,10 @@ export default function ProjectsPage() {
       console.error(err);
       toast.error("Failed to delete project");
     }
+  };
+
+  const toggleActionMenu = (projectId) => {
+    setOpenActionId((prev) => (prev === projectId ? null : projectId));
   };
 
   const normalizePhone = (p) => {
@@ -372,33 +413,64 @@ export default function ProjectsPage() {
                         </span>
                       </td>
                       <td>
-                        <div className="action-buttons">
+                        <div
+                          className="action-menu"
+                          ref={
+                            openActionId === project._id ? actionMenuRef : null
+                          }
+                        >
                           <button
-                            className="action-btn edit"
-                            onClick={() => openModal(project)}
-                            title="Edit"
+                            type="button"
+                            className="action-menu__trigger"
+                            aria-haspopup="true"
+                            aria-expanded={openActionId === project._id}
+                            title="Actions"
+                            onClick={() => toggleActionMenu(project._id)}
+                            ref={
+                              openActionId === project._id
+                                ? actionTriggerRef
+                                : null
+                            }
                           >
-                            <i className="uil uil-edit-alt"></i>
+                            <i className="uil uil-ellipsis-h"></i>
                           </button>
-                          <button
-                            className="action-btn"
-                            onClick={() => handleShareWhatsApp(project)}
-                            title="Share to WhatsApp"
-                            style={{
-                              background:
-                                "linear-gradient(135deg, #10b981, #059669)",
-                              color: "white",
-                            }}
-                          >
-                            <i className="uil uil-whatsapp"></i>
-                          </button>
-                          <button
-                            className="action-btn delete"
-                            onClick={() => deleteProject(project._id)}
-                            title="Delete"
-                          >
-                            <i className="uil uil-trash-alt"></i>
-                          </button>
+                          {openActionId === project._id && (
+                            <div className="action-menu__tray">
+                              <button
+                                type="button"
+                                className="action-menu__item"
+                                onClick={() => {
+                                  setOpenActionId(null);
+                                  openModal(project);
+                                }}
+                              >
+                                <i className="uil uil-edit-alt"></i>
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                className="action-menu__item"
+                                onClick={() => {
+                                  setOpenActionId(null);
+                                  handleShareWhatsApp(project);
+                                }}
+                              >
+                                <i className="uil uil-whatsapp"></i>
+                                Share to WhatsApp
+                              </button>
+                              <button
+                                type="button"
+                                className="action-menu__item action-menu__item--danger"
+                                onClick={() => {
+                                  setOpenActionId(null);
+                                  deleteProject(project._id);
+                                }}
+                              >
+                                <i className="uil uil-trash-alt"></i>
+                                Delete
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </td>
                     </tr>

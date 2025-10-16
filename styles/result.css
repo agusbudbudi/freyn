@@ -3,12 +3,19 @@ body {
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: center;
-  padding: 10px;
+  align-items: flex-start;
+  padding: 24px 16px;
 }
 
 .container {
-  width: 40%;
+  width: min(720px, 100%);
+  margin: 0 auto;
+}
+
+.result-loading {
+  display: flex;
+  justify-content: center;
+  padding: 80px 16px;
 }
 
 .hero-section {

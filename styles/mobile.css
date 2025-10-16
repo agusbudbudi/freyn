@@ -9,6 +9,10 @@
     grid-template-columns: 1.5fr 1fr;
     gap: 24px;
   }
+
+  .result-loading {
+    padding: 60px 12px;
+  }
 }
 
 /* Mobile & Tablet - 768px */

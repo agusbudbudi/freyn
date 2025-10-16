@@ -1,8 +1,10 @@
 import "./globals.css";
 import "../styles/global.css";
 import "../styles/theme.css";
+import "../styles/invoices.css";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "../styles/calendar.css";
+import "../styles/invoice-public.css";
 
 const getBaseUrl = () => {
   if (process.env.NEXT_PUBLIC_SITE_URL) {
