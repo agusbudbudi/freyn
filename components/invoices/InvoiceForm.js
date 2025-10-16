@@ -186,6 +186,7 @@ export default function InvoiceForm({
   mode = "create",
   initialInvoice = null,
   invoiceId = null,
+  projectId: projectIdProp = null,
 }) {
   const router = useRouter();
   const [form, setForm] = useState(() => {
@@ -211,6 +212,12 @@ export default function InvoiceForm({
   const [fetching, setFetching] = useState(true);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [billedByLocked, setBilledByLocked] = useState(true);
+  const [linkedProjectId, setLinkedProjectId] = useState(
+    initialInvoice?.projectId || projectIdProp || ""
+  );
+  const [projectPrefill, setProjectPrefill] = useState(null);
+  const [projectLoading, setProjectLoading] = useState(Boolean(projectIdProp));
+  const [prefillApplied, setPrefillApplied] = useState(false);
 
   const isEditing = mode === "edit" && Boolean(invoiceId);
   const isCreateDraft = mode === "create" && !initialInvoice;
@@ -255,6 +262,44 @@ export default function InvoiceForm({
       },
     };
   }, [form.paymentMethod]);
+
+  const handleBilledToChange = useCallback((field, value) => {
+    setForm((prev) => ({
+      ...prev,
+      billedTo: {
+        ...prev.billedTo,
+        [field]: value,
+      },
+    }));
+  }, []);
+
+  const handleClientSelect = useCallback(
+    (clientId) => {
+      if (!clientId) {
+        handleBilledToChange("clientId", "");
+        return;
+      }
+
+      const targetId = clientId.toString();
+      const client = clients.find((c) => {
+        const identifiers = [c.clientId, c.id, c._id?.toString?.()]
+          .filter(Boolean)
+          .map((value) => value.toString());
+        return identifiers.includes(targetId);
+      });
+      if (!client) {
+        handleBilledToChange("clientId", "");
+        return;
+      }
+      handleBilledToChange("clientId", client.clientId || client.id || "");
+      handleBilledToChange("name", client.clientName || "");
+      handleBilledToChange("company", client.companyName || "");
+      handleBilledToChange("email", client.email || "");
+      handleBilledToChange("phone", client.phoneNumber || "");
+      handleBilledToChange("address", client.address || "");
+    },
+    [clients, handleBilledToChange]
+  );
 
   const fetchInitialData = useCallback(async () => {
     try {
@@ -320,6 +365,158 @@ export default function InvoiceForm({
   }, [fetchInitialData]);
 
   useEffect(() => {
+    setLinkedProjectId(
+      initialInvoice?.projectId || projectIdProp || ""
+    );
+  }, [initialInvoice, projectIdProp]);
+
+  useEffect(() => {
+    if (!projectIdProp) {
+      setProjectPrefill(null);
+      setProjectLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const loadProject = async () => {
+      setProjectLoading(true);
+      setPrefillApplied(false);
+      try {
+        const response = await fetch(`/api/projects/${projectIdProp}`, {
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders(),
+          },
+        });
+        const data = await response.json();
+        if (cancelled) return;
+        if (data.success) {
+          setProjectPrefill(data.data?.project || null);
+        } else {
+          setProjectPrefill(null);
+          toast.error(data.message || "Failed to load project details");
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error(error);
+          setProjectPrefill(null);
+          toast.error("Failed to load project details");
+        }
+      } finally {
+        if (!cancelled) {
+          setProjectLoading(false);
+        }
+      }
+    };
+
+    loadProject();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [projectIdProp]);
+
+  useEffect(() => {
+    if (!projectIdProp) return;
+    if (!projectPrefill) return;
+    if (prefillApplied) return;
+    if (fetching) return;
+
+    const project = projectPrefill;
+    const normalizedProjectId =
+      project._id?.toString?.() || projectIdProp || "";
+
+    if (normalizedProjectId) {
+      setLinkedProjectId(normalizedProjectId);
+    }
+
+    const matchedClient = clients.find((client) => {
+      const identifiers = [client.clientId, client.id, client._id?.toString?.()];
+      return (
+        (project.clientId && identifiers.includes(project.clientId)) ||
+        client.clientName === project.clientName
+      );
+    });
+
+    if (matchedClient) {
+      const clientIdentifier =
+        matchedClient.clientId ||
+        matchedClient.id ||
+        matchedClient._id?.toString?.() ||
+        "";
+      if (clientIdentifier) {
+        handleClientSelect(clientIdentifier);
+      }
+    } else {
+      setForm((prev) => ({
+        ...prev,
+        billedTo: {
+          ...prev.billedTo,
+          clientId: project.clientId || prev.billedTo.clientId,
+          name: project.clientName || prev.billedTo.name,
+          company: project.clientCompany || prev.billedTo.company,
+          email: project.clientEmail || prev.billedTo.email,
+          phone: project.clientPhone || prev.billedTo.phone,
+          address: project.clientAddress || prev.billedTo.address,
+        },
+      }));
+    }
+
+    if (!items.length) {
+      const service = services.find((svc) => {
+        const svcIdentifiers = [
+          svc._id?.toString?.(),
+          svc.id,
+          svc.serviceId,
+        ];
+        return project.serviceId && svcIdentifiers.includes(project.serviceId);
+      });
+
+      const identifier =
+        service?.serviceId ||
+        service?.id ||
+        service?._id?.toString?.() ||
+        project.serviceId ||
+        `project-${normalizedProjectId}`;
+
+      const quantity = Math.max(1, Number(project.quantity) || 1);
+      const basePrice = Number(project.price) || Number(service?.servicePrice) || 0;
+      let totalAmount = Number(project.totalPrice);
+      if (!Number.isFinite(totalAmount) || totalAmount <= 0) {
+        totalAmount = quantity * basePrice;
+      }
+      if (!Number.isFinite(totalAmount) || totalAmount < 0) {
+        totalAmount = 0;
+      }
+      const pricePerUnit = quantity > 0 ? totalAmount / quantity : totalAmount;
+
+      const item = {
+        serviceId: String(identifier),
+        serviceName: service?.serviceName || project.projectName || "Service",
+        deliverables: project.deliverables || service?.deliverables || "",
+        quantity,
+        price: pricePerUnit,
+        subtotal: pricePerUnit * quantity,
+      };
+
+      const targetCurrency = project.currency || form.currency || "IDR";
+      setItems(mapItemsToState([item], targetCurrency));
+    }
+
+    setPrefillApplied(true);
+  }, [
+    projectIdProp,
+    projectPrefill,
+    fetching,
+    prefillApplied,
+    clients,
+    services,
+    items.length,
+    handleClientSelect,
+    form.currency,
+  ]);
+
+  useEffect(() => {
     if (!initialInvoice) return;
     setForm(defaultFormState(initialInvoice));
     setLogo(initialInvoice.logo || "");
@@ -355,32 +552,6 @@ export default function InvoiceForm({
         [field]: value,
       },
     }));
-  };
-
-  const handleBilledToChange = (field, value) => {
-    setForm((prev) => ({
-      ...prev,
-      billedTo: {
-        ...prev.billedTo,
-        [field]: value,
-      },
-    }));
-  };
-
-  const handleClientSelect = (clientId) => {
-    const client = clients.find(
-      (c) => c.clientId === clientId || c.id === clientId || c._id === clientId
-    );
-    if (!client) {
-      handleBilledToChange("clientId", "");
-      return;
-    }
-    handleBilledToChange("clientId", client.clientId || client.id || "");
-    handleBilledToChange("name", client.clientName || "");
-    handleBilledToChange("company", client.companyName || "");
-    handleBilledToChange("email", client.email || "");
-    handleBilledToChange("phone", client.phoneNumber || "");
-    handleBilledToChange("address", client.address || "");
   };
 
   const handlePaymentMethodTypeChange = (type) => {
@@ -528,7 +699,7 @@ export default function InvoiceForm({
 
     const { subtotal, total } = calculateInvoiceTotals(sanitizedItems);
 
-    return {
+    const payload = {
       invoiceNumber: form.invoiceNumber,
       invoiceDate,
       dueDate,
@@ -544,6 +715,12 @@ export default function InvoiceForm({
       total,
       currency: form.currency,
     };
+
+    if (linkedProjectId) {
+      payload.projectId = linkedProjectId;
+    }
+
+    return payload;
   };
 
   const handleSubmit = async (event) => {
@@ -610,7 +787,7 @@ export default function InvoiceForm({
     };
   }, [form, items, logo, parseCurrencyInput, paymentMethodState]);
 
-  if (fetching) {
+  if (fetching || projectLoading) {
     return (
       <div className="content-body">
         <div className="content-card" style={{ padding: "32px" }}>

@@ -21,9 +21,25 @@ const projectSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  clientId: {
+    type: String,
+    default: "",
+  },
   clientName: {
     type: String,
     required: true,
+  },
+  clientEmail: {
+    type: String,
+    default: "",
+  },
+  clientCompany: {
+    type: String,
+    default: "",
+  },
+  clientAddress: {
+    type: String,
+    default: "",
   },
   clientPhone: {
     type: String,
@@ -63,6 +79,14 @@ const projectSchema = new mongoose.Schema({
     default: "",
   },
   invoice: {
+    type: String,
+    default: "",
+  },
+  linkedInvoiceId: {
+    type: String,
+    default: "",
+  },
+  linkedInvoiceNumber: {
     type: String,
     default: "",
   },

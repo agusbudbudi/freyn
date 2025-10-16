@@ -1,5 +1,7 @@
+import mongoose from "mongoose";
 import dbConnect from "@/lib/db";
 import Invoice from "@/models/Invoice";
+import Project from "@/models/Project";
 import {
   authenticateRequest,
   errorResponse,
@@ -32,13 +34,7 @@ export async function GET(request) {
       .sort({ createdAt: -1 })
       .lean();
 
-    const data = invoices.map((invoice) => {
-      const { _id, __v, ...rest } = invoice;
-      return {
-        ...rest,
-        id: _id.toString(),
-      };
-    });
+    const data = invoices.map((invoice) => toInvoiceResponse(invoice));
 
     return successResponse({ invoices: data }, "Invoices fetched successfully");
   } catch (error) {
@@ -72,6 +68,30 @@ export async function POST(request) {
 
     const status = STATUSES.includes(body.status) ? body.status : "draft";
 
+    const projectIdRaw = body.projectId?.toString().trim() || "";
+    let project = null;
+    if (projectIdRaw) {
+      if (!mongoose.Types.ObjectId.isValid(projectIdRaw)) {
+        return errorResponse("Invalid project reference", 400);
+      }
+
+      project = await Project.findOne({
+        _id: projectIdRaw,
+        workspaceId: authUser.workspaceId,
+      });
+
+      if (!project) {
+        return errorResponse("Project not found", 404);
+      }
+
+      if (project.linkedInvoiceId && project.linkedInvoiceId !== "") {
+        return errorResponse(
+          "Project already linked to another invoice",
+          400
+        );
+      }
+    }
+
     const billedBy = sanitizeParty(body.billedBy || {});
     const billedTo = sanitizeParty(body.billedTo || {});
     const paymentMethod = sanitizePaymentMethod(body.paymentMethod || {});
@@ -104,6 +124,7 @@ export async function POST(request) {
 
     const invoice = await Invoice.create({
       workspaceId: authUser.workspaceId,
+      projectId: project ? project._id : null,
       invoiceNumber,
       invoiceDate,
       dueDate,
@@ -121,6 +142,12 @@ export async function POST(request) {
       createdBy: authUser.userId || "",
       updatedBy: authUser.userId || "",
     });
+
+    if (project) {
+      project.linkedInvoiceId = invoice._id.toString();
+      project.linkedInvoiceNumber = invoice.invoiceNumber;
+      await project.save();
+    }
 
     return successResponse(
       { invoice: toInvoiceResponse(invoice) },

@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import dbConnect from "@/lib/db";
 import Invoice from "@/models/Invoice";
+import Project from "@/models/Project";
 import {
   authenticateRequest,
   errorResponse,
@@ -76,7 +77,7 @@ export async function PUT(request, { params }) {
       return errorResponse("Invoice not found", 404);
     }
 
-     const existingInvoice = await Invoice.findOne(
+    const existingInvoice = await Invoice.findOne(
       buildInvoiceQuery(authUser.workspaceId, identifier)
     );
 
@@ -131,6 +132,47 @@ export async function PUT(request, { params }) {
       return errorResponse("Logo image is too large", 400);
     }
 
+    const previousProjectId = existingInvoice.projectId
+      ? existingInvoice.projectId.toString()
+      : "";
+
+    let nextProjectId = previousProjectId;
+    let targetProject = null;
+
+    if (Object.prototype.hasOwnProperty.call(body, "projectId")) {
+      const projectIdRaw = body.projectId?.toString().trim() || "";
+      if (!projectIdRaw) {
+        existingInvoice.projectId = null;
+        nextProjectId = "";
+      } else {
+        if (!mongoose.Types.ObjectId.isValid(projectIdRaw)) {
+          return errorResponse("Invalid project reference", 400);
+        }
+
+        targetProject = await Project.findOne({
+          _id: projectIdRaw,
+          workspaceId: authUser.workspaceId,
+        });
+
+        if (!targetProject) {
+          return errorResponse("Project not found", 404);
+        }
+
+        if (
+          targetProject.linkedInvoiceId &&
+          targetProject.linkedInvoiceId !== existingInvoice._id.toString()
+        ) {
+          return errorResponse(
+            "Project already linked to another invoice",
+            400
+          );
+        }
+
+        existingInvoice.projectId = targetProject._id;
+        nextProjectId = targetProject._id.toString();
+      }
+    }
+
     existingInvoice.invoiceNumber = invoiceNumber;
     existingInvoice.invoiceDate = invoiceDate;
     existingInvoice.dueDate = dueDate;
@@ -147,10 +189,31 @@ export async function PUT(request, { params }) {
     existingInvoice.currency = body.currency || "IDR";
     existingInvoice.updatedBy = authUser.userId || "";
 
-    await existingInvoice.save();
+    const savedInvoice = await existingInvoice.save();
+
+    if (
+      previousProjectId &&
+      previousProjectId !== nextProjectId
+    ) {
+      await Project.findOneAndUpdate(
+        { _id: previousProjectId, workspaceId: authUser.workspaceId },
+        { linkedInvoiceId: "", linkedInvoiceNumber: "" }
+      );
+    }
+
+    if (nextProjectId) {
+      await Project.findOneAndUpdate(
+        { _id: nextProjectId, workspaceId: authUser.workspaceId },
+        {
+          linkedInvoiceId: savedInvoice._id.toString(),
+          linkedInvoiceNumber: savedInvoice.invoiceNumber,
+        },
+        { new: false }
+      );
+    }
 
     return successResponse(
-      { invoice: toInvoiceResponse(existingInvoice) },
+      { invoice: toInvoiceResponse(savedInvoice) },
       "Invoice updated successfully"
     );
   } catch (error) {
@@ -224,6 +287,16 @@ export async function DELETE(request, { params }) {
 
     if (!deletedInvoice) {
       return errorResponse("Invoice not found", 404);
+    }
+
+    const linkedProjectId = deletedInvoice.projectId
+      ? deletedInvoice.projectId.toString()
+      : "";
+    if (linkedProjectId) {
+      await Project.findOneAndUpdate(
+        { _id: linkedProjectId, workspaceId: authUser.workspaceId },
+        { linkedInvoiceId: "", linkedInvoiceNumber: "" }
+      );
     }
 
     return successResponse(

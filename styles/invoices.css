@@ -36,8 +36,23 @@
   justify-content: center;
 }
 
+.invoice-preview__logo > span {
+  width: 100%;
+  height: 100%;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
 .invoice-preview__logo-img {
-  object-fit: contain;
+  object-fit: contain !important;
+  position: static !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
 }
 
 .invoice-preview__logo-placeholder {
@@ -209,9 +224,10 @@
 }
 
 .invoice-preview__footnote-logo {
-  width: 16px;
-  height: 16px;
-  object-fit: contain;
+  width: 16px !important;
+  height: 16px !important;
+  object-fit: contain !important;
+  display: block;
 }
 
 .invoice-preview__footnote-brand {
