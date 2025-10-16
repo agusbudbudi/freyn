@@ -314,7 +314,6 @@ const InvoicePreview = forwardRef(function InvoicePreview(
           unoptimized
         />
         <span className="invoice-preview__footnote-brand">Freyn</span>
-        <span>• Try for free at freyn.vercel.app</span>
       </div>
     </div>
   );
