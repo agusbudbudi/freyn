@@ -52,6 +52,12 @@ const invoiceSchema = new mongoose.Schema({
     required: true,
     index: true,
   },
+  projectId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Project",
+    default: null,
+    index: true,
+  },
   invoiceNumber: {
     type: String,
     required: true,

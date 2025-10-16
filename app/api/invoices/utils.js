@@ -91,8 +91,12 @@ export function toInvoiceResponse(invoice) {
       : { ...invoice };
 
   const { _id, __v, ...rest } = obj;
+  const projectId = rest.projectId
+    ? rest.projectId.toString?.() || String(rest.projectId)
+    : "";
   return {
     ...rest,
+    projectId,
     id: _id?.toString() || invoice.id || invoice._id?.toString() || "",
   };
 }

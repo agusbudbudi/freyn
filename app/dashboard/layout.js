@@ -283,7 +283,10 @@ export default function DashboardLayout({ children }) {
             <div key={idx} className="nav-section">
               <div className="nav-section-title">{section.section}</div>
               {section.items.map((item, itemIdx) => {
-                const isActive = pathname === item.href;
+                const isActive =
+                  pathname === item.href ||
+                  (item.href === "/dashboard/invoices" &&
+                    pathname.startsWith("/dashboard/invoices/"));
 
                 if (item.external) {
                   return (

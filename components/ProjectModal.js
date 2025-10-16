@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
@@ -15,6 +16,7 @@ export default function ProjectModal({
   onSave,
   editProject = null,
 }) {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     numberOrder: "",
     projectName: "",
@@ -40,6 +42,16 @@ export default function ProjectModal({
   const [submittingComment, setSubmittingComment] = useState(false);
   const [closing, setClosing] = useState(false);
   const closeTimerRef = useRef(null);
+
+  const linkedInvoiceId = (() => {
+    const value = editProject?.linkedInvoiceId;
+    if (!value) return "";
+    return value.toString().trim();
+  })();
+  const hasLinkedInvoice = Boolean(linkedInvoiceId);
+  const linkedInvoiceNumber = editProject?.linkedInvoiceNumber || "";
+  const canNavigateInvoice = Boolean(editProject?._id);
+  const invoiceDisplayNumber = linkedInvoiceNumber || linkedInvoiceId;
 
   const getAuthHeaders = useCallback(() => {
     if (typeof window === "undefined") return {};
@@ -252,6 +264,20 @@ export default function ProjectModal({
 
   const handleBriefChange = (value) => {
     setFormData((prev) => ({ ...prev, brief: value }));
+  };
+
+  const handleInvoiceNavigation = () => {
+    if (!canNavigateInvoice) {
+      toast.error("Please save the project before creating an invoice");
+      return;
+    }
+
+    const targetUrl = hasLinkedInvoice
+      ? `/dashboard/invoices/${linkedInvoiceId}`
+      : `/dashboard/invoices/add?projectId=${editProject._id}`;
+
+    handleStartClose();
+    router.push(targetUrl);
   };
 
   const handleSubmit = async (e) => {
@@ -636,32 +662,65 @@ export default function ProjectModal({
                     </div>
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Invoice Link</label>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      <input
-                        type="url"
-                        name="invoice"
-                        className="form-control"
-                        value={formData.invoice}
-                        onChange={handleInputChange}
-                        placeholder="https://splitbill-alpha.vercel.app/..."
-                        style={{ flex: 1 }}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-outline"
-                        onClick={() =>
-                          window.open(
-                            "https://splitbill-alpha.vercel.app/invoice.html",
-                            "_blank"
-                          )
-                        }
-                        style={{ whiteSpace: "nowrap", padding: "0 16px" }}
+                    <label className="form-label">Invoice</label>
+                    {hasLinkedInvoice ? (
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "12px",
+                        }}
                       >
-                        <i className="uil uil-external-link-alt"></i>
-                        Create Invoice
-                      </button>
-                    </div>
+                        <div
+                          style={{
+                            background: "#e0f2fe",
+                            color: "#1e3a8a",
+                            borderRadius: "10px",
+                            padding: "12px 16px",
+                            fontSize: "13px",
+                            fontWeight: 500,
+                            lineHeight: 1.5,
+                            width: "100%",
+                          }}
+                        >
+                          Your invoice has already been generated
+                          <strong style={{ marginLeft: "4px" }}>
+                            #{invoiceDisplayNumber}
+                          </strong>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-outline"
+                          onClick={handleInvoiceNavigation}
+                          style={{ whiteSpace: "nowrap", padding: "0 16px" }}
+                          disabled={!canNavigateInvoice}
+                        >
+                          <i className="uil uil-external-link-alt"></i>
+                          Open Invoice
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <input
+                          type="url"
+                          name="invoice"
+                          className="form-control"
+                          value={formData.invoice}
+                          onChange={handleInputChange}
+                          placeholder="https://splitbill-alpha.vercel.app/..."
+                          style={{ flex: 1 }}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-outline"
+                          onClick={handleInvoiceNavigation}
+                          style={{ whiteSpace: "nowrap", padding: "0 16px" }}
+                          disabled={!canNavigateInvoice}
+                        >
+                          <i className="uil uil-file-plus"></i>
+                          Create Invoice
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -773,7 +832,7 @@ export default function ProjectModal({
                     <label className="form-label">Status</label>
                     <div className="status-select-wrapper select-wrapper">
                       <span
-                        className={`status-badge ${getStatusClass(
+                        className={`status-label ${getStatusClass(
                           formData.status
                         )} status-select-badge`}
                       >

@@ -308,11 +308,13 @@ const InvoicePreview = forwardRef(function InvoicePreview(
         <Image
           src="/images/logo-freyn.png"
           alt="Freyn logo"
-          width={24}
-          height={24}
+          width={16}
+          height={16}
           className="invoice-preview__footnote-logo"
+          unoptimized
         />
         <span className="invoice-preview__footnote-brand">Freyn</span>
+        <span>• Try for free at freyn.vercel.app</span>
       </div>
     </div>
   );
