@@ -388,10 +388,9 @@ export default function DashboardPage() {
         </Link>
 
         <Link
-          href="https://splitbill-alpha.vercel.app/invoice.html"
-          target="_blank"
+          href="/dashboard/invoices/add"
           className="shortcut-card highlight"
-          aria-label="Open Invoice Generator"
+          aria-label="Create new invoice"
         >
           <span className="shortcut-icon title-icon--trophy">
             <i className="uil uil-invoice"></i>
@@ -399,7 +398,7 @@ export default function DashboardPage() {
           <div className="shortcut-content">
             <div className="shortcut-title">Create Invoice</div>
             <div className="shortcut-desc">
-              Make an invoice with SplitBill App
+              Build and send invoices from Freyn dashboard
             </div>
           </div>
           <i className="uil uil-angle-right-b shortcut-arrow"></i>

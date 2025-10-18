@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import LoadingState from "@/components/LoadingState";
@@ -13,6 +13,9 @@ export default function ResultPage() {
   const [error, setError] = useState(null);
   const [commentContent, setCommentContent] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [invoice, setInvoice] = useState(null);
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [invoiceError, setInvoiceError] = useState(null);
 
   useEffect(() => {
     if (params.id) {
@@ -27,7 +30,14 @@ export default function ResultPage() {
       const data = await response.json();
 
       if (data.success) {
-        setProject(data.data.project);
+        const projectData = data.data.project;
+        setProject(projectData);
+        if (projectData?.linkedInvoiceId) {
+          fetchInvoiceData(projectData.linkedInvoiceId);
+        } else {
+          setInvoice(null);
+          setInvoiceError(null);
+        }
       } else {
         setError(data.message || "Failed to load project");
       }
@@ -36,6 +46,34 @@ export default function ResultPage() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchInvoiceData = async (invoiceId) => {
+    if (!invoiceId) {
+      setInvoice(null);
+      setInvoiceError(null);
+      return;
+    }
+
+    try {
+      setInvoiceLoading(true);
+      setInvoiceError(null);
+      const response = await fetch(`/api/public/invoices/${invoiceId}`);
+      const data = await response.json();
+
+      if (data.success) {
+        setInvoice(data.data.invoice);
+      } else {
+        setInvoice(null);
+        setInvoiceError(data.message || "Failed to load invoice");
+      }
+    } catch (err) {
+      console.error(err);
+      setInvoice(null);
+      setInvoiceError("Failed to load invoice data");
+    } finally {
+      setInvoiceLoading(false);
     }
   };
 
@@ -92,6 +130,18 @@ export default function ResultPage() {
     });
   };
 
+  const formatCurrency = (value) => {
+    try {
+      return new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        minimumFractionDigits: 0,
+      }).format(value || 0);
+    } catch {
+      return `Rp ${Number(value || 0).toLocaleString("id-ID")}`;
+    }
+  };
+
   const formatCommentDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("id-ID", {
       year: "numeric",
@@ -100,6 +150,29 @@ export default function ResultPage() {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const getInvoiceStatusInfo = (status) => {
+    const normalized = (status || "draft").toLowerCase();
+    const statusMap = {
+      draft: {
+        text: "Draft",
+        className: "status-label status-pending",
+        icon: "uil-file",
+      },
+      sent: {
+        text: "Waiting Payment",
+        className: "status-label status-review",
+        icon: "uil uil-clock",
+      },
+      paid: {
+        text: "Paid",
+        className: "status-label status-success",
+        icon: "uil-check-circle",
+      },
+    };
+
+    return statusMap[normalized] || statusMap.draft;
   };
 
   const generateAvatar = (name, email) => {
@@ -178,6 +251,17 @@ export default function ResultPage() {
     toast.error("Invoice not available for this project");
   };
 
+  const canViewInvoice = useMemo(() => {
+    return Boolean(project?.invoice || project?.linkedInvoiceId);
+  }, [project]);
+
+  const invoiceDisplayNumber = useMemo(() => {
+    if (invoice?.invoiceNumber) return invoice.invoiceNumber;
+    if (project?.linkedInvoiceNumber) return project.linkedInvoiceNumber;
+    if (project?.linkedInvoiceId) return project.linkedInvoiceId;
+    return "-";
+  }, [invoice, project]);
+
   if (loading) {
     return (
       <div className="container">
@@ -209,6 +293,9 @@ export default function ResultPage() {
   }
 
   const statusInfo = getStatusInfo(project.status);
+  const invoiceStatusInfo = invoice
+    ? getInvoiceStatusInfo(invoice.status)
+    : null;
   const clientComments = (project.comments || [])
     .filter((comment) => comment.isClient)
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
@@ -233,59 +320,104 @@ export default function ResultPage() {
       </div>
 
       {/* Project Details */}
-      <div className="details-section">
-        <div className="detail-row">
-          <span className="detail-label">Order No</span>
-          <span className="detail-value">{project.numberOrder}</span>
-        </div>
+      <div className="projects-section">
+        <div className="details-section">
+          <div className="detail-row">
+            <span className="detail-label">Order No</span>
+            <span className="detail-value">{project.numberOrder}</span>
+          </div>
 
-        <div className="detail-row">
-          <span className="detail-label">Project Name</span>
-          <span className="detail-value">{project.projectName}</span>
-        </div>
+          <div className="detail-row">
+            <span className="detail-label">Project Name</span>
+            <span className="detail-value">{project.projectName}</span>
+          </div>
 
-        <div className="detail-row">
-          <span className="detail-label">Client</span>
-          <span className="detail-value">{project.clientName}</span>
-        </div>
+          <div className="detail-row">
+            <span className="detail-label">Client</span>
+            <span className="detail-value">{project.clientName}</span>
+          </div>
 
-        <div className="detail-row">
-          <span className="detail-label">Due Date</span>
-          <span className="detail-value">{formatDate(project.deadline)}</span>
-        </div>
+          <div className="detail-row">
+            <span className="detail-label">Due Date</span>
+            <span className="detail-value">{formatDate(project.deadline)}</span>
+          </div>
 
-        <div className="detail-row">
-          <span className="detail-label">Status</span>
-          <span className="detail-value">
-            <span className="status-badge-container">
-              <span className={`status-badge ${statusInfo.class}`}>
-                <i className={`uil ${statusInfo.icon}`}></i> {statusInfo.text}
+          <div className="detail-row">
+            <span className="detail-label">Status</span>
+            <span className="detail-value">
+              <span className="status-badge-container">
+                <span className={`status-label ${statusInfo.class}`}>
+                  <i className={`uil ${statusInfo.icon}`}></i> {statusInfo.text}
+                </span>
               </span>
             </span>
-          </span>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="buttons-section" style={{ marginTop: "16px" }}>
+          <button
+            onClick={() => openDeliverables(project.deliverables)}
+            className="btn btn-primary"
+            style={{
+              opacity: project.deliverables ? "1" : "0.6",
+            }}
+          >
+            <i className="uil uil-external-link-alt"></i> Lihat Hasil Desain
+          </button>
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="buttons-section">
-        <button
-          onClick={() => openDeliverables(project.deliverables)}
-          className="btn btn-primary"
-          style={{
-            opacity: project.deliverables ? "1" : "0.6",
-          }}
-        >
-          <i className="uil uil-external-link-alt"></i> Lihat Hasil Desain
-        </button>
-        <button
-          onClick={handleInvoiceNavigation}
-          className="btn btn-secondary"
-          style={{
-            opacity: project.invoice || project.linkedInvoiceId ? "1" : "0.6",
-          }}
-        >
-          Lihat Invoice
-        </button>
+      {/* Payment Section */}
+      <div className="payment-section">
+        <div className="details-section">
+          <h4 className="section-title">Payment Information</h4>
+          <div className="detail-row">
+            <span className="detail-label">Payment Status</span>
+            <span className="detail-value">
+              {invoiceLoading ? (
+                "Loading..."
+              ) : invoice ? (
+                <span className={invoiceStatusInfo.className}>
+                  <i className={`uil ${invoiceStatusInfo.icon}`}></i>{" "}
+                  {invoiceStatusInfo.text}
+                </span>
+              ) : invoiceError ? (
+                <span style={{ color: "#ef4444" }}>{invoiceError}</span>
+              ) : (
+                "Invoice not available"
+              )}
+            </span>
+          </div>
+
+          <div className="detail-row">
+            <span className="detail-label">Total Amount</span>
+            <span className="detail-value">
+              {invoice
+                ? formatCurrency(invoice.total)
+                : formatCurrency(project.totalPrice)}
+            </span>
+          </div>
+
+          <div className="detail-row">
+            <span className="detail-label">Invoice ID</span>
+            <span className="detail-value">{invoiceDisplayNumber}</span>
+          </div>
+        </div>
+
+        <div className="buttons-section" style={{ marginTop: "16px" }}>
+          <button
+            onClick={handleInvoiceNavigation}
+            className="btn btn-secondary"
+            disabled={!canViewInvoice}
+            style={{
+              opacity: canViewInvoice ? "1" : "0.6",
+              cursor: canViewInvoice ? "pointer" : "not-allowed",
+            }}
+          >
+            Lihat Invoice
+          </button>
+        </div>
       </div>
 
       {/* Comments Section */}

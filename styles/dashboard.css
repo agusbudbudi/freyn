@@ -75,7 +75,7 @@
 .nav-item {
   display: flex;
   align-items: center;
-  padding: 12px;
+  padding: 8px 12px;
   color: var(--sidebar-text-muted);
   text-decoration: none;
   transition: all 0.2s ease;
@@ -115,7 +115,7 @@
 .content-header {
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-primary);
-  padding: 10px 32px;
+  padding: 6px 32px;
   position: fixed;
   top: 0;
   right: 0;
@@ -155,7 +155,7 @@
 
 .content-body {
   padding: 24px;
-  margin-top: 74px;
+  margin-top: 66px;
 }
 
 /* Stats Cards */
@@ -1691,6 +1691,87 @@ table tbody tr:last-child td {
   color: var(--text-placeholder);
 }
 
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.pagination__button {
+  border: 1px solid var(--border-secondary);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination__button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination__button:not(:disabled):hover {
+  border-color: var(--border-focus);
+  color: var(--accent-primary);
+}
+
+.pagination__list {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pagination__page {
+  border: 1px solid var(--border-secondary);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-radius: 8px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.pagination__page:hover {
+  border-color: var(--border-focus);
+  color: var(--accent-primary);
+}
+
+.pagination__page--active {
+  background: var(--accent-primary);
+  color: #fff;
+  border-color: var(--accent-primary);
+  cursor: default;
+}
+
+.pagination__page--active:hover {
+  background: var(--accent-primary-hover);
+  color: #fff;
+  border-color: var(--accent-primary-hover);
+}
+
 /* Overdue badge */
 .overdue-badge {
   display: inline-block;
@@ -1743,6 +1824,64 @@ table tbody tr:last-child td {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 12px;
   margin: 10px 0 24px;
+}
+
+.status-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  /* margin-bottom: 16px; */
+  padding: 0 16px 16px 16px;
+}
+
+.status-filter__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-secondary);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.status-filter__chip:hover {
+  border-color: var(--border-focus);
+  color: var(--accent-primary);
+}
+
+.status-filter__chip--active {
+  background: var(--accent-primary);
+  color: #fff;
+  border-color: var(--accent-primary);
+}
+
+.status-filter__chip--active:hover {
+  background: var(--accent-primary-hover);
+  color: #fff;
+  border-color: var(--accent-primary-hover);
+}
+
+.status-filter__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--bg-primary);
+  color: inherit;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.status-filter__chip--active .status-filter__count {
+  background: rgba(255, 255, 255, 0.28);
 }
 
 .shortcut-card {
