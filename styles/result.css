@@ -8,7 +8,7 @@ body {
 }
 
 .container {
-  width: min(720px, 100%);
+  /* width: min(720px, 100%); */
   margin: 0 auto;
 }
 
@@ -128,12 +128,6 @@ body {
   text-align: center;
 }
 
-.details-section {
-  padding: 30px;
-  background: var(--bg-secondary);
-  border-radius: 20px 20px 0 0;
-}
-
 .section-title {
   font-size: 16px;
   color: var(--text-primary);
@@ -167,11 +161,11 @@ body {
   text-align: right;
 }
 
-.buttons-section {
+/* .buttons-section {
   padding: 0 30px 30px;
   background: var(--bg-secondary);
   border-radius: 0 0 20px 20px;
-}
+} */
 
 .buttons-section .btn {
   width: 100%;
@@ -269,9 +263,11 @@ body {
 }
 
 /* Client Comments Section */
-.comments-section {
+.comments-section,
+.projects-section,
+.payment-section {
   margin: 16px 0;
-  padding: 20px;
+  padding: 24px;
   background: var(--bg-secondary);
   border-radius: 16px;
 }

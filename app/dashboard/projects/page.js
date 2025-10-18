@@ -5,6 +5,10 @@ import Link from "next/link";
 import ProjectModal from "../../../components/ProjectModal";
 import LoadingState from "@/components/LoadingState";
 import { toast } from "@/components/ui/toast";
+import Pagination from "@/components/Pagination";
+import StatusFilter from "@/components/StatusFilter";
+import { usePagination } from "@/lib/hooks/usePagination";
+import { useStatusFilter } from "@/lib/hooks/useStatusFilter";
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState([]);
@@ -243,6 +247,39 @@ export default function ProjectsPage() {
     );
   });
 
+  const statusFilter = useStatusFilter(filteredProjects, {
+    order: [
+      "to do",
+      "in progress",
+      "waiting for payment",
+      "in review",
+      "revision",
+      "done",
+    ],
+    formatLabel: (status) => {
+      const labelMap = {
+        "to do": "To Do",
+        "in progress": "In Progress",
+        "waiting for payment": "Waiting Payment",
+        "in review": "In Review",
+        revision: "Revision",
+        done: "Done",
+      };
+      return labelMap[status] || status;
+    },
+  });
+
+  const pagination = usePagination(statusFilter.filteredItems, 10);
+  useEffect(() => {
+    pagination.goToPage(1);
+    statusFilter.setActiveStatus("all");
+  }, [searchTerm]);
+
+  useEffect(() => {
+    pagination.goToPage(1);
+  }, [statusFilter.activeStatus]);
+  const displayedProjects = pagination.pageItems;
+
   if (loading) {
     return (
       <div className="content-body">
@@ -332,23 +369,33 @@ export default function ProjectsPage() {
               </p>
             </div>
           ) : (
-            <div className="table-container">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Order No</th>
-                    <th>Project Name</th>
-                    <th>Client</th>
-                    <th>Due Date</th>
-                    <th>Total Price</th>
-                    <th>Deliverables</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredProjects.map((project) => (
-                    <tr key={project._id}>
+            <>
+              <StatusFilter
+                options={statusFilter.options}
+                value={statusFilter.activeStatus}
+                onChange={(value) => {
+                  statusFilter.setActiveStatus(value);
+                  pagination.goToPage(1);
+                }}
+              />
+
+              <div className="table-container">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Order No</th>
+                      <th>Project Name</th>
+                      <th>Client</th>
+                      <th>Due Date</th>
+                      <th>Total Price</th>
+                      <th>Deliverables</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {displayedProjects.map((project) => (
+                      <tr key={project._id}>
                       <td>
                         <a
                           href="#"
@@ -474,10 +521,21 @@ export default function ProjectsPage() {
                         </div>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="pagination-wrapper">
+                <Pagination
+                  currentPage={pagination.currentPage}
+                  totalPages={pagination.totalPages}
+                  onPageChange={pagination.goToPage}
+                  hasNextPage={pagination.hasNextPage}
+                  hasPreviousPage={pagination.hasPreviousPage}
+                  paginationRange={pagination.paginationRange}
+                />
+              </div>
+            </>
           )}
         </div>
       </div>
