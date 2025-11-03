@@ -191,14 +191,13 @@ export default function ClientModal({
 
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Phone Number *</label>
+                  <label className="form-label">Phone Number</label>
                   <input
                     type="tel"
                     name="phoneNumber"
                     className="form-control"
                     value={formData.phoneNumber}
                     onChange={handleInputChange}
-                    required
                     placeholder="6281234567890"
                   />
                 </div>

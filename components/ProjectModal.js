@@ -40,7 +40,9 @@ export default function ProjectModal({
   const [error, setError] = useState("");
   const [commentContent, setCommentContent] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [activeDetailTab, setActiveDetailTab] = useState("comment");
   const [closing, setClosing] = useState(false);
+  const [projectDetails, setProjectDetails] = useState(editProject);
   const closeTimerRef = useRef(null);
 
   const linkedInvoiceId = (() => {
@@ -52,6 +54,7 @@ export default function ProjectModal({
   const linkedInvoiceNumber = editProject?.linkedInvoiceNumber || "";
   const canNavigateInvoice = Boolean(editProject?._id);
   const invoiceDisplayNumber = linkedInvoiceNumber || linkedInvoiceId;
+  const editProjectId = editProject?._id;
 
   const getAuthHeaders = useCallback(() => {
     if (typeof window === "undefined") return {};
@@ -117,6 +120,38 @@ export default function ProjectModal({
       if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    setProjectDetails(editProject);
+  }, [editProject]);
+
+  useEffect(() => {
+    if (!isOpen || !editProjectId) return;
+
+    let isCancelled = false;
+
+    const loadProjectDetails = async () => {
+      try {
+        const response = await fetch(`/api/projects/${editProjectId}`, {
+          headers: {
+            ...getAuthHeaders(),
+          },
+        });
+        const data = await response.json();
+        if (!isCancelled && data.success) {
+          setProjectDetails(data.data?.project || editProject);
+        }
+      } catch (err) {
+        console.error("Failed to fetch project details:", err);
+      }
+    };
+
+    loadProjectDetails();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isOpen, editProjectId, getAuthHeaders, editProject]);
 
   const fetchClients = useCallback(async () => {
     try {
@@ -334,6 +369,9 @@ export default function ProjectModal({
 
       if (data.success) {
         toast.success("Project saved successfully");
+        if (data.data?.project) {
+          setProjectDetails(data.data.project);
+        }
         onSave(data.data?.project);
         handleStartClose();
       } else {
@@ -379,6 +417,44 @@ export default function ProjectModal({
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const formatLogTimestamp = (dateString) => {
+    if (!dateString) return "-";
+    const parsed = new Date(dateString);
+    if (Number.isNaN(parsed.getTime())) return "-";
+    return new Intl.DateTimeFormat("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(parsed);
+  };
+
+  const formatLogDetailValue = (detail) => {
+    if (!detail) return "-";
+    const { valueType, newValue } = detail;
+
+    if (valueType === "currency") {
+      const numericValue = Number(newValue || 0);
+      return formatCurrency(Number.isNaN(numericValue) ? 0 : numericValue);
+    }
+
+    if (valueType === "number") {
+      const numericValue = Number(newValue);
+      return Number.isNaN(numericValue) ? "-" : String(numericValue);
+    }
+
+    if (valueType === "datetime") {
+      return formatLogTimestamp(newValue);
+    }
+
+    if (typeof newValue === "string") {
+      return newValue.trim() === "" ? "-" : newValue.trim();
+    }
+
+    return newValue ?? "-";
   };
 
   // Status helpers to match list page badge colors/labels
@@ -466,6 +542,9 @@ export default function ProjectModal({
       if (data.success) {
         setCommentContent("");
         toast.success("Comment added successfully");
+        if (data.data?.project) {
+          setProjectDetails(data.data.project);
+        }
         // Pass the entire updated project back to the parent to update its state
         onSave(data.data.project, { source: "comment" });
       } else {
@@ -491,6 +570,19 @@ export default function ProjectModal({
     }),
     []
   );
+
+  const sortedLogs = useMemo(() => {
+    const sourceLogs = projectDetails?.logs || editProject?.logs;
+    if (!Array.isArray(sourceLogs)) {
+      return [];
+    }
+
+    return [...sourceLogs].sort((a, b) => {
+      const aTime = new Date(a.createdAt || 0).getTime();
+      const bTime = new Date(b.createdAt || 0).getTime();
+      return bTime - aTime;
+    });
+  }, [projectDetails?.logs, editProject?.logs]);
 
   if (!isOpen && !closing) return null;
 
@@ -727,90 +819,193 @@ export default function ProjectModal({
                 {/* Comments Section */}
                 {editProject && (
                   <div className="project-section">
-                    <h3 className="project-section-title">
-                      Comments & Discussion
-                    </h3>
-                    <p class="information-text">
-                      <i class="uil uil-info-circle"></i> Internal Comment only
-                      can be seen by you.
-                    </p>
+                    <h3 className="project-section-title">Activity</h3>
+
+                    <div className="project-detail-tabs">
+                      <button
+                        type="button"
+                        className={`project-detail-tab ${
+                          activeDetailTab === "comment"
+                            ? "project-detail-tab--active"
+                            : ""
+                        }`}
+                        onClick={() => setActiveDetailTab("comment")}
+                      >
+                        Comments
+                      </button>
+                      <button
+                        type="button"
+                        className={`project-detail-tab ${
+                          activeDetailTab === "history"
+                            ? "project-detail-tab--active"
+                            : ""
+                        }`}
+                        onClick={() => setActiveDetailTab("history")}
+                      >
+                        History
+                      </button>
+                    </div>
 
                     {/* Comment Form */}
-                    <div className="comment-form-wrapper">
-                      <div className="comment-input-wrapper">
-                        <textarea
-                          value={commentContent}
-                          onChange={(e) => setCommentContent(e.target.value)}
-                          className="comment-textarea"
-                          placeholder="Add a comment or note about this project..."
-                          rows="3"
-                        />
-                        <button
-                          type="button"
-                          className="comment-send-btn"
-                          onClick={handleSubmitComment}
-                          disabled={submittingComment}
-                        >
-                          <i className="uil uil-message"></i>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Comments List */}
-                    <div className="comments-list">
-                      {editProject.comments &&
-                      editProject.comments.length > 0 ? (
-                        editProject.comments
-                          .sort(
-                            (a, b) =>
-                              new Date(b.createdAt || 0) -
-                              new Date(a.createdAt || 0)
-                          )
-                          .map((comment, index) => (
-                            <div
-                              key={comment.id || comment.createdAt || index}
-                              className="comment-item"
+                    {activeDetailTab === "comment" ? (
+                      <>
+                        {" "}
+                        <p class="information-text">
+                          <i class="uil uil-info-circle"></i> Internal Comment
+                          only can be seen by you.
+                        </p>
+                        <div className="comment-form-wrapper">
+                          <div className="comment-input-wrapper">
+                            <textarea
+                              value={commentContent}
+                              onChange={(e) =>
+                                setCommentContent(e.target.value)
+                              }
+                              className="comment-textarea"
+                              placeholder="Add a comment or note about this project..."
+                              rows="3"
+                            />
+                            <button
+                              type="button"
+                              className="comment-send-btn"
+                              onClick={handleSubmitComment}
+                              disabled={submittingComment}
                             >
-                              <Image
-                                src={generateAvatar(
-                                  comment.authorName,
-                                  comment.authorEmail
-                                )}
-                                alt={comment.authorName || "Comment author"}
-                                width={32}
-                                height={32}
-                                className="comment-avatar"
-                                unoptimized
-                              />
-                              <div className="comment-content">
-                                <div className="comment-header">
-                                  <span className="comment-author">
-                                    {comment.authorName}
-                                  </span>
-                                  <span className="comment-date">
-                                    {formatCommentDate(comment.createdAt)}
-                                  </span>
-                                  <span
-                                    className={`comment-badge ${
-                                      comment.isClient ? "client" : "team"
-                                    }`}
-                                  >
-                                    {comment.isClient ? "Client" : "Team"}
-                                  </span>
-                                </div>
-                                <div className="comment-text">
-                                  {comment.content}
-                                </div>
-                              </div>
-                            </div>
-                          ))
-                      ) : (
-                        <div className="no-comments">
-                          <i className="uil uil-comment-dots"></i>
-                          <p>No comments yet. Be the first to add one!</p>
+                              <i className="uil uil-message"></i>
+                            </button>
+                          </div>
                         </div>
-                      )}
-                    </div>
+                        <div className="comments-list">
+                          {(() => {
+                            const commentSource =
+                              projectDetails?.comments || editProject?.comments;
+                            if (
+                              !Array.isArray(commentSource) ||
+                              commentSource.length === 0
+                            ) {
+                              return (
+                                <div className="no-comments">
+                                  <i className="uil uil-comment-dots"></i>
+                                  <p>
+                                    No comments yet. Be the first to add one!
+                                  </p>
+                                </div>
+                              );
+                            }
+
+                            return commentSource
+                              .slice()
+                              .sort(
+                                (a, b) =>
+                                  new Date(b.createdAt || 0) -
+                                  new Date(a.createdAt || 0)
+                              )
+                              .map((comment, index) => (
+                                <div
+                                  key={comment.id || comment.createdAt || index}
+                                  className="comment-item"
+                                >
+                                  <Image
+                                    src={generateAvatar(
+                                      comment.authorName,
+                                      comment.authorEmail
+                                    )}
+                                    alt={comment.authorName || "Comment author"}
+                                    width={32}
+                                    height={32}
+                                    className="comment-avatar"
+                                    unoptimized
+                                  />
+                                  <div className="comment-content">
+                                    <div className="comment-header">
+                                      <span className="comment-author">
+                                        {comment.authorName}
+                                      </span>
+                                      <span className="comment-date">
+                                        {formatCommentDate(comment.createdAt)}
+                                      </span>
+                                      <span
+                                        className={`comment-badge ${
+                                          comment.isClient ? "client" : "team"
+                                        }`}
+                                      >
+                                        {comment.isClient ? "Client" : "Team"}
+                                      </span>
+                                    </div>
+                                    <div className="comment-text">
+                                      {comment.content}
+                                    </div>
+                                  </div>
+                                </div>
+                              ));
+                          })()}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="project-log-container project-log-container--inline">
+                        <div className="project-log-list">
+                          {sortedLogs.length > 0 ? (
+                            sortedLogs.map((log) => {
+                              const actorName = log.actorName || "Unknown user";
+                              const logKey = log.id || log._id || log.createdAt;
+
+                              return (
+                                <div key={logKey} className="project-log-item">
+                                  <div className="project-log-header">
+                                    <Image
+                                      src={generateAvatar(
+                                        log.actorName,
+                                        log.actorEmail
+                                      )}
+                                      alt={actorName}
+                                      width={32}
+                                      height={32}
+                                      className="project-log-avatar"
+                                      unoptimized
+                                    />
+                                    <div>
+                                      <div className="project-log-title">
+                                        {log.message}
+                                      </div>
+                                      <div className="project-log-meta">
+                                        {formatLogTimestamp(log.createdAt)} by{" "}
+                                        {actorName}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  {log.type === "project_edit" &&
+                                    Array.isArray(log.details) &&
+                                    log.details.length > 0 && (
+                                      <ul className="project-log-details">
+                                        {log.details.map((detail, index) => (
+                                          <li
+                                            key={`${logKey}-${
+                                              detail.field || index
+                                            }`}
+                                          >
+                                            <span className="project-log-detail-label">
+                                              {detail.label}
+                                            </span>{" "}
+                                            changed to{" "}
+                                            <span className="project-log-detail-value">
+                                              {formatLogDetailValue(detail)}
+                                            </span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    )}
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <div className="project-log-empty">
+                              <i class="uil uil-history"></i>
+                              <p>No log history yet</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
