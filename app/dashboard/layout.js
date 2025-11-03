@@ -147,7 +147,6 @@ export default function DashboardLayout({ children }) {
           href: "/dashboard/projects/calendar",
           icon: "uil-calendar-alt",
           label: "Calendar",
-          badge: "New",
         },
         {
           href: "/dashboard/projects",
@@ -389,9 +388,7 @@ export default function DashboardLayout({ children }) {
                       src={avatarUrl}
                       className="avatar-profile"
                       alt={
-                        currentUser?.fullName ||
-                        currentUser?.name ||
-                        "Profile"
+                        currentUser?.fullName || currentUser?.name || "Profile"
                       }
                       width={40}
                       height={40}

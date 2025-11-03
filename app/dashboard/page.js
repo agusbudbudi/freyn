@@ -398,7 +398,7 @@ export default function DashboardPage() {
           <div className="shortcut-content">
             <div className="shortcut-title">Create Invoice</div>
             <div className="shortcut-desc">
-              Build and send invoices from Freyn dashboard
+              Build and send invoices from Freyn
             </div>
           </div>
           <i className="uil uil-angle-right-b shortcut-arrow"></i>

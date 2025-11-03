@@ -147,6 +147,69 @@ const projectSchema = new mongoose.Schema({
       },
     },
   ],
+  logs: {
+    type: [
+      {
+        id: {
+          type: String,
+          required: true,
+          default: () => new mongoose.Types.ObjectId().toString(),
+        },
+        type: {
+          type: String,
+          enum: ["status_change", "project_edit"],
+          required: true,
+        },
+        message: {
+          type: String,
+          required: true,
+        },
+        details: [
+          {
+            field: {
+              type: String,
+            },
+            label: {
+              type: String,
+            },
+            valueType: {
+              type: String,
+              default: "text",
+            },
+            previousValue: {
+              type: mongoose.Schema.Types.Mixed,
+              default: "",
+            },
+            newValue: {
+              type: mongoose.Schema.Types.Mixed,
+              default: "",
+            },
+          },
+        ],
+        status: {
+          type: String,
+          default: "",
+        },
+        actorId: {
+          type: String,
+          required: true,
+        },
+        actorName: {
+          type: String,
+          default: "",
+        },
+        actorEmail: {
+          type: String,
+          default: "",
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+    default: [],
+  },
 });
 
 // Update the updatedAt field before saving

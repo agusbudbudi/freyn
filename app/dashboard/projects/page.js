@@ -18,6 +18,8 @@ export default function ProjectsPage() {
   const [editingProject, setEditingProject] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [openActionId, setOpenActionId] = useState(null);
+  const [actionMenuPlacement, setActionMenuPlacement] = useState("bottom");
+  const [actionMenuStyle, setActionMenuStyle] = useState({});
   const actionMenuRef = useRef(null);
   const actionTriggerRef = useRef(null);
 
@@ -122,7 +124,11 @@ export default function ProjectsPage() {
   };
 
   useEffect(() => {
-    if (!openActionId) return;
+    if (!openActionId) {
+      setActionMenuPlacement("bottom");
+      setActionMenuStyle({});
+      return;
+    }
 
     const handleClickOutside = (event) => {
       if (
@@ -146,12 +152,72 @@ export default function ProjectsPage() {
       }
     };
 
+    const updatePlacement = () => {
+      if (!actionMenuRef.current) return;
+      const tray = actionMenuRef.current.querySelector(".action-menu__tray");
+      const trigger = actionTriggerRef.current;
+      if (!tray || !trigger) return;
+
+      const viewportHeight =
+        window.innerHeight || document.documentElement.clientHeight;
+      const triggerRect = trigger.getBoundingClientRect();
+      const trayHeight = tray.scrollHeight;
+      const gap = 8;
+      const margin = 12;
+      const spaceBelow = Math.max(viewportHeight - triggerRect.bottom - margin, 0);
+      const spaceAbove = Math.max(triggerRect.top - margin, 0);
+
+      let nextPlacement = "bottom";
+      if (spaceBelow >= trayHeight) {
+        nextPlacement = "bottom";
+      } else if (spaceAbove >= trayHeight) {
+        nextPlacement = "top";
+      } else {
+        nextPlacement = spaceBelow >= spaceAbove ? "bottom" : "top";
+      }
+
+      const maxHeight =
+        nextPlacement === "bottom" ? spaceBelow || undefined : spaceAbove || undefined;
+
+      setActionMenuStyle((prev) => {
+        const style =
+          nextPlacement === "top"
+            ? {
+                top: "auto",
+                bottom: `calc(100% + ${gap}px)`
+              }
+            : {
+                top: `calc(100% + ${gap}px)`,
+                bottom: "auto"
+              };
+        if (maxHeight) {
+          style.maxHeight = `${Math.max(maxHeight, 120)}px`;
+          style.overflowY = "auto";
+        } else {
+          delete style.maxHeight;
+          delete style.overflowY;
+        }
+        return style;
+      });
+
+      setActionMenuPlacement((prev) =>
+        prev === nextPlacement ? prev : nextPlacement
+      );
+    };
+
+    const rafId = requestAnimationFrame(updatePlacement);
+
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleEscape);
+    window.addEventListener("resize", updatePlacement);
+    window.addEventListener("scroll", updatePlacement, true);
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleEscape);
+      window.removeEventListener("resize", updatePlacement);
+      window.removeEventListener("scroll", updatePlacement, true);
+      cancelAnimationFrame(rafId);
     };
   }, [openActionId]);
 
@@ -207,6 +273,8 @@ export default function ProjectsPage() {
   };
 
   const toggleActionMenu = (projectId) => {
+    setActionMenuPlacement("bottom");
+    setActionMenuStyle({});
     setOpenActionId((prev) => (prev === projectId ? null : projectId));
   };
 
@@ -355,6 +423,16 @@ export default function ProjectsPage() {
               </button>
             )}
           </div>
+          {filteredProjects.length > 0 && (
+            <StatusFilter
+              options={statusFilter.options}
+              value={statusFilter.activeStatus}
+              onChange={(value) => {
+                statusFilter.setActiveStatus(value);
+                pagination.goToPage(1);
+              }}
+            />
+          )}
         </div>
 
         <div className="card-body">
@@ -370,15 +448,6 @@ export default function ProjectsPage() {
             </div>
           ) : (
             <>
-              <StatusFilter
-                options={statusFilter.options}
-                value={statusFilter.activeStatus}
-                onChange={(value) => {
-                  statusFilter.setActiveStatus(value);
-                  pagination.goToPage(1);
-                }}
-              />
-
               <div className="table-container">
                 <table className="table">
                   <thead>
@@ -482,7 +551,14 @@ export default function ProjectsPage() {
                             <i className="uil uil-ellipsis-h"></i>
                           </button>
                           {openActionId === project._id && (
-                            <div className="action-menu__tray">
+                            <div
+                              className={`action-menu__tray ${
+                                actionMenuPlacement === "top"
+                                  ? "action-menu__tray--dropup"
+                                  : ""
+                              }`}
+                              style={actionMenuStyle}
+                            >
                               <button
                                 type="button"
                                 className="action-menu__item"
@@ -525,16 +601,18 @@ export default function ProjectsPage() {
                   </tbody>
                 </table>
               </div>
-              <div className="pagination-wrapper">
-                <Pagination
-                  currentPage={pagination.currentPage}
-                  totalPages={pagination.totalPages}
-                  onPageChange={pagination.goToPage}
-                  hasNextPage={pagination.hasNextPage}
-                  hasPreviousPage={pagination.hasPreviousPage}
-                  paginationRange={pagination.paginationRange}
-                />
-              </div>
+              {pagination.totalPages > 1 && (
+                <div className="pagination-wrapper">
+                  <Pagination
+                    currentPage={pagination.currentPage}
+                    totalPages={pagination.totalPages}
+                    onPageChange={pagination.goToPage}
+                    hasNextPage={pagination.hasNextPage}
+                    hasPreviousPage={pagination.hasPreviousPage}
+                    paginationRange={pagination.paginationRange}
+                  />
+                </div>
+              )}
             </>
           )}
         </div>

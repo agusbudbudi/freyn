@@ -201,7 +201,7 @@ export default function ProjectsCalendarPage() {
         {/* <div className="card-header">
           <h2 className="card-title">Projects Calendar</h2>
         </div> */}
-        <div className="card-body" style={{ height: "88dvh" }}>
+        <div className="card-body" style={{ height: "85dvh" }}>
           {!loading && (
             <Calendar
               localizer={localizer}

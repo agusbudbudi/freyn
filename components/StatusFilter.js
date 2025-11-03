@@ -16,7 +16,7 @@ export default function StatusFilter({ options = [], value, onChange }) {
             }`}
             onClick={() => onChange(option.value)}
           >
-            <span>{option.label}</span>
+            <span>{option.value === "all" ? "All" : option.label}</span>
             <span className="status-filter__count">{option.count}</span>
           </button>
         );
