@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import "../../styles/dashboard.css";
@@ -9,6 +9,106 @@ import "../../styles/mobile.css";
 import "../../styles/invoices.css";
 import ProfileModal from "@/components/ProfileModal";
 import { toast } from "@/components/ui/toast";
+import workspacePermissionsConfig from "@/lib/workspacePermissions.json";
+
+const MENU_ITEMS_CONFIG = Array.isArray(workspacePermissionsConfig?.menuItems)
+  ? workspacePermissionsConfig.menuItems
+  : [];
+
+const DEFAULT_ROLE_PERMISSIONS =
+  workspacePermissionsConfig?.defaultPermissions || {};
+
+const OWNER_MENU_KEYS = MENU_ITEMS_CONFIG.map((item) => item.key);
+
+const RAW_NAV_SECTIONS = [
+  {
+    section: "Overview",
+    items: [
+      {
+        href: "/dashboard",
+        icon: "uil-chart-line",
+        label: "Dashboard",
+        permission: "dashboard",
+      },
+      {
+        href: "/dashboard/projects/calendar",
+        icon: "uil-calendar-alt",
+        label: "Calendar",
+        permission: "calendar",
+      },
+      {
+        href: "/dashboard/projects",
+        icon: "uil-folder-open",
+        label: "Projects",
+        permission: "projects",
+      },
+      {
+        href: "/dashboard/clients",
+        icon: "uil-users-alt",
+        label: "Clients",
+        permission: "clients",
+      },
+      {
+        href: "/dashboard/services",
+        icon: "uil-package",
+        label: "Services",
+        permission: "services",
+      },
+      {
+        href: "/dashboard/invoices",
+        icon: "uil-invoice",
+        label: "Invoices",
+        badge: "New",
+        permission: "invoices",
+      },
+    ],
+  },
+  {
+    section: "Settings",
+    items: [
+      {
+        href: "/dashboard/workspace",
+        icon: "uil-window",
+        label: "Workspace",
+        permission: "workspace-settings",
+      },
+      {
+        href: "/dashboard/portfolio",
+        icon: "uil-palette",
+        label: "Portfolio",
+        badge: "New",
+        permission: "portfolio",
+      },
+    ],
+  },
+  {
+    section: "Tools",
+    items: [
+      {
+        href: "https://splitbill-alpha.vercel.app/invoice.html",
+        icon: "uil-invoice",
+        label: "Invoice Split Bill",
+        external: true,
+        permission: "invoice-split",
+      },
+      {
+        href: "#",
+        icon: "uil-chart",
+        label: "Reports",
+        badge: "Soon",
+        permission: "reports",
+      },
+    ],
+  },
+];
+
+const getDefaultPermissionsForRole = (role) => {
+  if (role === "owner") {
+    return [...OWNER_MENU_KEYS];
+  }
+  const defaults = DEFAULT_ROLE_PERMISSIONS?.[role];
+  return Array.isArray(defaults) ? [...defaults] : [];
+};
 
 export default function DashboardLayout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -187,6 +287,31 @@ export default function DashboardLayout({ children }) {
     }
   }, [isProfileMenuOpen, fetchWorkspaceOptions]);
 
+  useEffect(() => {
+    const handlePermissionsUpdated = () => {
+      try {
+        const rawWorkspace = localStorage.getItem("workspace");
+        if (rawWorkspace) {
+          setCurrentWorkspace(JSON.parse(rawWorkspace));
+        }
+      } catch (e) {
+        console.error("Failed to refresh workspace permissions", e);
+      }
+    };
+
+    window.addEventListener(
+      "workspace-permissions-updated",
+      handlePermissionsUpdated
+    );
+
+    return () => {
+      window.removeEventListener(
+        "workspace-permissions-updated",
+        handlePermissionsUpdated
+      );
+    };
+  }, []);
+
   const handleToggleWorkspaceSwitcher = () => {
     setIsWorkspaceSwitcherOpen((prev) => !prev);
   };
@@ -266,10 +391,6 @@ export default function DashboardLayout({ children }) {
     }
   };
 
-  if (!authChecked) {
-    return null;
-  }
-
   const avatarUrl = currentUser?.profileImage
     ? currentUser.profileImage
     : `https://api.dicebear.com/9.x/personas/svg?backgroundColor=b6e3f4&scale=100&seed=${encodeURIComponent(
@@ -282,68 +403,50 @@ export default function DashboardLayout({ children }) {
       .split(" ")
       .filter(Boolean)[0] || null;
 
-  const navItems = [
-    {
-      section: "Overview",
-      items: [
-        { href: "/dashboard", icon: "uil-chart-line", label: "Dashboard" },
-        {
-          href: "/dashboard/projects/calendar",
-          icon: "uil-calendar-alt",
-          label: "Calendar",
-        },
-        {
-          href: "/dashboard/projects",
-          icon: "uil-folder-open",
-          label: "Projects",
-        },
-        {
-          href: "/dashboard/clients",
-          icon: "uil-users-alt",
-          label: "Clients",
-        },
-        {
-          href: "/dashboard/services",
-          icon: "uil-package",
-          label: "Services",
-        },
-        {
-          href: "/dashboard/invoices",
-          icon: "uil-invoice",
-          label: "Invoices",
-          badge: "New",
-        },
-      ],
+  const userRole = currentUser?.workspaceRole || "member";
+
+  const allowedMenuKeys = useMemo(() => {
+    if (!currentUser || !currentWorkspace) {
+      return new Set(OWNER_MENU_KEYS);
+    }
+
+    if (userRole === "owner") {
+      return new Set(OWNER_MENU_KEYS);
+    }
+
+    const workspacePermissions = currentWorkspace?.permissions;
+    const rolePermissions = Array.isArray(workspacePermissions?.[userRole])
+      ? workspacePermissions[userRole]
+      : getDefaultPermissionsForRole(userRole);
+
+    return new Set(
+      rolePermissions.filter((key) => OWNER_MENU_KEYS.includes(key))
+    );
+  }, [currentUser, currentWorkspace, userRole]);
+
+  const canAccessMenu = useCallback(
+    (permissionKey) => {
+      if (!permissionKey) {
+        return true;
+      }
+      if (userRole === "owner") {
+        return true;
+      }
+      return allowedMenuKeys.has(permissionKey);
     },
-    {
-      section: "Settings",
-      items: [
-        {
-          href: "/dashboard/workspace",
-          icon: "uil-window",
-          label: "Workspace",
-        },
-        {
-          href: "/dashboard/portfolio",
-          icon: "uil-palette",
-          label: "Portfolio",
-          badge: "New",
-        },
-      ],
-    },
-    {
-      section: "Tools",
-      items: [
-        {
-          href: "https://splitbill-alpha.vercel.app/invoice.html",
-          icon: "uil-invoice",
-          label: "Invoice Split Bill",
-          external: true,
-        },
-        { href: "#", icon: "uil-chart", label: "Reports", badge: "Soon" },
-      ],
-    },
-  ];
+    [allowedMenuKeys, userRole]
+  );
+
+  const navItems = useMemo(() => {
+    return RAW_NAV_SECTIONS.map((section) => ({
+      ...section,
+      items: section.items.filter((item) => canAccessMenu(item.permission)),
+    })).filter((section) => section.items.length > 0);
+  }, [canAccessMenu]);
+
+  if (!authChecked) {
+    return null;
+  }
 
   const pageMetadata = {
     "/dashboard": {
@@ -502,42 +605,42 @@ export default function DashboardLayout({ children }) {
                   </p>
                 </div>
               </div>
-              <div
-                className="profile-right"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
-              >
-                {(firstName || currentWorkspace?.name) && (
-                  <div className="profile-greeting">
-                    {firstName && (
-                      <span>
-                        Hi, <strong>{firstName}</strong>!
-                      </span>
-                    )}
-                    {currentWorkspace?.name && (
-                      <span className="profile-greeting-workspace">
-                        <i className="uil uil-folder-check"></i>
-                        {currentWorkspace.name}
-                      </span>
-                    )}
-                  </div>
-                )}
-                <div className="profile-menu profile-button">
-                  <button
-                    type="button"
-                    className="avatar-button"
-                    onClick={toggleProfileMenu}
-                    aria-label="Toggle profile menu"
-                    style={{
-                      padding: 0,
-                      border: "none",
-                      background: "transparent",
-                      display: "flex",
-                    }}
-                  >
+              <div className="profile-menu">
+                <button
+                  type="button"
+                  className="profile-right profile-button"
+                  onClick={toggleProfileMenu}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      toggleProfileMenu();
+                    }
+                  }}
+                  aria-label="Toggle profile menu"
+                >
+                  {(firstName || currentWorkspace?.name) && (
+                    <div className="profile-greeting">
+                      {firstName && (
+                        <span>
+                          Hi, <strong>{firstName}</strong>!
+                        </span>
+                      )}
+                      {currentWorkspace?.name && (
+                        <span className="profile-greeting-workspace">
+                          <span className="profile-greeting-workspace-name">
+                            <i className="uil uil-folder-check"></i>
+                            {currentWorkspace.name}
+                          </span>
+                          {userRole && (
+                            <span className="profile-role-label">
+                              {formatWorkspaceRole(userRole)}
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <span className="avatar-wrapper">
                     <Image
                       src={avatarUrl}
                       className="avatar-profile"
@@ -548,8 +651,8 @@ export default function DashboardLayout({ children }) {
                       height={40}
                       unoptimized
                     />
-                  </button>
-                </div>
+                  </span>
+                </button>
               </div>
 
               {/* Profile Menu Dropdown */}

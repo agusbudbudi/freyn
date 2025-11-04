@@ -24,16 +24,24 @@ const formatUserResponse = (user) => ({
   })),
 });
 
-const formatWorkspaceResponse = (workspace) =>
-  workspace
-    ? {
-        id: workspace._id.toString(),
-        name: workspace.name,
-        slug: workspace.slug,
-        plan: workspace.plan,
-        status: workspace.status,
-      }
-    : null;
+const formatWorkspaceResponse = (workspace) => {
+  if (!workspace) {
+    return null;
+  }
+
+  const permissions = Workspace.normalizePermissions(
+    workspace.permissions?.toObject?.() || workspace.permissions
+  );
+
+  return {
+    id: workspace._id.toString(),
+    name: workspace.name,
+    slug: workspace.slug,
+    plan: workspace.plan,
+    status: workspace.status,
+    permissions,
+  };
+};
 
 export async function POST(request) {
   try {

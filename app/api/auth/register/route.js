@@ -72,6 +72,10 @@ export async function POST(request) {
 
     let workspace;
     try {
+      const defaultPermissions =
+        typeof Workspace.getDefaultPermissions === "function"
+          ? Workspace.getDefaultPermissions()
+          : undefined;
       workspace = await Workspace.create({
         name: workspaceName,
         owner: user._id,
@@ -83,6 +87,7 @@ export async function POST(request) {
             joinedAt,
           },
         ],
+        permissions: defaultPermissions,
       });
     } catch (workspaceError) {
       console.error("Workspace creation error:", workspaceError);
@@ -138,6 +143,12 @@ export async function POST(request) {
           name: workspace.name,
           slug: workspace.slug,
           plan: workspace.plan,
+          permissions:
+            typeof Workspace.normalizePermissions === "function"
+              ? Workspace.normalizePermissions(
+                  workspace.permissions?.toObject?.() || workspace.permissions
+                )
+              : workspace.permissions,
         },
         token,
       },

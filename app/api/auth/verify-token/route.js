@@ -38,6 +38,12 @@ export async function POST(request) {
       }
     }
 
+    const normalizedPermissions = workspace
+      ? Workspace.normalizePermissions(
+          workspace.permissions?.toObject?.() || workspace.permissions
+        )
+      : null;
+
     return successResponse(
       {
         user: {
@@ -61,6 +67,7 @@ export async function POST(request) {
               slug: workspace.slug,
               plan: workspace.plan,
               status: workspace.status,
+              permissions: normalizedPermissions,
             }
           : null,
       },
