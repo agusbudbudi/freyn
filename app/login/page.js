@@ -421,7 +421,7 @@ export default function LoginPage() {
               <div className="auth-header">
                 <h1 className="auth-title">Create Account 👋🏻</h1>
                 <p className="auth-subtitle">
-                  Join us to start managing your design projects
+                  Join us to start managing your projects
                 </p>
               </div>
 

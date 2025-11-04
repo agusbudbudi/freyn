@@ -26,6 +26,31 @@ const workspaceSchema = new mongoose.Schema(
       enum: ["free", "pro", "business"],
       default: "free",
     },
+    members: {
+      type: [
+        {
+          user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+          },
+          role: {
+            type: String,
+            enum: ["owner", "manager", "member"],
+            default: "member",
+          },
+          joinedAt: {
+            type: Date,
+            default: Date.now,
+          },
+          invitedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+          },
+        },
+      ],
+      default: [],
+    },
     settings: {
       locale: {
         type: String,

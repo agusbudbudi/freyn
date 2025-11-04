@@ -1,13 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import "../../styles/dashboard.css";
 import "../../styles/mobile.css";
 import "../../styles/invoices.css";
 import ProfileModal from "@/components/ProfileModal";
+import { toast } from "@/components/ui/toast";
 
 export default function DashboardLayout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -15,8 +16,57 @@ export default function DashboardLayout({ children }) {
   const pathname = usePathname();
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState(null);
+  const [currentWorkspace, setCurrentWorkspace] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [workspaceOptions, setWorkspaceOptions] = useState([]);
+  const [workspaceOptionsLoading, setWorkspaceOptionsLoading] = useState(false);
+  const [workspaceOptionsError, setWorkspaceOptionsError] = useState("");
+  const [isWorkspaceSwitcherOpen, setIsWorkspaceSwitcherOpen] = useState(false);
+  const [switchingWorkspace, setSwitchingWorkspace] = useState(false);
+
+  const activeWorkspaceId =
+    currentWorkspace?.id ||
+    (typeof currentWorkspace?._id === "string"
+      ? currentWorkspace?._id
+      : currentWorkspace?._id?.toString?.()) ||
+    currentWorkspace?.workspaceId?.toString?.() ||
+    null;
+
+  const fetchWorkspaceOptions = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setWorkspaceOptions([]);
+        setWorkspaceOptionsError("Authentication required");
+        return;
+      }
+
+      setWorkspaceOptionsLoading(true);
+      setWorkspaceOptionsError("");
+
+      const res = await fetch("/api/workspace/list", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setWorkspaceOptions(data.data?.workspaces || []);
+      } else {
+        setWorkspaceOptionsError(data.message || "Failed to load workspaces");
+      }
+    } catch (error) {
+      setWorkspaceOptionsError("Failed to load workspaces");
+    } finally {
+      setWorkspaceOptionsLoading(false);
+    }
+  }, []);
+
+  const formatWorkspaceRole = (role) => {
+    if (!role) return "Member";
+    return role.charAt(0).toUpperCase() + role.slice(1);
+  };
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -37,6 +87,8 @@ export default function DashboardLayout({ children }) {
       localStorage.removeItem("workspace");
       document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
     } catch (e) {}
+    setCurrentUser(null);
+    setCurrentWorkspace(null);
     setIsProfileMenuOpen(false);
     router.push("/login");
   };
@@ -44,9 +96,13 @@ export default function DashboardLayout({ children }) {
   // Load current user from storage
   useEffect(() => {
     try {
-      const raw = localStorage.getItem("user");
-      if (raw) {
-        setCurrentUser(JSON.parse(raw));
+      const rawUser = localStorage.getItem("user");
+      if (rawUser) {
+        setCurrentUser(JSON.parse(rawUser));
+      }
+      const rawWorkspace = localStorage.getItem("workspace");
+      if (rawWorkspace) {
+        setCurrentWorkspace(JSON.parse(rawWorkspace));
       }
     } catch (e) {}
   }, []);
@@ -83,6 +139,7 @@ export default function DashboardLayout({ children }) {
               "workspace",
               JSON.stringify(data.data.workspace)
             );
+            setCurrentWorkspace(data.data.workspace);
           }
         } catch (e) {
           // If verification endpoint fails, still allow based on local token
@@ -121,6 +178,93 @@ export default function DashboardLayout({ children }) {
       document.removeEventListener("keydown", handleKey);
     };
   }, [isProfileMenuOpen]);
+
+  useEffect(() => {
+    if (isProfileMenuOpen) {
+      fetchWorkspaceOptions();
+    } else {
+      setIsWorkspaceSwitcherOpen(false);
+    }
+  }, [isProfileMenuOpen, fetchWorkspaceOptions]);
+
+  const handleToggleWorkspaceSwitcher = () => {
+    setIsWorkspaceSwitcherOpen((prev) => !prev);
+  };
+
+  const handleSwitchWorkspace = async (workspaceId) => {
+    if (!workspaceId || switchingWorkspace) {
+      return;
+    }
+
+    if (activeWorkspaceId && workspaceId === activeWorkspaceId) {
+      setIsWorkspaceSwitcherOpen(false);
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.replace("/login");
+      return;
+    }
+
+    setSwitchingWorkspace(true);
+
+    try {
+      const res = await fetch("/api/workspace/switch", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ workspaceId }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        const message = data.message || "Failed to switch workspace";
+        toast.error(message);
+        return;
+      }
+
+      if (data.data?.user) {
+        localStorage.setItem("user", JSON.stringify(data.data.user));
+        setCurrentUser(data.data.user);
+      }
+
+      if (data.data?.workspace) {
+        localStorage.setItem("workspace", JSON.stringify(data.data.workspace));
+        setCurrentWorkspace(data.data.workspace);
+      }
+
+      if (data.data?.token) {
+        localStorage.setItem("token", data.data.token);
+        document.cookie = `token=${data.data.token}; path=/; max-age=604800; SameSite=Lax`;
+      }
+
+      if (typeof window !== "undefined") {
+        const switchedWorkspaceId =
+          data.data?.workspace?.id || data.data?.workspace?._id || workspaceId;
+        window.dispatchEvent(
+          new CustomEvent("workspace-switched", {
+            detail: {
+              workspaceId: switchedWorkspaceId?.toString?.() || switchedWorkspaceId,
+            },
+          })
+        );
+      }
+
+      await fetchWorkspaceOptions();
+      toast.success(data.message || "Workspace switched successfully");
+      setIsWorkspaceSwitcherOpen(false);
+      setIsProfileMenuOpen(false);
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to switch workspace");
+    } finally {
+      setSwitchingWorkspace(false);
+    }
+  };
 
   if (!authChecked) {
     return null;
@@ -366,10 +510,20 @@ export default function DashboardLayout({ children }) {
                   gap: "8px",
                 }}
               >
-                {firstName && (
-                  <span className="profile-greeting">
-                    Hi, <strong>{firstName}</strong>!
-                  </span>
+                {(firstName || currentWorkspace?.name) && (
+                  <div className="profile-greeting">
+                    {firstName && (
+                      <span>
+                        Hi, <strong>{firstName}</strong>!
+                      </span>
+                    )}
+                    {currentWorkspace?.name && (
+                      <span className="profile-greeting-workspace">
+                        <i className="uil uil-folder-check"></i>
+                        {currentWorkspace.name}
+                      </span>
+                    )}
+                  </div>
                 )}
                 <div className="profile-menu profile-button">
                   <button
@@ -439,6 +593,86 @@ export default function DashboardLayout({ children }) {
                     <div className="profile-menu-items">
                       <button
                         className="profile-menu-item"
+                        onClick={handleToggleWorkspaceSwitcher}
+                        type="button"
+                      >
+                        <i className="uil uil-folder-check"></i>
+                        Select Workspace
+                        <i
+                          className={`uil ${
+                            isWorkspaceSwitcherOpen
+                              ? "uil-angle-up"
+                              : "uil-angle-down"
+                          } workspace-switcher-caret`}
+                        ></i>
+                      </button>
+
+                      {isWorkspaceSwitcherOpen && (
+                        <div className="workspace-switcher">
+                          {workspaceOptionsLoading ? (
+                            <div className="workspace-switcher-placeholder">
+                              Loading workspaces...
+                            </div>
+                          ) : workspaceOptionsError ? (
+                            <div className="workspace-switcher-placeholder error">
+                              {workspaceOptionsError}
+                            </div>
+                          ) : workspaceOptions.length === 0 ? (
+                            <div className="workspace-switcher-placeholder">
+                              No additional workspaces yet.
+                            </div>
+                          ) : (
+                            workspaceOptions.map((option) => {
+                              const optionId = option.id?.toString();
+                              const isActive =
+                                optionId && activeWorkspaceId
+                                  ? optionId === activeWorkspaceId
+                                  : false;
+                              return (
+                                <button
+                                  key={optionId || option.slug || option.name}
+                                  type="button"
+                                  className={`workspace-switcher-item ${
+                                    isActive ? "active" : ""
+                                  }`}
+                                  onClick={() =>
+                                    handleSwitchWorkspace(optionId)
+                                  }
+                                  disabled={
+                                    switchingWorkspace || !optionId || isActive
+                                  }
+                                >
+                                  <div className="workspace-switcher-left">
+                                    <span
+                                      className={`workspace-switcher-dot ${
+                                        isActive ? "active" : ""
+                                      }`}
+                                    ></span>
+                                    <div className="workspace-switcher-text">
+                                      <span className="workspace-switcher-name">
+                                        {option.name || "Workspace"}
+                                      </span>
+                                      <span className="workspace-switcher-meta">
+                                        {formatWorkspaceRole(option.role)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <span className="workspace-switcher-action">
+                                    {isActive
+                                      ? "Current"
+                                      : switchingWorkspace
+                                      ? "Switching..."
+                                      : "Switch"}
+                                  </span>
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+                      )}
+
+                      <button
+                        className="profile-menu-item"
                         onClick={() => {
                           setIsProfileMenuOpen(false);
                           setIsProfileModalOpen(true);
@@ -471,7 +705,7 @@ export default function DashboardLayout({ children }) {
         />
 
         {/* Page Content */}
-        {children}
+        <div key={activeWorkspaceId || "default"}>{children}</div>
       </div>
     </div>
   );

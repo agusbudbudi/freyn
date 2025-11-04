@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import ClientModal from "@/components/ClientModal";
 import LoadingState from "@/components/LoadingState";
 import { toast } from "@/components/ui/toast";
+import { useWorkspaceSwitchListener } from "@/lib/hooks/useWorkspaceSwitchListener";
 
 export default function ClientsPage() {
   const [clients, setClients] = useState([]);
@@ -50,6 +51,8 @@ export default function ClientsPage() {
   useEffect(() => {
     fetchClients();
   }, [fetchClients]);
+
+  useWorkspaceSwitchListener(fetchClients);
 
   const handleAddClient = () => {
     setEditingClient(null);

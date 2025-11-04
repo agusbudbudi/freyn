@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import LoadingState from "@/components/LoadingState";
 import { toast } from "@/components/ui/toast";
@@ -9,6 +9,7 @@ import DoughnutChart from "@/components/charts/DoughnutChart";
 import LineChart from "@/components/charts/LineChart";
 import BarChart from "@/components/charts/BarChart";
 import ProjectModal from "@/components/ProjectModal";
+import { useWorkspaceSwitchListener } from "@/lib/hooks/useWorkspaceSwitchListener";
 
 export default function DashboardPage() {
   const [dashboardData, setDashboardData] = useState(null);
@@ -17,11 +18,7 @@ export default function DashboardPage() {
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       const token =
@@ -50,7 +47,13 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  useWorkspaceSwitchListener(fetchDashboardData);
 
   const handleProjectClick = async (project) => {
     try {

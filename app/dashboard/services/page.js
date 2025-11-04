@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ServiceModal from "@/components/ServiceModal";
 import LoadingState from "@/components/LoadingState";
 import { toast } from "@/components/ui/toast";
+import { useWorkspaceSwitchListener } from "@/lib/hooks/useWorkspaceSwitchListener";
 
 export default function ServicesPage() {
   const [services, setServices] = useState([]);
@@ -13,7 +14,7 @@ export default function ServicesPage() {
   const [editingService, setEditingService] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const getAuthHeaders = () => {
+  const getAuthHeaders = useCallback(() => {
     if (typeof window === "undefined") return {};
     const token = localStorage.getItem("token");
     return token
@@ -21,13 +22,9 @@ export default function ServicesPage() {
           Authorization: `Bearer ${token}`,
         }
       : {};
-  };
-
-  useEffect(() => {
-    fetchServices();
   }, []);
 
-  const fetchServices = async () => {
+  const fetchServices = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch("/api/services", {
@@ -49,7 +46,13 @@ export default function ServicesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getAuthHeaders]);
+
+  useEffect(() => {
+    fetchServices();
+  }, [fetchServices]);
+
+  useWorkspaceSwitchListener(fetchServices);
 
   const handleAddService = () => {
     setEditingService(null);

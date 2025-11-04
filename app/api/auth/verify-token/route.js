@@ -29,7 +29,14 @@ export async function POST(request) {
       return errorResponse("User not found", 404);
     }
 
-    const workspace = await Workspace.findById(user.workspaceId);
+    let workspace = await Workspace.findById(user.workspaceId);
+
+    if (!workspace) {
+      const ownerWorkspace = await Workspace.findOne({ owner: user._id });
+      if (ownerWorkspace) {
+        workspace = ownerWorkspace;
+      }
+    }
 
     return successResponse(
       {
@@ -39,6 +46,13 @@ export async function POST(request) {
           email: user.email,
           phone: user.phone || "",
           workspaceId: user.workspaceId?.toString() || null,
+          workspaceRole: user.workspaceRole || null,
+          workspaceJoinedAt: user.workspaceJoinedAt || null,
+          workspaces: (user.workspaces || []).map((entry) => ({
+            workspaceId: entry.workspace?.toString() || null,
+            role: entry.role,
+            joinedAt: entry.joinedAt,
+          })),
         },
         workspace: workspace
           ? {

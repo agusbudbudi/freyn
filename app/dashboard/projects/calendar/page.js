@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Calendar, dateFnsLocalizer, Views } from "react-big-calendar";
 import { format, parse, startOfWeek as dfStartOfWeek, getDay } from "date-fns";
 import enUS from "date-fns/locale/en-US";
 import LoadingState from "@/components/LoadingState";
 import ProjectModal from "@/components/ProjectModal";
+import { useWorkspaceSwitchListener } from "@/lib/hooks/useWorkspaceSwitchListener";
 
 const locales = { "en-US": enUS };
 
@@ -71,7 +72,7 @@ export default function ProjectsCalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState(Views.MONTH);
 
-  const getAuthHeaders = () => {
+  const getAuthHeaders = useCallback(() => {
     if (typeof window === "undefined") return {};
     const token = localStorage.getItem("token");
     return token
@@ -79,9 +80,9 @@ export default function ProjectsCalendarPage() {
           Authorization: `Bearer ${token}`,
         }
       : {};
-  };
+  }, []);
 
-  const loadProjects = async (opts = {}) => {
+  const loadProjects = useCallback(async (opts = {}) => {
     const silent = opts?.silent === true;
     try {
       if (!silent) setLoading(true);
@@ -101,11 +102,13 @@ export default function ProjectsCalendarPage() {
     } finally {
       if (!silent) setLoading(false);
     }
-  };
+  }, [getAuthHeaders]);
 
   useEffect(() => {
     loadProjects();
-  }, []);
+  }, [loadProjects]);
+
+  useWorkspaceSwitchListener(() => loadProjects({ silent: false }));
 
   useEffect(() => {
     const evts = (projects || []).map((p) => {

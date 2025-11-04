@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import ProjectModal from "../../../components/ProjectModal";
 import LoadingState from "@/components/LoadingState";
@@ -9,6 +9,7 @@ import Pagination from "@/components/Pagination";
 import StatusFilter from "@/components/StatusFilter";
 import { usePagination } from "@/lib/hooks/usePagination";
 import { useStatusFilter } from "@/lib/hooks/useStatusFilter";
+import { useWorkspaceSwitchListener } from "@/lib/hooks/useWorkspaceSwitchListener";
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState([]);
@@ -23,7 +24,7 @@ export default function ProjectsPage() {
   const actionMenuRef = useRef(null);
   const actionTriggerRef = useRef(null);
 
-  const getAuthHeaders = () => {
+  const getAuthHeaders = useCallback(() => {
     if (typeof window === "undefined") return {};
     const token = localStorage.getItem("token");
     return token
@@ -31,14 +32,10 @@ export default function ProjectsPage() {
           Authorization: `Bearer ${token}`,
         }
       : {};
-  };
-
-  // Fetch projects from API
-  useEffect(() => {
-    fetchProjects();
   }, []);
 
-  const fetchProjects = async () => {
+  // Fetch projects from API
+  const fetchProjects = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch("/api/projects", {
@@ -60,7 +57,13 @@ export default function ProjectsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getAuthHeaders]);
+
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
+
+  useWorkspaceSwitchListener(fetchProjects);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("id-ID", {
