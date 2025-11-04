@@ -308,11 +308,7 @@ export default function ServiceModal({
                       id="unlimitedRevision"
                       checked={isUnlimitedRevision}
                       onChange={handleUnlimitedRevisionChange}
-                      style={{
-                        width: "16px",
-                        height: "16px",
-                        cursor: "pointer",
-                      }}
+                      className="checkbox-modern"
                     />
                     <label
                       htmlFor="unlimitedRevision"

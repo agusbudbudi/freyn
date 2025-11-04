@@ -94,7 +94,7 @@ export default function PortfolioPage() {
       <div className="content-card">
         <div className="card-header">
           <div>
-            <h2 className="card-title">Portfolio</h2>
+            <h2 className="card-title">Portfolio Management</h2>
             <p className="card-subtitle">
               Create a public portfolio link showcasing your best work.
             </p>

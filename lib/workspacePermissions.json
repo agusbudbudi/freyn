@@ -1,0 +1,35 @@
+{
+  "menuItems": [
+    { "key": "dashboard", "label": "Dashboard" },
+    { "key": "projects", "label": "Projects" },
+    { "key": "calendar", "label": "Calendar" },
+    { "key": "clients", "label": "Clients" },
+    { "key": "services", "label": "Services" },
+    { "key": "invoices", "label": "Invoices" },
+    { "key": "workspace-settings", "label": "Workspace" },
+    { "key": "portfolio", "label": "Portfolio" },
+    { "key": "reports", "label": "Reports" },
+    { "key": "invoice-split", "label": "Invoice Split Bill" }
+  ],
+  "defaultPermissions": {
+    "manager": [
+      "dashboard",
+      "projects",
+      "calendar",
+      "clients",
+      "services",
+      "invoices",
+      "portfolio",
+      "reports",
+      "invoice-split"
+    ],
+    "member": [
+      "dashboard",
+      "projects",
+      "calendar",
+      "clients",
+      "services",
+      "invoices"
+    ]
+  }
+}

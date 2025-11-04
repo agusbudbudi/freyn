@@ -12,6 +12,13 @@ function serializeWorkspace(workspace, owner) {
     return null;
   }
 
+  const permissions =
+    typeof Workspace.normalizePermissions === "function"
+      ? Workspace.normalizePermissions(
+          workspace.permissions?.toObject?.() || workspace.permissions
+        )
+      : workspace.permissions;
+
   return {
     id: workspace._id.toString(),
     name: workspace.name,
@@ -20,6 +27,7 @@ function serializeWorkspace(workspace, owner) {
     status: workspace.status,
     ownerId: workspace.owner?.toString() || null,
     ownerName: owner?.fullName || "",
+    permissions,
   };
 }
 

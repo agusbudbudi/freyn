@@ -1,20 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import LoadingState from "@/components/LoadingState";
 import { toast } from "@/components/ui/toast";
+import workspacePermissionsConfig from "@/lib/workspacePermissions.json";
 
 const DEFAULT_WORKSPACE = {
+  id: null,
   name: "",
   slug: "",
   plan: "",
   status: "",
   ownerName: "",
+  permissions: null,
 };
 
 const WORKSPACE_TABS = {
   DETAILS: "details",
   MEMBERS: "members",
+  PERMISSIONS: "permissions",
 };
 
 const WORKSPACE_MEMBER_ROLES = [
@@ -42,9 +46,36 @@ export default function WorkspacePage() {
   const [editErrors, setEditErrors] = useState({});
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [memberActionId, setMemberActionId] = useState(null);
+  const [userRole, setUserRole] = useState("member");
+  const [permissionsData, setPermissionsData] = useState({
+    roles: [],
+    menus: [],
+  });
+  const [permissionsLoading, setPermissionsLoading] = useState(false);
+  const [permissionsError, setPermissionsError] = useState("");
+  const [permissionsLoaded, setPermissionsLoaded] = useState(false);
+  const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
+  const [permissionEditRole, setPermissionEditRole] = useState(null);
+  const [permissionSelections, setPermissionSelections] = useState([]);
+  const [permissionSubmitting, setPermissionSubmitting] = useState(false);
+  const [permissionModalError, setPermissionModalError] = useState("");
 
   useEffect(() => {
     fetchWorkspace();
+  }, []);
+
+  useEffect(() => {
+    try {
+      const rawUser = localStorage.getItem("user");
+      if (rawUser) {
+        const parsedUser = JSON.parse(rawUser);
+        if (parsedUser?.workspaceRole) {
+          setUserRole(parsedUser.workspaceRole);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to read workspace role", error);
+    }
   }, []);
 
   const hasChanges = useMemo(() => {
@@ -57,42 +88,127 @@ export default function WorkspacePage() {
   const getAuthToken = () =>
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
-  async function fetchMembers(force = false) {
-    try {
-      if (membersLoading && !force) {
-        return;
-      }
-
-      setMembersLoading(true);
-
-      const token = getAuthToken();
-      if (!token) {
-        toast.error("Authentication required");
-        setMembers([]);
-        return;
-      }
-
-      const res = await fetch("/api/workspace/members", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        setMembers(data.data?.members || []);
-      } else {
-        const message = data.message || "Failed to load members";
-        toast.error(message);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to load members");
-    } finally {
-      setMembersLoading(false);
+  const menuOptions = useMemo(() => {
+    if (Array.isArray(permissionsData.menus) && permissionsData.menus.length) {
+      return permissionsData.menus;
     }
-  }
+    return Array.isArray(workspacePermissionsConfig?.menuItems)
+      ? workspacePermissionsConfig.menuItems
+      : [];
+  }, [permissionsData.menus]);
+
+  const fetchMembers = useCallback(
+    async (force = false) => {
+      try {
+        if (membersLoading && !force) {
+          return;
+        }
+
+        setMembersLoading(true);
+
+        const token = getAuthToken();
+        if (!token) {
+          toast.error("Authentication required");
+          setMembers([]);
+          return;
+        }
+
+        const res = await fetch("/api/workspace/members", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          setMembers(data.data?.members || []);
+        } else {
+          const message = data.message || "Failed to load members";
+          toast.error(message);
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to load members");
+      } finally {
+        setMembersLoading(false);
+      }
+    },
+    [membersLoading]
+  );
+
+  const fetchPermissions = useCallback(
+    async (force = false) => {
+      if (userRole !== "owner") {
+        setPermissionsError(
+          "Only workspace owners can manage role permissions."
+        );
+        return;
+      }
+
+      if (permissionsLoading && !force) {
+        return;
+      }
+
+      setPermissionsLoading(true);
+      setPermissionsError("");
+
+      try {
+        const token = getAuthToken();
+        if (!token) {
+          setPermissionsError("Authentication required");
+          setPermissionsLoading(false);
+          return;
+        }
+
+        const res = await fetch("/api/workspace/permissions", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          const roles = Array.isArray(data.data?.roles) ? data.data.roles : [];
+          const menus = Array.isArray(data.data?.menus) ? data.data.menus : [];
+          const permissions = data.data?.permissions;
+
+          setPermissionsData({ roles, menus });
+
+          if (permissions) {
+            setWorkspace((prev) => ({
+              ...prev,
+              permissions,
+            }));
+
+            try {
+              const cachedWorkspace = JSON.parse(
+                localStorage.getItem("workspace") || "{}"
+              );
+              localStorage.setItem(
+                "workspace",
+                JSON.stringify({ ...cachedWorkspace, permissions })
+              );
+            } catch (storageError) {
+              console.error("Failed to update cached workspace", storageError);
+            }
+          }
+        } else {
+          const message = data.message || "Failed to load permissions";
+          setPermissionsError(message);
+          toast.error(message);
+        }
+      } catch (error) {
+        console.error(error);
+        setPermissionsError("Failed to load permissions");
+        toast.error("Failed to load permissions");
+      } finally {
+        setPermissionsLoading(false);
+      }
+    },
+    [permissionsLoading, userRole]
+  );
 
   const fetchWorkspace = async () => {
     try {
@@ -148,7 +264,23 @@ export default function WorkspacePage() {
       setMembersLoaded(true);
       fetchMembers(true);
     }
-  }, [activeTab, membersLoaded]);
+
+    if (
+      activeTab === WORKSPACE_TABS.PERMISSIONS &&
+      !permissionsLoaded &&
+      userRole === "owner"
+    ) {
+      setPermissionsLoaded(true);
+      fetchPermissions(true);
+    }
+  }, [
+    activeTab,
+    membersLoaded,
+    permissionsLoaded,
+    userRole,
+    fetchMembers,
+    fetchPermissions,
+  ]);
 
   const handleCancel = () => {
     setFormData({ name: workspace.name || "" });
@@ -168,6 +300,13 @@ export default function WorkspacePage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
+
+    if (userRole !== "owner") {
+      const message = "Only workspace owners can edit workspace details";
+      setError(message);
+      toast.error(message);
+      return;
+    }
 
     const trimmedName = formData.name.trim();
     if (!trimmedName) {
@@ -452,6 +591,134 @@ export default function WorkspacePage() {
     }
   };
 
+  const handleOpenPermissionModal = (role) => {
+    if (!role || !role.editable) {
+      return;
+    }
+
+    setPermissionEditRole(role);
+    setPermissionSelections(role.permissions || []);
+    setPermissionModalError("");
+    setPermissionSubmitting(false);
+    setIsPermissionModalOpen(true);
+  };
+
+  const handleClosePermissionModal = () => {
+    setIsPermissionModalOpen(false);
+    setPermissionEditRole(null);
+    setPermissionSelections([]);
+    setPermissionSubmitting(false);
+    setPermissionModalError("");
+  };
+
+  const handleTogglePermission = (key) => {
+    setPermissionSelections((prev) => {
+      if (prev.includes(key)) {
+        return prev.filter((item) => item !== key);
+      }
+      return [...prev, key];
+    });
+  };
+
+  const handleSelectAllPermissions = () => {
+    setPermissionSelections(menuOptions.map((menu) => menu.key));
+  };
+
+  const handleClearPermissions = () => {
+    setPermissionSelections([]);
+  };
+
+  const handleSubmitPermissions = async (event) => {
+    event.preventDefault();
+
+    if (!permissionEditRole) {
+      toast.error("Role information is unavailable");
+      return;
+    }
+
+    const token = getAuthToken();
+    if (!token) {
+      toast.error("Authentication required");
+      return;
+    }
+
+    setPermissionSubmitting(true);
+    setPermissionModalError("");
+
+    try {
+      const res = await fetch("/api/workspace/permissions", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          role: permissionEditRole.key,
+          permissions: permissionSelections,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        const message = data.message || "Failed to update permissions";
+        setPermissionModalError(message);
+        toast.error(message);
+        return;
+      }
+
+      const roles = Array.isArray(data.data?.roles)
+        ? data.data.roles
+        : permissionsData.roles;
+      const permissions = data.data?.permissions;
+
+      setPermissionsData((prev) => ({
+        roles,
+        menus: prev.menus,
+      }));
+
+      if (permissions) {
+        setWorkspace((prev) => ({
+          ...prev,
+          permissions,
+        }));
+
+        try {
+          const cachedWorkspace = JSON.parse(
+            localStorage.getItem("workspace") || "{}"
+          );
+          const updatedWorkspace = {
+            ...cachedWorkspace,
+            permissions,
+          };
+          localStorage.setItem("workspace", JSON.stringify(updatedWorkspace));
+
+          const workspaceId =
+            updatedWorkspace.id || workspace.id || cachedWorkspace.id || null;
+
+          window.dispatchEvent(
+            new CustomEvent("workspace-permissions-updated", {
+              detail: {
+                workspaceId,
+              },
+            })
+          );
+        } catch (storageError) {
+          console.error("Failed to update workspace cache", storageError);
+        }
+      }
+
+      toast.success(data.message || "Permissions updated successfully");
+      handleClosePermissionModal();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update permissions");
+      setPermissionModalError("Failed to update permissions");
+    } finally {
+      setPermissionSubmitting(false);
+    }
+  };
+
   const displayPlan = workspace.plan
     ? workspace.plan === "free"
       ? "Free"
@@ -472,15 +739,16 @@ export default function WorkspacePage() {
   return (
     <div className="content-body">
       {error && (
-        <div className="alert alert-error">
-          <i className="uil uil-exclamation-triangle"></i> {error}
+        <div className="workspace-inline-error">
+          <i className="uil uil-exclamation-triangle"></i>
+          {error}
         </div>
       )}
 
       <div className="content-card">
         <div className="card-header">
           <div>
-            <h2 className="card-title">Workspace Settings</h2>
+            <h2 className="card-title">Workspace Management</h2>
             <div className="workspace-tabs">
               <button
                 type="button"
@@ -504,6 +772,17 @@ export default function WorkspacePage() {
               >
                 Member
               </button>
+              <button
+                type="button"
+                className={`workspace-tab ${
+                  activeTab === WORKSPACE_TABS.PERMISSIONS
+                    ? "workspace-tab--active"
+                    : ""
+                }`}
+                onClick={() => setActiveTab(WORKSPACE_TABS.PERMISSIONS)}
+              >
+                Permission
+              </button>
             </div>
           </div>
         </div>
@@ -512,13 +791,13 @@ export default function WorkspacePage() {
           <form onSubmit={handleSubmit}>
             <div className="card-body">
               <div className="form-header">
-                <h2 className="card-title">Workspace Details</h2>
+                <h2 className="card-title">Details</h2>
                 <p className="card-subtitle">
                   Update your workspace name and review subscription
                   information.
                 </p>
               </div>
-              <div className="form-grid">
+              <div className="form-grid form-grid--two-column">
                 <div className="form-group">
                   <label className="form-label" htmlFor="workspace-name">
                     Workspace Name
@@ -532,6 +811,7 @@ export default function WorkspacePage() {
                     onChange={handleChange}
                     placeholder="Enter workspace name"
                     maxLength={120}
+                    disabled={userRole !== "owner"}
                   />
                 </div>
 
@@ -614,11 +894,11 @@ export default function WorkspacePage() {
               </div>
             </div>
           </form>
-        ) : (
+        ) : activeTab === WORKSPACE_TABS.MEMBERS ? (
           <div className="card-body">
             <div className="workspace-member-actions">
               <div>
-                <h2 className="card-title">Workspace Members</h2>
+                <h2 className="card-title">Members</h2>
                 <p className="card-subtitle">
                   Invite teammates and manage their roles.
                 </p>
@@ -703,9 +983,14 @@ export default function WorkspacePage() {
                                   memberSubmitting
                                 }
                               >
-                                {memberActionId === member.id
-                                  ? "Deleting..."
-                                  : "Delete"}
+                                {memberActionId === member.id ? (
+                                  "Deleting..."
+                                ) : (
+                                  <>
+                                    <i className="uil uil-trash-alt"></i>
+                                    Delete
+                                  </>
+                                )}
                               </button>
                             </div>
                           )}
@@ -716,6 +1001,124 @@ export default function WorkspacePage() {
                 </tbody>
               </table>
             </div>
+          </div>
+        ) : (
+          <div className="card-body">
+            <div className="workspace-permission-header">
+              <div>
+                <h2 className="card-title">Permissions</h2>
+                <p className="card-subtitle">
+                  Control which menus each role can access in the sidebar.
+                </p>
+              </div>
+            </div>
+
+            {userRole !== "owner" ? (
+              <div className="workspace-permission-notice">
+                <i className="uil uil-lock"></i>
+                <div>
+                  <h4>Permission management is restricted</h4>
+                  <p>Only workspace owners can manage menu permissions.</p>
+                </div>
+              </div>
+            ) : permissionsLoading && !permissionsData.roles.length ? (
+              <div className="workspace-permission-empty">
+                Loading permissions...
+              </div>
+            ) : permissionsError && !permissionsData.roles.length ? (
+              <div className="workspace-permission-empty">
+                {permissionsError}
+              </div>
+            ) : (
+              <div className="workspace-permission-table-wrapper">
+                <table className="table workspace-permission-table">
+                  <thead>
+                    <tr>
+                      <th>Role Name</th>
+                      <th>Menu Access</th>
+                      <th className="align-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {permissionsData.roles.length === 0 ? (
+                      <tr>
+                        <td colSpan={3} className="workspace-permission-empty">
+                          No role permissions found.
+                        </td>
+                      </tr>
+                    ) : (
+                      permissionsData.roles.map((role) => {
+                        const preview = role.permissions || [];
+                        const previewLimit = 3;
+                        const previewList = preview.slice(0, previewLimit);
+                        const remainder = preview.length - previewList.length;
+
+                        return (
+                          <tr key={role.key}>
+                            <td>{role.name}</td>
+                            <td>
+                              {previewList.length > 0 ? (
+                                <div className="workspace-permission-chips">
+                                  {previewList.map((permKey) => {
+                                    const label =
+                                      menuOptions.find(
+                                        (menu) => menu.key === permKey
+                                      )?.label || permKey;
+                                    return (
+                                      <span
+                                        key={`${role.key}-${permKey}`}
+                                        className="workspace-permission-chip"
+                                      >
+                                        {label}
+                                      </span>
+                                    );
+                                  })}
+                                  {remainder > 0 && (
+                                    <span className="workspace-permission-chip more">
+                                      +{remainder}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="workspace-permission-empty">
+                                  No menu access
+                                </span>
+                              )}
+                            </td>
+                            <td className="align-right">
+                              <button
+                                type="button"
+                                className="workspace-member-link-button"
+                                onClick={() => handleOpenPermissionModal(role)}
+                                disabled={!role.editable || permissionsLoading}
+                              >
+                                {role.editable ? (
+                                  <>
+                                    <i className="uil uil-edit-alt"></i>
+                                    Edit
+                                  </>
+                                ) : (
+                                  <>
+                                    <i className="uil uil-lock"></i>
+                                    Locked
+                                  </>
+                                )}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+                {permissionsError && (
+                  <div className="workspace-permission-error">
+                    <i className="uil uil-exclamation-triangle"></i>
+                    {permissionsError}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -877,6 +1280,93 @@ export default function WorkspacePage() {
         </div>
       )}
 
+      {isPermissionModalOpen && permissionEditRole && (
+        <div className="modal" style={{ display: "block" }}>
+          <div className="modal-content workspace-permission-modal">
+            <div className="modal-header">
+              <h3 className="modal-title">Edit Permissions</h3>
+              <button
+                type="button"
+                className="close"
+                onClick={handleClosePermissionModal}
+                aria-label="Close"
+              >
+                <i className="uil uil-times"></i>
+              </button>
+            </div>
+            <form onSubmit={handleSubmitPermissions}>
+              <div className="modal-body workspace-permission-modal-body">
+                <div className="workspace-permission-role">
+                  Role: <strong>{permissionEditRole.name}</strong>
+                </div>
+                <div className="workspace-permission-controls">
+                  <button
+                    type="button"
+                    className="workspace-permission-link"
+                    onClick={handleSelectAllPermissions}
+                  >
+                    Select All
+                  </button>
+                  <button
+                    type="button"
+                    className="workspace-permission-link"
+                    onClick={handleClearPermissions}
+                  >
+                    Clear All
+                  </button>
+                </div>
+                <div className="workspace-permission-options">
+                  {menuOptions.map((menu) => {
+                    const isChecked = permissionSelections.includes(menu.key);
+                    return (
+                      <div
+                        key={menu.key}
+                        className="workspace-permission-option"
+                      >
+                        <label className="workspace-permission-control">
+                          <input
+                            type="checkbox"
+                            className="checkbox-modern"
+                            checked={isChecked}
+                            onChange={() => handleTogglePermission(menu.key)}
+                          />
+                          <span className="workspace-permission-label">
+                            {menu.label}
+                          </span>
+                        </label>
+                      </div>
+                    );
+                  })}
+                </div>
+                {permissionModalError && (
+                  <div className="workspace-permission-error inline">
+                    <i className="uil uil-exclamation-triangle"></i>
+                    {permissionModalError}
+                  </div>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleClosePermissionModal}
+                  disabled={permissionSubmitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={permissionSubmitting}
+                >
+                  {permissionSubmitting ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <style jsx>{`
         .card-body {
           padding: 24px;
@@ -900,7 +1390,7 @@ export default function WorkspacePage() {
         .workspace-tabs {
           display: inline-flex;
           gap: 8px;
-          padding: 8px;
+          padding: 6px;
           border-radius: 10px;
           border: 1px solid var(--border-secondary);
           background: var(--bg-secondary);
@@ -993,9 +1483,15 @@ export default function WorkspacePage() {
           font-weight: 500;
           cursor: pointer;
           padding: 0;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
         }
         .workspace-member-link-button.delete {
           color: var(--accent-red);
+        }
+        .workspace-member-link-button i {
+          font-size: 14px;
         }
         .workspace-member-link-button:disabled {
           color: var(--text-muted);
@@ -1017,6 +1513,156 @@ export default function WorkspacePage() {
           margin-top: 6px;
           font-size: 12px;
           color: var(--accent-red);
+        }
+        .form-grid.form-grid--two-column {
+          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+          align-items: start;
+        }
+        .workspace-inline-error {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 12px 14px;
+          border-radius: 10px;
+          background: rgba(239, 68, 68, 0.12);
+          color: var(--accent-red);
+          margin-bottom: 16px;
+          font-size: 13px;
+        }
+        .workspace-inline-error i {
+          font-size: 16px;
+        }
+        .align-right {
+          text-align: right;
+        }
+        .workspace-permission-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          margin-bottom: 16px;
+        }
+        .workspace-permission-table-wrapper {
+          margin-top: 16px;
+        }
+        .workspace-permission-table td {
+          vertical-align: top;
+        }
+        .workspace-permission-chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+        .workspace-permission-chip {
+          display: inline-flex;
+          align-items: center;
+          padding: 4px 10px;
+          border-radius: 999px;
+          background: var(--bg-secondary);
+          font-size: 11px;
+          color: var(--text-secondary);
+          border: 1px solid var(--border-secondary);
+        }
+        .workspace-permission-chip.more {
+          background: var(--bg-primary);
+          color: var(--accent-primary);
+          border-color: rgba(129, 58, 251, 0.25);
+        }
+        .workspace-permission-empty {
+          text-align: center;
+          padding: 24px 12px;
+          color: var(--text-muted);
+          font-size: 13px;
+        }
+        .workspace-permission-error {
+          margin-top: 12px;
+          padding: 10px 12px;
+          border-radius: 8px;
+          background: rgba(239, 68, 68, 0.12);
+          color: var(--accent-red);
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 12px;
+        }
+        .workspace-permission-error.inline {
+          margin: 12px 0 0 0;
+        }
+        .workspace-permission-notice {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 16px;
+          border-radius: 12px;
+          background: var(--status-todo-bg);
+          color: var(--status-todo-text);
+          margin-top: 16px;
+          font-size: 14px;
+        }
+        .workspace-permission-notice i {
+          font-size: 24px;
+          color: var(--status-todo-text);
+        }
+
+        .workspace-permission-notice p {
+          font-size: 12px;
+        }
+
+        .workspace-permission-modal {
+          max-width: 520px;
+          width: 100%;
+        }
+        .workspace-permission-modal-body {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        .workspace-permission-role {
+          font-size: 13px;
+          color: var(--text-secondary);
+        }
+        .workspace-permission-controls {
+          display: flex;
+          gap: 12px;
+        }
+        .workspace-permission-link {
+          border: none;
+          padding: 0;
+          background: transparent;
+          color: var(--accent-primary);
+          font-size: 12px;
+          font-weight: 500;
+          cursor: pointer;
+        }
+        .workspace-permission-link:hover {
+          text-decoration: underline;
+        }
+        .workspace-permission-options {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+          gap: 10px;
+        }
+        .workspace-permission-option {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: var(--bg-secondary);
+          border-radius: 10px;
+          padding: 10px 12px;
+          font-size: 12px;
+          color: var(--text-secondary);
+        }
+        .workspace-permission-control {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          cursor: pointer;
+        }
+        .workspace-permission-control input {
+          margin: 0;
+        }
+        .workspace-permission-label {
+          cursor: pointer;
+          user-select: none;
         }
       `}</style>
     </div>
