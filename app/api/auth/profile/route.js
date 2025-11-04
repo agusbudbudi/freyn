@@ -41,6 +41,13 @@ export async function GET(request) {
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
         workspaceId: user.workspaceId?.toString() || null,
+        workspaceRole: user.workspaceRole || null,
+        workspaceJoinedAt: user.workspaceJoinedAt || null,
+        workspaces: (user.workspaces || []).map((entry) => ({
+          workspaceId: entry.workspace?.toString() || null,
+          role: entry.role,
+          joinedAt: entry.joinedAt,
+        })),
       },
       workspace: workspace
         ? {
@@ -131,6 +138,13 @@ export async function PUT(request) {
           bio: updatedUser.bio || "",
           updatedAt: updatedUser.updatedAt,
           workspaceId: updatedUser.workspaceId?.toString() || null,
+          workspaceRole: updatedUser.workspaceRole || null,
+          workspaceJoinedAt: updatedUser.workspaceJoinedAt || null,
+          workspaces: (updatedUser.workspaces || []).map((entry) => ({
+            workspaceId: entry.workspace?.toString() || null,
+            role: entry.role,
+            joinedAt: entry.joinedAt,
+          })),
         },
       },
       "Profile updated successfully"

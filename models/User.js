@@ -8,6 +8,35 @@ const userSchema = new mongoose.Schema(
       ref: "Workspace",
       index: true,
     },
+    workspaceRole: {
+      type: String,
+      enum: ["owner", "manager", "member"],
+      default: "member",
+    },
+    workspaceJoinedAt: {
+      type: Date,
+    },
+    workspaces: {
+      type: [
+        {
+          workspace: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Workspace",
+            required: true,
+          },
+          role: {
+            type: String,
+            enum: ["owner", "manager", "member"],
+            default: "member",
+          },
+          joinedAt: {
+            type: Date,
+            default: Date.now,
+          },
+        },
+      ],
+      default: [],
+    },
     userId: {
       type: String,
       unique: true,
@@ -50,6 +79,8 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+userSchema.index({ "workspaces.workspace": 1 });
 
 // Note: User ID generation moved to route handler for better reliability
 

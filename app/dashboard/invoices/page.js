@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import LoadingState from "@/components/LoadingState";
@@ -10,6 +10,7 @@ import {
   formatCurrency,
   formatDateHuman,
 } from "@/components/invoices/utils";
+import { useWorkspaceSwitchListener } from "@/lib/hooks/useWorkspaceSwitchListener";
 
 function getAuthHeaders() {
   if (typeof window === "undefined") return {};
@@ -29,34 +30,36 @@ export default function InvoicesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [deletingId, setDeletingId] = useState(null);
 
-  useEffect(() => {
-    const fetchInvoices = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch("/api/invoices", {
-          headers: {
-            "Content-Type": "application/json",
-            ...getAuthHeaders(),
-          },
-        });
-        const data = await response.json();
-        if (!data.success) {
-          setError(data.message || "Failed to load invoices");
-          toast.error(data.message || "Failed to load invoices");
-          return;
-        }
-        setInvoices(data.data.invoices || []);
-      } catch (err) {
-        console.error(err);
-        setError("Failed to load invoices");
-        toast.error("Failed to load invoices");
-      } finally {
-        setLoading(false);
+  const fetchInvoices = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/invoices", {
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+      });
+      const data = await response.json();
+      if (!data.success) {
+        setError(data.message || "Failed to load invoices");
+        toast.error(data.message || "Failed to load invoices");
+        return;
       }
-    };
-
-    fetchInvoices();
+      setInvoices(data.data.invoices || []);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load invoices");
+      toast.error("Failed to load invoices");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchInvoices();
+  }, [fetchInvoices]);
+
+  useWorkspaceSwitchListener(fetchInvoices);
 
   const filteredInvoices = useMemo(() => {
     if (!searchTerm) return invoices;

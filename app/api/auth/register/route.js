@@ -64,6 +64,8 @@ export async function POST(request) {
 
     await user.save();
 
+    const joinedAt = new Date();
+
     // Create workspace for the user
     const workspaceName = `${fullName.trim()}'s Workspace`;
     const workspaceSlug = `workspace-${user.userId.toLowerCase()}`;
@@ -74,6 +76,13 @@ export async function POST(request) {
         name: workspaceName,
         owner: user._id,
         slug: workspaceSlug,
+        members: [
+          {
+            user: user._id,
+            role: "owner",
+            joinedAt,
+          },
+        ],
       });
     } catch (workspaceError) {
       console.error("Workspace creation error:", workspaceError);
@@ -85,9 +94,22 @@ export async function POST(request) {
     }
 
     // Link workspace to user
-    await User.findByIdAndUpdate(user._id, {
-      workspaceId: workspace._id,
-    });
+    const updatedUser = await User.findByIdAndUpdate(
+      user._id,
+      {
+        workspaceId: workspace._id,
+        workspaceRole: "owner",
+        workspaceJoinedAt: joinedAt,
+        $push: {
+          workspaces: {
+            workspace: workspace._id,
+            role: "owner",
+            joinedAt,
+          },
+        },
+      },
+      { new: true }
+    );
 
     // Generate JWT token
     const token = generateToken({
@@ -98,11 +120,18 @@ export async function POST(request) {
     return successResponse(
       {
         user: {
-          userId: user.userId,
-          fullName: user.fullName,
-          email: user.email,
-          createdAt: user.createdAt,
+          userId: updatedUser.userId,
+          fullName: updatedUser.fullName,
+          email: updatedUser.email,
+          createdAt: updatedUser.createdAt,
           workspaceId: workspace._id.toString(),
+          workspaceRole: updatedUser.workspaceRole,
+          workspaceJoinedAt: updatedUser.workspaceJoinedAt,
+          workspaces: (updatedUser.workspaces || []).map((entry) => ({
+            workspaceId: entry.workspace?.toString() || null,
+            role: entry.role,
+            joinedAt: entry.joinedAt,
+          })),
         },
         workspace: {
           id: workspace._id.toString(),

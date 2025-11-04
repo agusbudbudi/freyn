@@ -51,7 +51,7 @@
 }
 
 .auth-title {
-  font-size: 18px;
+  font-size: 28px;
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 5px;
@@ -92,6 +92,16 @@
 .input-wrapper .form-control {
   width: 100%;
   padding-right: 40px;
+}
+
+.form-group.auth input {
+  padding: 10px 16px;
+  border-radius: 12px;
+}
+
+.form-page button {
+  padding: 10px 16px;
+  border-radius: 12px;
 }
 
 .password-toggle {
@@ -321,7 +331,7 @@
   grid-template-columns: 1fr 1fr;
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.06);
-  background-color: var(--bg-primary);
+  background-color: var(--bg-secondary);
 }
 
 /* Left column: Hero */
@@ -332,7 +342,12 @@
   flex-direction: column;
   justify-content: center;
   gap: 12px;
-  background-color: var(--bg-secondary);
+  /* background-color: var(--accent-primary); */
+  background: linear-gradient(
+    140deg,
+    var(--accent-blue) 10%,
+    var(--accent-primary) 100%
+  );
 
   margin: 20px;
   border-radius: 20px;
@@ -351,12 +366,12 @@
 .hero-title {
   font-size: 28px;
   font-weight: 800;
-  color: var(--accent-primary);
+  color: var(--text-white);
   margin: 8px 0 4px;
 }
 
 .hero-subtitle {
-  color: var(--text-muted);
+  color: var(--text-white);
   font-size: 14px;
   line-height: 1.6;
 }
@@ -373,20 +388,20 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--text-muted);
+  color: var(--text-white);
   font-size: 13px;
 }
 
 .hero-points li::before {
   content: "•";
-  color: #667eea;
+  color: var(--text-light);
   font-size: 18px;
   line-height: 1;
 }
 
 .hero-illus {
   width: 100%;
-  max-width: 480px;
+  max-width: 800px;
 }
 
 /* Right column: Form panel */
@@ -394,7 +409,7 @@
   padding: 40px;
   display: grid;
   place-items: center;
-  background: var(--bg-primary);
+  background: var(--bg-secondary);
 }
 
 .auth-panel-inner {
