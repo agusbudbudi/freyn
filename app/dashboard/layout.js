@@ -102,6 +102,24 @@ const RAW_NAV_SECTIONS = [
   },
 ];
 
+const ROUTE_PERMISSION_RULES = [
+  { pattern: /^\/dashboard$/, permission: "dashboard" },
+  {
+    pattern: /^\/dashboard\/projects\/calendar(?:\/|$)/,
+    permission: "calendar",
+  },
+  { pattern: /^\/dashboard\/projects(?:\/|$)/, permission: "projects" },
+  { pattern: /^\/dashboard\/clients(?:\/|$)/, permission: "clients" },
+  { pattern: /^\/dashboard\/services(?:\/|$)/, permission: "services" },
+  { pattern: /^\/dashboard\/invoices(?:\/|$)/, permission: "invoices" },
+  {
+    pattern: /^\/dashboard\/workspace(?:\/|$)/,
+    permission: "workspace-settings",
+  },
+  { pattern: /^\/dashboard\/portfolio(?:\/|$)/, permission: "portfolio" },
+  { pattern: /^\/dashboard\/reports(?:\/|$)/, permission: "reports" },
+];
+
 const getDefaultPermissionsForRole = (role) => {
   if (role === "owner") {
     return [...OWNER_MENU_KEYS];
@@ -372,7 +390,8 @@ export default function DashboardLayout({ children }) {
         window.dispatchEvent(
           new CustomEvent("workspace-switched", {
             detail: {
-              workspaceId: switchedWorkspaceId?.toString?.() || switchedWorkspaceId,
+              workspaceId:
+                switchedWorkspaceId?.toString?.() || switchedWorkspaceId,
             },
           })
         );
@@ -444,6 +463,23 @@ export default function DashboardLayout({ children }) {
     })).filter((section) => section.items.length > 0);
   }, [canAccessMenu]);
 
+  const currentPermissionKey = useMemo(() => {
+    if (!pathname) {
+      return null;
+    }
+
+    const normalizedPath =
+      pathname !== "/" && pathname.endsWith("/")
+        ? pathname.slice(0, -1)
+        : pathname;
+
+    const matchedRule = ROUTE_PERMISSION_RULES.find(({ pattern }) =>
+      pattern.test(normalizedPath)
+    );
+
+    return matchedRule?.permission || null;
+  }, [pathname]);
+
   if (!authChecked) {
     return null;
   }
@@ -495,6 +531,18 @@ export default function DashboardLayout({ children }) {
       .sort((a, b) => b[0].length - a[0].length)
       .find(([key]) => pathname.startsWith(key))?.[1] ||
     defaultPageMeta;
+
+  const showRestrictionBanner =
+    authChecked && currentPermissionKey && !canAccessMenu(currentPermissionKey);
+
+  const restrictedContent = (
+    <div className="content-body">
+      <div className="alert alert-error">
+        <i className="uil uil-lock"></i>
+        This page cannot be accessed due to workspace permission restrictions.
+      </div>
+    </div>
+  );
 
   return (
     <div className="app-container">
@@ -808,7 +856,9 @@ export default function DashboardLayout({ children }) {
         />
 
         {/* Page Content */}
-        <div key={activeWorkspaceId || "default"}>{children}</div>
+        <div key={activeWorkspaceId || "default"}>
+          {showRestrictionBanner ? restrictedContent : children}
+        </div>
       </div>
     </div>
   );
