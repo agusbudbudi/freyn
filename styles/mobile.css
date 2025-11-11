@@ -215,7 +215,9 @@
   }
 
   .card-header-search .status-filter {
-    width: 100%;
+    width: auto;
+    align-self: flex-start;
+    margin-left: 0;
   }
 
   /* Profile */
@@ -254,6 +256,10 @@
   .project-form-layout {
     grid-template-columns: 1fr;
     gap: 20px;
+  }
+
+  .project-status-timeline--desktop {
+    display: none;
   }
 
   .project-sidebar {
@@ -603,9 +609,9 @@
   }
 
   .card-header-search .status-filter {
-    width: 100%;
+    width: auto;
+    align-self: flex-start;
     margin-left: 0;
-    justify-content: flex-start;
   }
 
   .search-input {

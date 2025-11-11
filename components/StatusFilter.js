@@ -7,16 +7,18 @@ export default function StatusFilter({ options = [], value, onChange }) {
     <div className="status-filter">
       {options.map((option) => {
         const isActive = option.value === value;
+        const label = option.value === "all" ? "All" : option.label;
         return (
           <button
             key={option.value}
             type="button"
-            className={`status-filter__chip ${
-              isActive ? "status-filter__chip--active" : ""
+            className={`status-filter__tab ${
+              isActive ? "status-filter__tab--active" : ""
             }`}
+            aria-pressed={isActive}
             onClick={() => onChange(option.value)}
           >
-            <span>{option.value === "all" ? "All" : option.label}</span>
+            <span className="status-filter__label">{label}</span>
             <span className="status-filter__count">{option.count}</span>
           </button>
         );

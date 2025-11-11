@@ -10,6 +10,15 @@ import { toast } from "@/components/ui/toast";
 // Dynamic import Quill to avoid SSR issues
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
+const PROJECT_STATUS_FLOW = [
+  { key: "to do", icon: "uil-clipboard-alt" },
+  { key: "in progress", icon: "uil-spinner-alt" },
+  { key: "waiting for payment", icon: "uil-wallet" },
+  { key: "in review", icon: "uil-search" },
+  { key: "revision", icon: "uil-refresh" },
+  { key: "done", icon: "uil-check-circle" },
+];
+
 export default function ProjectModal({
   isOpen,
   onClose,
@@ -474,12 +483,99 @@ export default function ProjectModal({
     const labelMap = {
       "to do": "To Do",
       "in progress": "In Progress",
-      "waiting for payment": "Waiting Payment",
+      "waiting for payment": "Payment",
       "in review": "In Review",
       revision: "Revision",
       done: "Done",
     };
     return labelMap[status] || status;
+  };
+
+  const currentStatusKey = (formData.status || "").toLowerCase();
+
+  const currentStatusIndex = useMemo(() => {
+    const index = PROJECT_STATUS_FLOW.findIndex(
+      (step) => step.key === currentStatusKey
+    );
+    return index >= 0 ? index : 0;
+  }, [currentStatusKey]);
+
+  const statusTimeline = useMemo(
+    () =>
+      PROJECT_STATUS_FLOW.map((step, index) => ({
+        ...step,
+        label: getStatusLabel(step.key),
+        state:
+          index < currentStatusIndex
+            ? "completed"
+            : index === currentStatusIndex
+            ? "current"
+            : "upcoming",
+      })),
+    [currentStatusIndex]
+  );
+
+  const statusProgressRatio = useMemo(() => {
+    if (PROJECT_STATUS_FLOW.length <= 1) {
+      return 0;
+    }
+    const normalizedIndex = Math.min(
+      Math.max(currentStatusIndex, 0),
+      PROJECT_STATUS_FLOW.length - 1
+    );
+    return normalizedIndex / (PROJECT_STATUS_FLOW.length - 1);
+  }, [currentStatusIndex]);
+
+  const renderStatusTimeline = (variantClass = "") => {
+    const classes = ["project-status-timeline"];
+    if (variantClass) {
+      classes.push(variantClass);
+    }
+
+    return (
+      <div className={classes.join(" ")}>
+        <div className="project-status-timeline__header">
+          <div className="project-status-timeline__title">
+            <i className="uil uil-pathfinder"></i>
+            <span>Project Progress</span>
+          </div>
+          <span className={`status-badge ${getStatusClass(currentStatusKey)}`}>
+            {getStatusLabel(currentStatusKey)}
+          </span>
+        </div>
+        <div className="project-status-timeline__steps">
+          <div className="project-status-timeline__line-wrapper">
+            <div className="project-status-timeline__line" />
+            <div
+              className="project-status-timeline__line project-status-timeline__line--progress"
+              style={{ transform: `scaleX(${statusProgressRatio})` }}
+            />
+          </div>
+          {statusTimeline.map((step) => (
+            <div
+              key={step.key}
+              className={`project-status-step project-status-step--${step.state}`}
+            >
+              <div className="project-status-step__icon">
+                <i className={`uil ${step.icon}`}></i>
+              </div>
+              <span className="project-status-step__label">
+                <i
+                  className={`uil ${
+                    step.state === "completed"
+                      ? "uil-check-circle"
+                      : step.state === "current"
+                      ? "uil-history"
+                      : "uil-schedule"
+                  } project-status-step__indicator`}
+                ></i>
+                {step.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   const generateAvatar = (name, email) => {
@@ -616,6 +712,8 @@ export default function ProjectModal({
             <div className="project-form-layout">
               {/* Main Content */}
               <div className="project-main-content">
+                {editProject &&
+                  renderStatusTimeline("project-status-timeline--desktop")}
                 {/* Project Information */}
                 <div className="project-section">
                   <h3 className="project-section-title">Project Information</h3>
@@ -721,21 +819,21 @@ export default function ProjectModal({
                 </div>
 
                 {/* Deliverables */}
-                <div className="project-section">
-                  <h3 className="project-section-title">Deliverables</h3>
-                  <div className="form-group">
-                    <label className="form-label">Deliverables Link</label>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      <input
-                        type="url"
-                        name="deliverables"
-                        className="form-control"
-                        value={formData.deliverables}
-                        onChange={handleInputChange}
-                        placeholder="https://drive.google.com/..."
-                        style={{ flex: 1 }}
-                      />
-                      {editProject && (
+                {editProject && (
+                  <div className="project-section">
+                    <h3 className="project-section-title">Deliverables</h3>
+                    <div className="form-group">
+                      <label className="form-label">Deliverables Link</label>
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <input
+                          type="url"
+                          name="deliverables"
+                          className="form-control"
+                          value={formData.deliverables}
+                          onChange={handleInputChange}
+                          placeholder="https://drive.google.com/..."
+                          style={{ flex: 1 }}
+                        />
                         <button
                           type="button"
                           className="btn btn-outline"
@@ -750,71 +848,77 @@ export default function ProjectModal({
                           <i className="uil uil-external-link-alt"></i>
                           Open Result
                         </button>
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Invoice</label>
+                      {hasLinkedInvoice ? (
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "12px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              background: "#e0f2fe",
+                              color: "#1e3a8a",
+                              borderRadius: "10px",
+                              padding: "12px 16px",
+                              fontSize: "13px",
+                              fontWeight: 500,
+                              lineHeight: 1.5,
+                              width: "100%",
+                            }}
+                          >
+                            Your invoice has already been generated
+                            <strong style={{ marginLeft: "4px" }}>
+                              #{invoiceDisplayNumber}
+                            </strong>
+                          </div>
+                          <button
+                            type="button"
+                            className="btn btn-outline"
+                            onClick={handleInvoiceNavigation}
+                            style={{
+                              whiteSpace: "nowrap",
+                              padding: "0 16px",
+                            }}
+                            disabled={!canNavigateInvoice}
+                          >
+                            <i className="uil uil-external-link-alt"></i>
+                            Open Invoice
+                          </button>
+                        </div>
+                      ) : (
+                        <div style={{ display: "flex", gap: "8px" }}>
+                          <input
+                            type="url"
+                            name="invoice"
+                            className="form-control"
+                            value={formData.invoice}
+                            onChange={handleInputChange}
+                            placeholder="https://splitbill-alpha.vercel.app/..."
+                            style={{ flex: 1 }}
+                          />
+                          <button
+                            type="button"
+                            className="btn btn-outline"
+                            onClick={handleInvoiceNavigation}
+                            style={{
+                              whiteSpace: "nowrap",
+                              padding: "0 16px",
+                            }}
+                            disabled={!canNavigateInvoice}
+                          >
+                            <i className="uil uil-file-plus"></i>
+                            Create Invoice
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
-                  <div className="form-group">
-                    <label className="form-label">Invoice</label>
-                    {hasLinkedInvoice ? (
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "12px",
-                        }}
-                      >
-                        <div
-                          style={{
-                            background: "#e0f2fe",
-                            color: "#1e3a8a",
-                            borderRadius: "10px",
-                            padding: "12px 16px",
-                            fontSize: "13px",
-                            fontWeight: 500,
-                            lineHeight: 1.5,
-                            width: "100%",
-                          }}
-                        >
-                          Your invoice has already been generated
-                          <strong style={{ marginLeft: "4px" }}>
-                            #{invoiceDisplayNumber}
-                          </strong>
-                        </div>
-                        <button
-                          type="button"
-                          className="btn btn-outline"
-                          onClick={handleInvoiceNavigation}
-                          style={{ whiteSpace: "nowrap", padding: "0 16px" }}
-                          disabled={!canNavigateInvoice}
-                        >
-                          <i className="uil uil-external-link-alt"></i>
-                          Open Invoice
-                        </button>
-                      </div>
-                    ) : (
-                      <div style={{ display: "flex", gap: "8px" }}>
-                        <input
-                          type="url"
-                          name="invoice"
-                          className="form-control"
-                          value={formData.invoice}
-                          onChange={handleInputChange}
-                          placeholder="https://splitbill-alpha.vercel.app/..."
-                          style={{ flex: 1 }}
-                        />
-                        <button
-                          type="button"
-                          className="btn btn-outline"
-                          onClick={handleInvoiceNavigation}
-                          style={{ whiteSpace: "nowrap", padding: "0 16px" }}
-                          disabled={!canNavigateInvoice}
-                        >
-                          <i className="uil uil-file-plus"></i>
-                          Create Invoice
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                )}
 
                 {/* Comments Section */}
                 {editProject && (

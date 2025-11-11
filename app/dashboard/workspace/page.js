@@ -1389,8 +1389,8 @@ export default function WorkspacePage() {
         }
         .workspace-tabs {
           display: inline-flex;
-          gap: 8px;
-          padding: 6px;
+          gap: 3px;
+          padding: 3px;
           border-radius: 10px;
           border: 1px solid var(--border-secondary);
           background: var(--bg-secondary);
