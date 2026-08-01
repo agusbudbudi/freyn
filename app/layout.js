@@ -4,7 +4,6 @@ import "../styles/theme.css";
 import "../styles/invoices.css";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "../styles/calendar.css";
-import "../styles/invoice-public.css";
 
 const getBaseUrl = () => {
   if (process.env.NEXT_PUBLIC_SITE_URL) {
@@ -40,6 +39,10 @@ export default function RootLayout({ children }) {
         />
         <link
           href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
         <link

@@ -1,9 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import PortfolioModal from "@/components/PortfolioModal";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import LoadingState from "@/components/LoadingState";
 import { toast } from "@/components/ui/toast";
+import { Card, CardHeader, CardTitle, CardSubtitle, CardBody } from "@/components/ui/Card";
+import Button, { buttonClasses } from "@/components/ui/Button";
+import EmptyState from "@/components/ui/EmptyState";
+import Alert from "@/components/ui/Alert";
 
 const stripHtml = (html = "") => {
   if (!html) return "";
@@ -18,19 +22,11 @@ const stripHtml = (html = "") => {
   return tmp.textContent || tmp.innerText || "";
 };
 
-const slugifyName = (value = "") =>
-  value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
-
 export default function PortfolioPage() {
+  const router = useRouter();
   const [portfolio, setPortfolio] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchPortfolio();
@@ -77,56 +73,43 @@ export default function PortfolioPage() {
     }
   };
 
-  const suggestedSlug = useMemo(() => {
-    if (portfolio?.slug) return portfolio.slug;
-    if (portfolio?.ownerName) return slugifyName(portfolio.ownerName);
-    if (portfolio?.workspaceName) return slugifyName(portfolio.workspaceName);
-    return "";
-  }, [portfolio?.slug, portfolio?.ownerName, portfolio?.workspaceName]);
-
-  const portfolioItems = useMemo(
-    () => (portfolio ? [portfolio] : []),
-    [portfolio]
-  );
+  const portfolioItems = portfolio ? [portfolio] : [];
 
   return (
-    <div className="content-body">
-      <div className="content-card">
-        <div className="card-header">
+    <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
+      <Card>
+        <CardHeader>
           <div>
-            <h2 className="card-title">Portfolio Management</h2>
-            <p className="card-subtitle">
+            <CardTitle>Portfolio Management</CardTitle>
+            <CardSubtitle>
               Create a public portfolio link showcasing your best work.
-            </p>
+            </CardSubtitle>
           </div>
-          <button
-            className="btn btn-primary"
-            onClick={() => setIsModalOpen(true)}
-          >
+          <Button onClick={() => router.push("/dashboard/portfolio/edit")}>
             <i className="uil uil-edit"></i>
             {portfolio ? "Edit Portfolio" : "Create Portfolio"}
-          </button>
-        </div>
+          </Button>
+        </CardHeader>
 
-        <div className="card-body" style={{ padding: "16px" }}>
+        <CardBody className="p-4">
           {loading ? (
             <LoadingState message="Loading portfolio..." />
           ) : portfolioItems.length > 0 ? (
-            <div className="portfolio-grid">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               {portfolioItems.map((item, idx) => (
-                <div key={item.slug || idx} className="portfolio-card">
+                <div key={item.slug || idx} className="bg-white border border-slate-100 rounded-2xl overflow-hidden flex flex-col min-h-full">
                   {item.coverImage ? (
                     <button
                       type="button"
-                      className="portfolio-cover-button"
-                      onClick={() => setIsModalOpen(true)}
+                      className="group relative p-0 border-none m-0 cursor-pointer block bg-transparent overflow-hidden leading-none"
+                      onClick={() => router.push("/dashboard/portfolio/edit")}
                     >
                       <img
                         src={item.coverImage}
                         alt={`${item.title || "Portfolio"} cover`}
-                        className="portfolio-cover"
+                        className="w-full max-h-[260px] object-cover"
                       />
-                      <span className="portfolio-cover-overlay">
+                      <span className="absolute inset-0 flex items-center justify-center gap-2 bg-gray-900/45 text-white font-medium opacity-0 transition-opacity duration-200 pointer-events-none group-hover:opacity-100">
                         <i className="uil uil-edit"></i>
                         Edit Portfolio
                       </span>
@@ -134,22 +117,22 @@ export default function PortfolioPage() {
                   ) : (
                     <button
                       type="button"
-                      className="portfolio-cover-button placeholder"
-                      onClick={() => setIsModalOpen(true)}
+                      className="h-[260px] flex flex-col items-center justify-center gap-2 text-slate-500 bg-slate-100 [&>i]:text-4xl"
+                      onClick={() => router.push("/dashboard/portfolio/edit")}
                     >
                       <i className="uil uil-image"></i>
                       <span>Edit Portfolio</span>
                     </button>
                   )}
-                  <div className="portfolio-content">
-                    <div className="portfolio-title-row">
-                      <h3 className="portfolio-title">{item.title}</h3>
+                  <div className="p-4 flex flex-col gap-3">
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                      <h3 className="m-0 text-lg font-semibold text-slate-900 flex-1 min-w-0">{item.title}</h3>
                       {item.slug && (
                         <a
                           href={`/portfolio/${item.slug}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="btn btn-outline"
+                          className={buttonClasses({ variant: "outline", size: "sm" })}
                         >
                           See Portfolio
                           <i className="uil uil-external-link-alt"></i>
@@ -157,27 +140,27 @@ export default function PortfolioPage() {
                       )}
                     </div>
                     {item.slug && (
-                      <div className="text-sm" style={{ marginTop: "4px" }}>
+                      <div className="text-sm mt-1">
                         Public URL slug:{" "}
-                        <span className="portfolio-slug">{item.slug}</span>
+                        <span className="text-emerald-700 bg-emerald-100 py-0.5 px-2 rounded-full text-xs">{item.slug}</span>
                       </div>
                     )}
                     {item.description && (
-                      <p className="portfolio-description">
+                      <p className="m-0 text-gray-600 text-sm">
                         {stripHtml(item.description)}
                       </p>
                     )}
                     {(item.links || []).length > 0 && (
-                      <div className="portfolio-links">
-                        <h4>Links</h4>
-                        <div className="portfolio-links-list">
+                      <div>
+                        <h4 className="mt-0 mb-2 text-sm font-semibold text-gray-600">Links</h4>
+                        <div className="flex flex-wrap gap-3">
                           {item.links.map((link, linkIdx) => (
                             <a
                               key={`${link.url}-${linkIdx}`}
                               href={link.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="btn btn-secondary portfolio-link-item"
+                              className={`${buttonClasses({ variant: "secondary", size: "sm" })} text-xs`}
                             >
                               {link.name || link.url}
                               <i className="uil uil-link"></i>
@@ -191,155 +174,18 @@ export default function PortfolioPage() {
               ))}
             </div>
           ) : error ? (
-            <div className="alert alert-error">
+            <Alert type="error">
               <i className="uil uil-exclamation-triangle"></i> {error}
-            </div>
+            </Alert>
           ) : (
-            <div className="empty-state" style={{ padding: "48px 16px" }}>
-              <i className="uil uil-palette"></i>
-              <h3 style={{ marginBottom: "8px" }}>No portfolio yet</h3>
-              <p style={{ maxWidth: "480px", margin: "0 auto" }}>
-                Create your public portfolio to share a curated collection of
-                projects, links, and achievements.
-              </p>
-            </div>
+            <EmptyState
+              icon="uil uil-palette"
+              title="No portfolio yet"
+              description="Create your public portfolio to share a curated collection of projects, links, and achievements."
+            />
           )}
-        </div>
-      </div>
-
-      {isModalOpen && (
-        <PortfolioModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onSaved={(updated) => {
-            setPortfolio(updated);
-            setIsModalOpen(false);
-            setError("");
-          }}
-          initialData={portfolio}
-          suggestedSlug={suggestedSlug}
-        />
-      )}
-
-      <style jsx>{`
-        .portfolio-grid {
-          display: grid;
-          gap: 20px;
-          grid-template-columns: 1fr;
-        }
-        .portfolio-card {
-          background: var(--bg-secondary);
-          border: 1px solid var(--border-secondary);
-          border-radius: 16px;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-          min-height: 100%;
-        }
-        .portfolio-cover {
-          width: 100%;
-          max-height: 260px;
-          object-fit: cover;
-        }
-        .portfolio-cover-button {
-          position: relative;
-          padding: 0;
-          border: none;
-          margin: 0;
-          cursor: pointer;
-          display: block;
-          background: transparent;
-          overflow: hidden;
-          line-height: 0;
-        }
-
-        .portfolio-cover-overlay {
-          position: absolute;
-          inset: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          background: rgba(17, 24, 39, 0.45);
-          color: #fff;
-          font-weight: 500;
-          opacity: 0;
-          transition: opacity 0.2s ease;
-          pointer-events: none;
-        }
-        .portfolio-cover-button:hover .portfolio-cover-overlay {
-          opacity: 1;
-        }
-        .portfolio-cover-button.placeholder {
-          height: 260px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          color: var(--text-muted);
-          background: var(--bg-tertiary);
-        }
-        .portfolio-cover-button.placeholder i {
-          font-size: 40px;
-        }
-        .portfolio-content {
-          padding: 16px;
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-        .portfolio-title {
-          margin: 0;
-          font-size: 18px;
-          font-weight: 600;
-          color: var(--text-primary);
-          flex: 1;
-          min-width: 0;
-        }
-        .portfolio-title-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-          flex-wrap: wrap;
-        }
-        .portfolio-description {
-          margin: 0;
-          color: #4b5563;
-          font-size: 14px;
-        }
-        .portfolio-links h4 {
-          margin: 0 0 8px 0;
-          font-size: 14px;
-          font-weight: 600;
-          color: #4b5563;
-        }
-        .portfolio-links-list {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 12px;
-        }
-        .portfolio-link-item {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 12px;
-        }
-        .portfolio-slug {
-          color: var(--status-done-text);
-          background: var(--status-done-bg);
-          padding: 2px 8px;
-          border-radius: 20px;
-          font-size: 12px;
-        }
-
-        @media (min-width: 1024px) {
-          .portfolio-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-        }
-      `}</style>
+        </CardBody>
+      </Card>
     </div>
   );
 }

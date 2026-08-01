@@ -4,6 +4,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import LoadingState from "@/components/LoadingState";
 import { toast } from "@/components/ui/toast";
 import workspacePermissionsConfig from "@/lib/workspacePermissions.json";
+import { Card, CardHeader, CardTitle, CardSubtitle, CardBody } from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import Tabs from "@/components/ui/Tabs";
+import Input from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
+import Modal from "@/components/ui/Modal";
 
 const DEFAULT_WORKSPACE = {
   id: null,
@@ -554,8 +560,7 @@ export default function WorkspacePage() {
     }
 
     const confirmed = window.confirm(
-      `Remove ${
-        member.fullName || member.email || "this member"
+      `Remove ${member.fullName || member.email || "this member"
       } from the workspace?`
     );
 
@@ -730,83 +735,57 @@ export default function WorkspacePage() {
 
   if (loading) {
     return (
-      <div className="content-body">
+      <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
         <LoadingState message="Loading workspace..." />
       </div>
     );
   }
 
   return (
-    <div className="content-body">
+    <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
       {error && (
-        <div className="workspace-inline-error">
-          <i className="uil uil-exclamation-triangle"></i>
+        <div className="flex items-center gap-2 py-3 px-3.5 rounded-[10px] bg-red-500/[0.12] text-red-500 mb-4 text-[13px]">
+          <i className="uil uil-exclamation-triangle text-base"></i>
           {error}
         </div>
       )}
 
-      <div className="content-card">
-        <div className="card-header">
+      <Card>
+        <CardHeader>
           <div>
-            <h2 className="card-title">Workspace Management</h2>
-            <div className="workspace-tabs">
-              <button
-                type="button"
-                className={`workspace-tab ${
-                  activeTab === WORKSPACE_TABS.DETAILS
-                    ? "workspace-tab--active"
-                    : ""
-                }`}
-                onClick={() => setActiveTab(WORKSPACE_TABS.DETAILS)}
-              >
-                Details
-              </button>
-              <button
-                type="button"
-                className={`workspace-tab ${
-                  activeTab === WORKSPACE_TABS.MEMBERS
-                    ? "workspace-tab--active"
-                    : ""
-                }`}
-                onClick={() => setActiveTab(WORKSPACE_TABS.MEMBERS)}
-              >
-                Member
-              </button>
-              <button
-                type="button"
-                className={`workspace-tab ${
-                  activeTab === WORKSPACE_TABS.PERMISSIONS
-                    ? "workspace-tab--active"
-                    : ""
-                }`}
-                onClick={() => setActiveTab(WORKSPACE_TABS.PERMISSIONS)}
-              >
-                Permission
-              </button>
-            </div>
+            <CardTitle>Workspace Management</CardTitle>
+            <Tabs
+              className="mt-4"
+              tabs={[
+                { value: WORKSPACE_TABS.DETAILS, label: "Details" },
+                { value: WORKSPACE_TABS.MEMBERS, label: "Member" },
+                { value: WORKSPACE_TABS.PERMISSIONS, label: "Permission" },
+              ]}
+              value={activeTab}
+              onChange={setActiveTab}
+            />
           </div>
-        </div>
+        </CardHeader>
 
         {activeTab === WORKSPACE_TABS.DETAILS ? (
           <form onSubmit={handleSubmit}>
-            <div className="card-body">
-              <div className="form-header">
-                <h2 className="card-title">Details</h2>
-                <p className="card-subtitle">
+            <CardBody className="p-6 pt-0">
+              <div className="mb-5">
+                <CardTitle>Details</CardTitle>
+                <CardSubtitle className="text-sm mt-1">
                   Update your workspace name and review subscription
                   information.
-                </p>
+                </CardSubtitle>
               </div>
-              <div className="form-grid form-grid--two-column">
-                <div className="form-group">
-                  <label className="form-label" htmlFor="workspace-name">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-5 items-start">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block" htmlFor="workspace-name">
                     Workspace Name
                   </label>
-                  <input
+                  <Input
                     id="workspace-name"
                     name="name"
                     type="text"
-                    className="form-control"
                     value={formData.name}
                     onChange={handleChange}
                     placeholder="Enter workspace name"
@@ -815,155 +794,143 @@ export default function WorkspacePage() {
                   />
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label" htmlFor="workspace-plan">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block" htmlFor="workspace-plan">
                     Workspace Plan
                   </label>
-                  <input
+                  <Input
                     id="workspace-plan"
                     type="text"
-                    className="form-control"
                     value={displayPlan}
                     readOnly
                     disabled
                   />
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label" htmlFor="workspace-slug">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block" htmlFor="workspace-slug">
                     Slug
                   </label>
-                  <input
+                  <Input
                     id="workspace-slug"
                     type="text"
-                    className="form-control"
                     value={workspace.slug || ""}
                     readOnly
                     disabled
                   />
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label" htmlFor="workspace-owner">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block" htmlFor="workspace-owner">
                     Owner
                   </label>
-                  <input
+                  <Input
                     id="workspace-owner"
                     type="text"
-                    className="form-control"
                     value={workspace.ownerName || ""}
                     readOnly
                     disabled
                   />
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label" htmlFor="workspace-status">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block" htmlFor="workspace-status">
                     Status
                   </label>
-                  <input
+                  <Input
                     id="workspace-status"
                     type="text"
-                    className="form-control"
                     value={displayStatus}
                     readOnly
                     disabled
                   />
                 </div>
               </div>
-            </div>
+            </CardBody>
 
-            <div className="card-footer">
-              <div className="button-group">
-                <button
+            <div className="p-4 border-t border-slate-100 bg-white">
+              <div className="flex gap-3 justify-end">
+                <Button
                   type="button"
-                  className="btn btn-secondary"
+                  variant="secondary"
                   onClick={handleCancel}
                   disabled={saving || !hasChanges}
                 >
                   Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={saving || !hasChanges}
-                >
+                </Button>
+                <Button type="submit" disabled={saving || !hasChanges}>
                   <i className="uil uil-save"></i>
                   {saving ? "Saving..." : "Save"}
-                </button>
+                </Button>
               </div>
             </div>
           </form>
         ) : activeTab === WORKSPACE_TABS.MEMBERS ? (
-          <div className="card-body">
-            <div className="workspace-member-actions">
+          <CardBody className="p-6 pt-0">
+            <div className="flex justify-between items-end gap-4 mb-4">
               <div>
-                <h2 className="card-title">Members</h2>
-                <p className="card-subtitle">
+                <CardTitle className="mb-1">Members</CardTitle>
+                <CardSubtitle className="text-sm">
                   Invite teammates and manage their roles.
-                </p>
+                </CardSubtitle>
               </div>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleOpenAddMember}
-              >
+              <Button onClick={handleOpenAddMember}>
                 <i className="uil uil-user-plus"></i>
                 Add Member
-              </button>
+              </Button>
             </div>
-            <div className="table-container">
-              <table className="table workspace-member-table">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Role</th>
-                    <th>Action</th>
+                    <th className="py-4 px-5 text-left bg-slate-100 border-y border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-[0.5px]">Name</th>
+                    <th className="py-4 px-5 text-left bg-slate-100 border-y border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-[0.5px]">Role</th>
+                    <th className="py-4 px-5 text-right bg-slate-100 border-y border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-[0.5px]">Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {membersLoading ? (
                     <tr>
-                      <td colSpan={3} className="workspace-member-empty">
+                      <td colSpan={3} className="text-center py-8 px-4 text-slate-500">
                         Loading members...
                       </td>
                     </tr>
                   ) : members.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="workspace-member-empty">
+                      <td colSpan={3} className="text-center py-8 px-4 text-slate-500">
                         No members to display yet.
                       </td>
                     </tr>
                   ) : (
                     members.map((member, index) => (
                       <tr key={member.id || member.email || `member-${index}`}>
-                        <td>
-                          <div className="workspace-member-name">
-                            <span className="workspace-member-fullname">
+                        <td className="py-3 pr-3 pl-5 border-b border-slate-100 text-xs">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="font-semibold text-slate-900">
                               {member.fullName || member.email || "Member"}
                             </span>
                             {member.email && (
-                              <span className="workspace-member-email">
+                              <span className="text-xs text-slate-500">
                                 {member.email}
                               </span>
                             )}
                           </div>
                         </td>
-                        <td>
-                          <span className="workspace-member-role">
+                        <td className="py-3 pr-3 pl-5 border-b border-slate-100 text-xs">
+                          <span className="text-xs font-medium capitalize text-slate-800">
                             {formatRole(member.role)}
                           </span>
                         </td>
-                        <td className="workspace-member-actions-cell">
+                        <td className="py-3 pr-3 pl-5 border-b border-slate-100 text-xs text-right text-slate-500">
                           {member.role === "owner" || !member.id ? (
-                            <span className="workspace-member-owner-tag">
+                            <span className="text-xs font-semibold text-signal-blue">
                               Owner
                             </span>
                           ) : (
-                            <div className="workspace-member-row-actions">
+                            <div className="flex justify-end gap-3">
                               <button
                                 type="button"
-                                className="workspace-member-link-button"
+                                className="border-none bg-transparent text-signal-blue text-xs font-medium cursor-pointer p-0 inline-flex items-center gap-1.5 disabled:text-slate-500 disabled:cursor-not-allowed"
                                 onClick={() => handleOpenEditMember(member)}
                                 disabled={
                                   editSubmitting ||
@@ -971,11 +938,11 @@ export default function WorkspacePage() {
                                   memberActionId === member.id
                                 }
                               >
-                                <i className="uil uil-edit-alt"></i> Edit
+                                <i className="uil uil-edit-alt text-sm"></i> Edit
                               </button>
                               <button
                                 type="button"
-                                className="workspace-member-link-button delete"
+                                className="border-none bg-transparent text-red-500 text-xs font-medium cursor-pointer p-0 inline-flex items-center gap-1.5 disabled:text-slate-500 disabled:cursor-not-allowed"
                                 onClick={() => handleDeleteMember(member)}
                                 disabled={
                                   memberActionId === member.id ||
@@ -987,7 +954,7 @@ export default function WorkspacePage() {
                                   "Deleting..."
                                 ) : (
                                   <>
-                                    <i className="uil uil-trash-alt"></i>
+                                    <i className="uil uil-trash-alt text-sm"></i>
                                     Delete
                                   </>
                                 )}
@@ -1001,670 +968,307 @@ export default function WorkspacePage() {
                 </tbody>
               </table>
             </div>
-          </div>
+          </CardBody>
         ) : (
-          <div className="card-body">
-            <div className="workspace-permission-header">
+          <CardBody className="p-6 pt-0">
+            <div className="flex justify-between items-end mb-4">
               <div>
-                <h2 className="card-title">Permissions</h2>
-                <p className="card-subtitle">
+                <CardTitle>Permissions</CardTitle>
+                <CardSubtitle className="text-sm">
                   Control which menus each role can access in the sidebar.
-                </p>
+                </CardSubtitle>
               </div>
             </div>
 
             {userRole !== "owner" ? (
-              <div className="workspace-permission-notice">
-                <i className="uil uil-lock"></i>
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-100 text-amber-800 mt-4 text-sm">
+                <i className="uil uil-lock text-2xl text-amber-800"></i>
                 <div>
-                  <h4>Permission management is restricted</h4>
-                  <p>Only workspace owners can manage menu permissions.</p>
+                  <h4 className="m-0">Permission management is restricted</h4>
+                  <p className="text-xs m-0">Only workspace owners can manage menu permissions.</p>
                 </div>
               </div>
             ) : permissionsLoading && !permissionsData.roles.length ? (
-              <div className="workspace-permission-empty">
+              <div className="text-center py-6 px-3 text-slate-500 text-sm">
                 Loading permissions...
               </div>
             ) : permissionsError && !permissionsData.roles.length ? (
-              <div className="workspace-permission-empty">
+              <div className="text-center py-6 px-3 text-slate-500 text-sm">
                 {permissionsError}
               </div>
             ) : (
-              <div className="workspace-permission-table-wrapper">
-                <table className="table workspace-permission-table">
-                  <thead>
-                    <tr>
-                      <th>Role Name</th>
-                      <th>Menu Access</th>
-                      <th className="align-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {permissionsData.roles.length === 0 ? (
+              <div className="mt-4">
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
                       <tr>
-                        <td colSpan={3} className="workspace-permission-empty">
-                          No role permissions found.
-                        </td>
+                        <th className="py-4 px-5 text-left bg-slate-100 border-y border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-[0.5px]">Role Name</th>
+                        <th className="py-4 px-5 text-left bg-slate-100 border-y border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-[0.5px]">Menu Access</th>
+                        <th className="py-4 px-5 text-right bg-slate-100 border-y border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-[0.5px]">Action</th>
                       </tr>
-                    ) : (
-                      permissionsData.roles.map((role) => {
-                        const preview = role.permissions || [];
-                        const previewLimit = 3;
-                        const previewList = preview.slice(0, previewLimit);
-                        const remainder = preview.length - previewList.length;
+                    </thead>
+                    <tbody>
+                      {permissionsData.roles.length === 0 ? (
+                        <tr>
+                          <td colSpan={3} className="text-center py-6 px-3 text-slate-500 text-sm">
+                            No role permissions found.
+                          </td>
+                        </tr>
+                      ) : (
+                        permissionsData.roles.map((role) => {
+                          const preview = role.permissions || [];
+                          const previewLimit = 3;
+                          const previewList = preview.slice(0, previewLimit);
+                          const remainder = preview.length - previewList.length;
 
-                        return (
-                          <tr key={role.key}>
-                            <td>{role.name}</td>
-                            <td>
-                              {previewList.length > 0 ? (
-                                <div className="workspace-permission-chips">
-                                  {previewList.map((permKey) => {
-                                    const label =
-                                      menuOptions.find(
-                                        (menu) => menu.key === permKey
-                                      )?.label || permKey;
-                                    return (
-                                      <span
-                                        key={`${role.key}-${permKey}`}
-                                        className="workspace-permission-chip"
-                                      >
-                                        {label}
+                          return (
+                            <tr key={role.key}>
+                              <td className="py-3 pr-3 pl-5 border-b border-slate-100 text-xs align-top">{role.name}</td>
+                              <td className="py-3 pr-3 pl-5 border-b border-slate-100 text-xs align-top">
+                                {previewList.length > 0 ? (
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {previewList.map((permKey) => {
+                                      const label =
+                                        menuOptions.find(
+                                          (menu) => menu.key === permKey
+                                        )?.label || permKey;
+                                      return (
+                                        <span
+                                          key={`${role.key}-${permKey}`}
+                                          className="inline-flex items-center py-1 px-2.5 rounded-full bg-white text-[11px] text-slate-800 border border-slate-100"
+                                        >
+                                          {label}
+                                        </span>
+                                      );
+                                    })}
+                                    {remainder > 0 && (
+                                      <span className="inline-flex items-center py-1 px-2.5 rounded-full bg-slate-50 text-[11px] text-signal-blue border border-signal-blue/25">
+                                        +{remainder}
                                       </span>
-                                    );
-                                  })}
-                                  {remainder > 0 && (
-                                    <span className="workspace-permission-chip more">
-                                      +{remainder}
-                                    </span>
-                                  )}
-                                </div>
-                              ) : (
-                                <span className="workspace-permission-empty">
-                                  No menu access
-                                </span>
-                              )}
-                            </td>
-                            <td className="align-right">
-                              <button
-                                type="button"
-                                className="workspace-member-link-button"
-                                onClick={() => handleOpenPermissionModal(role)}
-                                disabled={!role.editable || permissionsLoading}
-                              >
-                                {role.editable ? (
-                                  <>
-                                    <i className="uil uil-edit-alt"></i>
-                                    Edit
-                                  </>
+                                    )}
+                                  </div>
                                 ) : (
-                                  <>
-                                    <i className="uil uil-lock"></i>
-                                    Locked
-                                  </>
+                                  <span className="text-slate-500 text-[13px]">
+                                    No menu access
+                                  </span>
                                 )}
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
+                              </td>
+                              <td className="py-3 pr-3 pl-5 border-b border-slate-100 text-xs align-top text-right">
+                                <button
+                                  type="button"
+                                  className="border-none bg-transparent text-signal-blue text-xs font-medium cursor-pointer p-0 inline-flex items-center gap-1.5 disabled:text-slate-500 disabled:cursor-not-allowed"
+                                  onClick={() => handleOpenPermissionModal(role)}
+                                  disabled={!role.editable || permissionsLoading}
+                                >
+                                  {role.editable ? (
+                                    <>
+                                      <i className="uil uil-edit-alt text-sm"></i>
+                                      Edit
+                                    </>
+                                  ) : (
+                                    <>
+                                      <i className="uil uil-lock text-sm"></i>
+                                      Locked
+                                    </>
+                                  )}
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
                 {permissionsError && (
-                  <div className="workspace-permission-error">
+                  <div className="mt-3 py-2.5 px-3 rounded-lg bg-red-500/[0.12] text-red-500 flex items-center gap-2 text-xs">
                     <i className="uil uil-exclamation-triangle"></i>
                     {permissionsError}
                   </div>
                 )}
               </div>
             )}
-          </div>
+          </CardBody>
         )}
-      </div>
+      </Card>
 
       {isAddMemberOpen && (
-        <div className="modal" style={{ display: "block" }}>
-          <div className="modal-content workspace-modal">
-            <div className="modal-header">
-              <h3 className="modal-title">Add Member</h3>
-              <button
-                type="button"
-                className="close"
-                onClick={handleCloseAddMember}
-                aria-label="Close"
-              >
-                <i className="uil uil-times"></i>
-              </button>
+        <Modal title="Add Member" onClose={handleCloseAddMember} maxWidth="420px">
+          <form onSubmit={handleMemberSubmit}>
+            <div className="p-6 flex flex-col gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block" htmlFor="member-email">
+                  Email
+                </label>
+                <Input
+                  id="member-email"
+                  name="email"
+                  type="email"
+                  placeholder="user@example.com"
+                  value={memberForm.email}
+                  onChange={handleMemberChange}
+                  className={memberErrors.email ? "border-red-500" : ""}
+                />
+                {memberErrors.email && (
+                  <div className="mt-1.5 text-xs text-red-500">{memberErrors.email}</div>
+                )}
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block" htmlFor="member-role">
+                  Role
+                </label>
+                <Select
+                  id="member-role"
+                  name="role"
+                  value={memberForm.role}
+                  onChange={handleMemberChange}
+                  className={memberErrors.role ? "border-red-500" : ""}
+                >
+                  {WORKSPACE_MEMBER_ROLES.map((roleOption) => (
+                    <option key={roleOption.value} value={roleOption.value}>
+                      {roleOption.label}
+                    </option>
+                  ))}
+                </Select>
+                {memberErrors.role && (
+                  <div className="mt-1.5 text-xs text-red-500">{memberErrors.role}</div>
+                )}
+              </div>
             </div>
-            <form onSubmit={handleMemberSubmit}>
-              <div className="modal-body workspace-modal-body">
-                <div
-                  className={`form-group ${
-                    memberErrors.email ? "has-error" : ""
-                  }`}
-                >
-                  <label className="form-label" htmlFor="member-email">
-                    Email
-                  </label>
-                  <input
-                    id="member-email"
-                    name="email"
-                    type="email"
-                    className="form-control"
-                    placeholder="user@example.com"
-                    value={memberForm.email}
-                    onChange={handleMemberChange}
-                  />
-                  {memberErrors.email && (
-                    <div className="form-error">{memberErrors.email}</div>
-                  )}
-                </div>
-                <div
-                  className={`form-group ${
-                    memberErrors.role ? "has-error" : ""
-                  }`}
-                >
-                  <label className="form-label" htmlFor="member-role">
-                    Role
-                  </label>
-                  <select
-                    id="member-role"
-                    name="role"
-                    className="form-control"
-                    value={memberForm.role}
-                    onChange={handleMemberChange}
-                  >
-                    {WORKSPACE_MEMBER_ROLES.map((roleOption) => (
-                      <option key={roleOption.value} value={roleOption.value}>
-                        {roleOption.label}
-                      </option>
-                    ))}
-                  </select>
-                  {memberErrors.role && (
-                    <div className="form-error">{memberErrors.role}</div>
-                  )}
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={handleCloseAddMember}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={memberSubmitting}
-                >
-                  {memberSubmitting ? "Saving..." : "Save"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            <div className="py-2.5 px-6 border-t border-slate-100 flex justify-end gap-2.5">
+              <Button type="button" variant="secondary" onClick={handleCloseAddMember}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={memberSubmitting}>
+                {memberSubmitting ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </form>
+        </Modal>
       )}
 
       {isEditMemberOpen && editingMember && (
-        <div className="modal" style={{ display: "block" }}>
-          <div className="modal-content workspace-modal">
-            <div className="modal-header">
-              <h3 className="modal-title">Edit Member</h3>
-              <button
-                type="button"
-                className="close"
-                onClick={handleCloseEditMember}
-                aria-label="Close"
-              >
-                <i className="uil uil-times"></i>
-              </button>
+        <Modal title="Edit Member" onClose={handleCloseEditMember} maxWidth="420px">
+          <form onSubmit={handleEditMemberSubmit}>
+            <div className="p-6 flex flex-col gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block" htmlFor="edit-member-email">
+                  Email
+                </label>
+                <Input
+                  id="edit-member-email"
+                  type="email"
+                  value={editingMember.email || ""}
+                  disabled
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block" htmlFor="edit-member-role">
+                  Role
+                </label>
+                <Select
+                  id="edit-member-role"
+                  value={editForm.role}
+                  onChange={handleEditMemberChange}
+                  className={editErrors.role ? "border-red-500" : ""}
+                >
+                  {WORKSPACE_MEMBER_ROLES.map((roleOption) => (
+                    <option key={roleOption.value} value={roleOption.value}>
+                      {roleOption.label}
+                    </option>
+                  ))}
+                </Select>
+                {editErrors.role && (
+                  <div className="mt-1.5 text-xs text-red-500">{editErrors.role}</div>
+                )}
+              </div>
             </div>
-            <form onSubmit={handleEditMemberSubmit}>
-              <div className="modal-body workspace-modal-body">
-                <div className="form-group">
-                  <label className="form-label" htmlFor="edit-member-email">
-                    Email
-                  </label>
-                  <input
-                    id="edit-member-email"
-                    type="email"
-                    className="form-control"
-                    value={editingMember.email || ""}
-                    disabled
-                  />
-                </div>
-                <div
-                  className={`form-group ${editErrors.role ? "has-error" : ""}`}
-                >
-                  <label className="form-label" htmlFor="edit-member-role">
-                    Role
-                  </label>
-                  <select
-                    id="edit-member-role"
-                    className="form-control"
-                    value={editForm.role}
-                    onChange={handleEditMemberChange}
-                  >
-                    {WORKSPACE_MEMBER_ROLES.map((roleOption) => (
-                      <option key={roleOption.value} value={roleOption.value}>
-                        {roleOption.label}
-                      </option>
-                    ))}
-                  </select>
-                  {editErrors.role && (
-                    <div className="form-error">{editErrors.role}</div>
-                  )}
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={handleCloseEditMember}
-                  disabled={editSubmitting}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={editSubmitting}
-                >
-                  {editSubmitting ? "Saving..." : "Save Changes"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            <div className="py-2.5 px-6 border-t border-slate-100 flex justify-end gap-2.5">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleCloseEditMember}
+                disabled={editSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={editSubmitting}>
+                {editSubmitting ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </form>
+        </Modal>
       )}
 
       {isPermissionModalOpen && permissionEditRole && (
-        <div className="modal" style={{ display: "block" }}>
-          <div className="modal-content workspace-permission-modal">
-            <div className="modal-header">
-              <h3 className="modal-title">Edit Permissions</h3>
-              <button
-                type="button"
-                className="close"
-                onClick={handleClosePermissionModal}
-                aria-label="Close"
-              >
-                <i className="uil uil-times"></i>
-              </button>
-            </div>
-            <form onSubmit={handleSubmitPermissions}>
-              <div className="modal-body workspace-permission-modal-body">
-                <div className="workspace-permission-role">
-                  Role: <strong>{permissionEditRole.name}</strong>
-                </div>
-                <div className="workspace-permission-controls">
-                  <button
-                    type="button"
-                    className="workspace-permission-link"
-                    onClick={handleSelectAllPermissions}
-                  >
-                    Select All
-                  </button>
-                  <button
-                    type="button"
-                    className="workspace-permission-link"
-                    onClick={handleClearPermissions}
-                  >
-                    Clear All
-                  </button>
-                </div>
-                <div className="workspace-permission-options">
-                  {menuOptions.map((menu) => {
-                    const isChecked = permissionSelections.includes(menu.key);
-                    return (
-                      <div
-                        key={menu.key}
-                        className="workspace-permission-option"
-                      >
-                        <label className="workspace-permission-control">
-                          <input
-                            type="checkbox"
-                            className="checkbox-modern"
-                            checked={isChecked}
-                            onChange={() => handleTogglePermission(menu.key)}
-                          />
-                          <span className="workspace-permission-label">
-                            {menu.label}
-                          </span>
-                        </label>
-                      </div>
-                    );
-                  })}
-                </div>
-                {permissionModalError && (
-                  <div className="workspace-permission-error inline">
-                    <i className="uil uil-exclamation-triangle"></i>
-                    {permissionModalError}
-                  </div>
-                )}
+        <Modal title="Edit Permissions" onClose={handleClosePermissionModal} maxWidth="520px">
+          <form onSubmit={handleSubmitPermissions}>
+            <div className="p-6 flex flex-col gap-4">
+              <div className="text-[13px] text-slate-800">
+                Role: <strong>{permissionEditRole.name}</strong>
               </div>
-              <div className="modal-footer">
+              <div className="flex gap-3">
                 <button
                   type="button"
-                  className="btn btn-secondary"
-                  onClick={handleClosePermissionModal}
-                  disabled={permissionSubmitting}
+                  className="border-none p-0 bg-transparent text-signal-blue text-xs font-medium cursor-pointer hover:underline"
+                  onClick={handleSelectAllPermissions}
                 >
-                  Cancel
+                  Select All
                 </button>
                 <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={permissionSubmitting}
+                  type="button"
+                  className="border-none p-0 bg-transparent text-signal-blue text-xs font-medium cursor-pointer hover:underline"
+                  onClick={handleClearPermissions}
                 >
-                  {permissionSubmitting ? "Saving..." : "Save Changes"}
+                  Clear All
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-2.5">
+                {menuOptions.map((menu) => {
+                  const isChecked = permissionSelections.includes(menu.key);
+                  return (
+                    <div
+                      key={menu.key}
+                      className="flex items-center gap-2 bg-slate-50 rounded-[10px] py-2.5 px-3 text-xs text-slate-800"
+                    >
+                      <label className="inline-flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="checkbox-modern"
+                          checked={isChecked}
+                          onChange={() => handleTogglePermission(menu.key)}
+                        />
+                        <span className="cursor-pointer select-none">
+                          {menu.label}
+                        </span>
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+              {permissionModalError && (
+                <div className="py-2.5 px-3 rounded-lg bg-red-500/[0.12] text-red-500 flex items-center gap-2 text-xs">
+                  <i className="uil uil-exclamation-triangle"></i>
+                  {permissionModalError}
+                </div>
+              )}
+            </div>
+            <div className="py-2.5 px-6 border-t border-slate-100 flex justify-end gap-2.5">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleClosePermissionModal}
+                disabled={permissionSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={permissionSubmitting}>
+                {permissionSubmitting ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </form>
+        </Modal>
       )}
-
-      <style jsx>{`
-        .card-body {
-          padding: 24px;
-          padding-top: 0;
-        }
-        .card-footer {
-          padding: 16px;
-          border-top: 1px solid var(--border-secondary);
-          background: var(--bg-secondary);
-        }
-        .button-group {
-          display: flex;
-          gap: 12px;
-          justify-content: flex-end;
-        }
-        .card-subtitle {
-          font-size: 14px;
-          color: #6b7280;
-          margin-top: 4px;
-        }
-        .workspace-tabs {
-          display: inline-flex;
-          gap: 3px;
-          padding: 3px;
-          border-radius: 10px;
-          border: 1px solid var(--border-secondary);
-          background: var(--bg-secondary);
-          margin-top: 16px;
-        }
-        .workspace-tab {
-          border: none;
-          background: transparent;
-          color: var(--text-muted);
-          font-size: 12px;
-          font-weight: 500;
-          padding: 6px 16px;
-          border-radius: 8px;
-          cursor: pointer;
-          border: 1px solid transparent;
-          transition: all 0.2s ease;
-        }
-        .workspace-tab:hover {
-          color: var(--text-primary);
-          background: var(--bg-hover);
-        }
-        .workspace-tab--active {
-          color: var(--accent-primary);
-          background: var(--bg-primary);
-          border-color: var(--accent-primary);
-          box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-        }
-        .workspace-member-actions {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-end;
-          gap: 16px;
-          margin-bottom: 16px;
-        }
-        .workspace-member-actions .card-title {
-          margin-bottom: 4px;
-        }
-        .workspace-member-actions .btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-        }
-        .workspace-member-table th:nth-child(3),
-        .workspace-member-table td:nth-child(3) {
-          text-align: right;
-        }
-        .workspace-member-empty {
-          text-align: center;
-          padding: 32px 16px;
-          color: var(--text-muted);
-        }
-        .workspace-member-name {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-        .workspace-member-fullname {
-          font-weight: 600;
-          color: var(--text-primary);
-        }
-        .workspace-member-email {
-          font-size: 12px;
-          color: var(--text-muted);
-        }
-        .workspace-member-role {
-          font-size: 12px;
-          font-weight: 500;
-          text-transform: capitalize;
-          color: var(--text-secondary);
-        }
-        .workspace-member-actions-cell {
-          color: var(--text-muted);
-          font-size: 12px;
-        }
-        .workspace-member-owner-tag {
-          font-size: 12px;
-          font-weight: 600;
-          color: var(--accent-primary);
-        }
-        .workspace-member-row-actions {
-          display: flex;
-          justify-content: flex-end;
-          gap: 12px;
-        }
-        .workspace-member-link-button {
-          border: none;
-          background: transparent;
-          color: var(--accent-primary);
-          font-size: 12px;
-          font-weight: 500;
-          cursor: pointer;
-          padding: 0;
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-        }
-        .workspace-member-link-button.delete {
-          color: var(--accent-red);
-        }
-        .workspace-member-link-button i {
-          font-size: 14px;
-        }
-        .workspace-member-link-button:disabled {
-          color: var(--text-muted);
-          cursor: not-allowed;
-        }
-        .workspace-modal {
-          max-width: 420px;
-          width: 100%;
-        }
-        .workspace-modal-body {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-        .has-error .form-control {
-          border-color: var(--accent-red);
-        }
-        .form-error {
-          margin-top: 6px;
-          font-size: 12px;
-          color: var(--accent-red);
-        }
-        .form-grid.form-grid--two-column {
-          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-          align-items: start;
-        }
-        .workspace-inline-error {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 12px 14px;
-          border-radius: 10px;
-          background: rgba(239, 68, 68, 0.12);
-          color: var(--accent-red);
-          margin-bottom: 16px;
-          font-size: 13px;
-        }
-        .workspace-inline-error i {
-          font-size: 16px;
-        }
-        .align-right {
-          text-align: right;
-        }
-        .workspace-permission-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-end;
-          margin-bottom: 16px;
-        }
-        .workspace-permission-table-wrapper {
-          margin-top: 16px;
-        }
-        .workspace-permission-table td {
-          vertical-align: top;
-        }
-        .workspace-permission-chips {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 6px;
-        }
-        .workspace-permission-chip {
-          display: inline-flex;
-          align-items: center;
-          padding: 4px 10px;
-          border-radius: 999px;
-          background: var(--bg-secondary);
-          font-size: 11px;
-          color: var(--text-secondary);
-          border: 1px solid var(--border-secondary);
-        }
-        .workspace-permission-chip.more {
-          background: var(--bg-primary);
-          color: var(--accent-primary);
-          border-color: rgba(129, 58, 251, 0.25);
-        }
-        .workspace-permission-empty {
-          text-align: center;
-          padding: 24px 12px;
-          color: var(--text-muted);
-          font-size: 13px;
-        }
-        .workspace-permission-error {
-          margin-top: 12px;
-          padding: 10px 12px;
-          border-radius: 8px;
-          background: rgba(239, 68, 68, 0.12);
-          color: var(--accent-red);
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 12px;
-        }
-        .workspace-permission-error.inline {
-          margin: 12px 0 0 0;
-        }
-        .workspace-permission-notice {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 16px;
-          border-radius: 12px;
-          background: var(--status-todo-bg);
-          color: var(--status-todo-text);
-          margin-top: 16px;
-          font-size: 14px;
-        }
-        .workspace-permission-notice i {
-          font-size: 24px;
-          color: var(--status-todo-text);
-        }
-
-        .workspace-permission-notice p {
-          font-size: 12px;
-        }
-
-        .workspace-permission-modal {
-          max-width: 520px;
-          width: 100%;
-        }
-        .workspace-permission-modal-body {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-        .workspace-permission-role {
-          font-size: 13px;
-          color: var(--text-secondary);
-        }
-        .workspace-permission-controls {
-          display: flex;
-          gap: 12px;
-        }
-        .workspace-permission-link {
-          border: none;
-          padding: 0;
-          background: transparent;
-          color: var(--accent-primary);
-          font-size: 12px;
-          font-weight: 500;
-          cursor: pointer;
-        }
-        .workspace-permission-link:hover {
-          text-decoration: underline;
-        }
-        .workspace-permission-options {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-          gap: 10px;
-        }
-        .workspace-permission-option {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          background: var(--bg-secondary);
-          border-radius: 10px;
-          padding: 10px 12px;
-          font-size: 12px;
-          color: var(--text-secondary);
-        }
-        .workspace-permission-control {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          cursor: pointer;
-        }
-        .workspace-permission-control input {
-          margin: 0;
-        }
-        .workspace-permission-label {
-          cursor: pointer;
-          user-select: none;
-        }
-      `}</style>
     </div>
   );
 }

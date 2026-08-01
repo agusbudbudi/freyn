@@ -11,14 +11,20 @@ import {
   formatDateHuman,
 } from "@/components/invoices/utils";
 import { useWorkspaceSwitchListener } from "@/lib/hooks/useWorkspaceSwitchListener";
+import { Card, CardHeader, CardBody } from "@/components/ui/Card";
+import { buttonClasses } from "@/components/ui/Button";
+import SearchInput from "@/components/ui/SearchInput";
+import ActionButton from "@/components/ui/ActionButton";
+import EmptyState from "@/components/ui/EmptyState";
+import Alert from "@/components/ui/Alert";
 
 function getAuthHeaders() {
   if (typeof window === "undefined") return {};
   const token = localStorage.getItem("token");
   return token
     ? {
-        Authorization: `Bearer ${token}`,
-      }
+      Authorization: `Bearer ${token}`,
+    }
     : {};
 }
 
@@ -108,73 +114,54 @@ export default function InvoicesPage() {
 
   if (loading) {
     return (
-      <div className="content-body">
+      <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
         <LoadingState message="Loading invoices..." />
       </div>
     );
   }
 
   return (
-    <div className="content-body">
+    <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
       {error && (
-        <div className="alert alert-error">
+        <Alert type="error">
           <i className="uil uil-exclamation-triangle"></i> {error}
-        </div>
+        </Alert>
       )}
 
-      <div className="content-card">
-        <div className="card-header">
-          <h2 className="card-title">Invoices</h2>
-          <Link href="/dashboard/invoices/add" className="btn btn-primary">
+      <Card>
+        <CardHeader className="flex-wrap">
+          <SearchInput
+            placeholder="Search by invoice number, client name, or company"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onClear={() => setSearchTerm("")}
+          />
+          <Link href="/dashboard/invoices/add" className={buttonClasses()}>
             <i className="uil uil-plus"></i>
             Create Invoice
           </Link>
-        </div>
+        </CardHeader>
 
-        <div className="card-header-search">
-          <div className="search-input-container">
-            <i className="uil uil-search search-icon"></i>
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search by invoice number, client name, or company"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            {searchTerm && (
-              <button
-                className="search-clear-btn"
-                onClick={() => setSearchTerm("")}
-                style={{ display: "flex" }}
-              >
-                <i className="uil uil-times"></i>
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="card-body">
+        <CardBody>
           {filteredInvoices.length ? (
-            <div className="table-container">
-              <table className="table">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
                 <thead>
                   <tr>
-                    <th>Invoice Number</th>
-                    <th>Client</th>
-                    <th>Invoice Date</th>
-                    <th>Due Date</th>
-                    <th>Status</th>
-                    <th>Total</th>
-                    <th>Actions</th>
+                    {["Invoice Number", "Client", "Invoice Date", "Due Date", "Status", "Total", "Actions"].map((h) => (
+                      <th key={h} className="py-3.5 px-5 text-left bg-slate-100 border-y border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-[0.5px]">
+                        {h}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filteredInvoices.map((invoice) => (
-                    <tr key={invoice.id}>
-                      <td>
+                    <tr key={invoice.id} className="odd:bg-white even:bg-slate-50 hover:bg-slate-100 [&:last-child_td]:border-b-0">
+                      <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">
                         <a
                           href="#"
-                          className="link"
+                          className="text-blue-500 no-underline cursor-pointer whitespace-nowrap hover:underline"
                           onClick={(e) => {
                             e.preventDefault();
                             router.push(`/dashboard/invoices/${invoice.id}`);
@@ -183,48 +170,45 @@ export default function InvoicesPage() {
                           <strong>{invoice.invoiceNumber}</strong>
                         </a>
                       </td>
-                      <td>
-                        <div style={{ display: "flex", flexDirection: "column" }}>
+                      <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">
+                        <div className="flex flex-col">
                           <strong>{invoice.billedTo?.name || invoice.billedTo?.company || "-"}</strong>
                           {invoice.billedTo?.company && (
-                            <span style={{ color: "var(--text-muted)", fontSize: "11px" }}>
+                            <span className="text-slate-500 text-[11px]">
                               {invoice.billedTo.company}
                             </span>
                           )}
                         </div>
                       </td>
-                      <td>{formatDateHuman(invoice.invoiceDate)}</td>
-                      <td>{formatDateHuman(invoice.dueDate)}</td>
-                      <td>
+                      <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">{formatDateHuman(invoice.invoiceDate)}</td>
+                      <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">{formatDateHuman(invoice.dueDate)}</td>
+                      <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">
                         <InvoiceStatusBadge status={invoice.status} />
                       </td>
-                      <td className="currency">
+                      <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs font-bold text-emerald-600">
                         {formatCurrency(invoice.total ?? invoice.subtotal)}
                       </td>
-                      <td>
-                        <div className="action-buttons">
-                          <button
-                            className="action-btn"
+                      <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">
+                        <div className="flex gap-2">
+                          <ActionButton
+                            variant="view"
+                            icon="uil uil-eye"
                             title="View"
                             onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}
-                          >
-                            <i className="uil uil-eye"></i>
-                          </button>
-                          <button
-                            className="action-btn edit"
+                          />
+                          <ActionButton
+                            variant="edit"
+                            icon="uil uil-edit"
                             title="Edit"
                             onClick={() => router.push(`/dashboard/invoices/${invoice.id}/edit`)}
-                          >
-                            <i className="uil uil-edit"></i>
-                          </button>
-                          <button
-                            className="action-btn delete"
+                          />
+                          <ActionButton
+                            variant="delete"
+                            icon="uil uil-trash-alt"
                             title="Delete"
                             onClick={() => handleDeleteInvoice(invoice)}
                             disabled={deletingId === invoice.id}
-                          >
-                            <i className="uil uil-trash-alt"></i>
-                          </button>
+                          />
                         </div>
                       </td>
                     </tr>
@@ -233,19 +217,18 @@ export default function InvoicesPage() {
               </table>
             </div>
           ) : (
-            <div className="empty-state">
-              <i className="uil uil-receipt"></i>
-              <h3>{searchTerm ? "No invoices found" : "No invoices yet"}</h3>
-              <p>
-                {searchTerm
+            <EmptyState
+              icon="uil uil-receipt"
+              title={searchTerm ? "No invoices found" : "No invoices yet"}
+              description={
+                searchTerm
                   ? "Try adjusting your search query"
-                  : "Create your first invoice to get started"}
-              </p>
-            </div>
+                  : "Create your first invoice to get started"
+              }
+            />
           )}
-        </div>
-      </div>
-
+        </CardBody>
+      </Card>
     </div>
   );
 }

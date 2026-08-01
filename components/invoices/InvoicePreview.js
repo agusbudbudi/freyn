@@ -44,7 +44,7 @@ const formatAccountNumber = (value = "") =>
     .trim();
 
 const InvoicePreview = forwardRef(function InvoicePreview(
-  { invoice = {}, showStatus = true },
+  { invoice = {}, showStatus = true, constrained = true },
   ref
 ) {
   const {
@@ -88,110 +88,189 @@ const InvoicePreview = forwardRef(function InvoicePreview(
       : bank.accountNumber || "";
 
   return (
-    <div className="invoice-preview" ref={ref}>
-      <div className="invoice-preview__header">
-        <div className="invoice-preview__logo">
+    <div
+      ref={ref}
+      className={`invoice-preview bg-white flex flex-col gap-6 p-5 border-0 rounded-none sm:gap-8 sm:p-8 sm:rounded-2xl sm:border sm:border-slate-200 ${
+        constrained ? "max-w-[900px] mx-auto" : "w-full"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-3 sm:items-start sm:gap-8">
+        <div className="relative flex items-center justify-center overflow-hidden rounded-2xl border border-dashed border-slate-100 bg-slate-100 w-14 h-14 sm:w-[140px] sm:h-[140px] [&>span]:!flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-center">
           {logo ? (
             <Image
               src={logo}
               alt="Invoice logo"
               fill
               sizes="140px"
-              className="invoice-preview__logo-img"
+              className="!static !h-auto !w-auto !max-w-full !max-h-full !min-w-0 !min-h-0 !object-contain"
               unoptimized
               style={{ objectFit: "contain", padding: 8 }}
             />
           ) : (
-            <div className="invoice-preview__logo-placeholder">Logo</div>
+            <div className="text-sm text-slate-500 uppercase tracking-[1px]">
+              Logo
+            </div>
           )}
         </div>
-        <div className="invoice-preview__meta">
-          <h2 className="invoice-preview__title">Invoice</h2>
-          <div className="invoice-preview__number">{invoiceNumber || "-"}</div>
-          <div className="invoice-preview__dates">
+        <div className="flex-1 flex flex-col items-end gap-1 sm:gap-3">
+          <h2 className="m-0 text-slate-900 text-base sm:text-[28px]">
+            Invoice
+          </h2>
+          <div className="text-[11px] sm:text-sm text-slate-500">
+            {invoiceNumber || "-"}
+          </div>
+          <div className="flex gap-2.5 sm:gap-6">
             <div>
-              <span className="label">Invoice Date</span>
-              <strong>{formatDateHuman(invoiceDate)}</strong>
+              <span className="block uppercase tracking-[0.5px] text-slate-500 text-[9px] sm:text-[11px]">
+                Invoice Date
+              </span>
+              <strong className="text-[11px] sm:text-sm">
+                {formatDateHuman(invoiceDate)}
+              </strong>
             </div>
             <div>
-              <span className="label">Due Date</span>
-              <strong>{formatDateHuman(dueDate)}</strong>
+              <span className="block uppercase tracking-[0.5px] text-slate-500 text-[9px] sm:text-[11px]">
+                Due Date
+              </span>
+              <strong className="text-[11px] sm:text-sm">
+                {formatDateHuman(dueDate)}
+              </strong>
             </div>
           </div>
           {showStatus && status && (
-            <div className="invoice-preview__status" aria-hidden="true"></div>
+            <div className="self-start sm:self-end" aria-hidden="true"></div>
           )}
         </div>
       </div>
 
-      <div className="invoice-preview__parties">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(160px,1fr))] sm:gap-6">
         <div>
-          <h3>Billed By</h3>
-          <p className="invoice-preview__party-name">{billedBy.name || "-"}</p>
+          <h3 className="uppercase text-slate-500 text-[11px] mb-2 sm:text-sm sm:mb-3">
+            Billed By
+          </h3>
+          <p className="font-semibold mb-1 text-[13px] sm:text-base">
+            {billedBy.name || "-"}
+          </p>
           {billedBy.company && (
-            <p className="invoice-preview__party-meta">{billedBy.company}</p>
+            <p className="text-slate-500 mb-0.5 text-[10px] sm:text-xs">
+              {billedBy.company}
+            </p>
           )}
           {billedBy.email && (
-            <p className="invoice-preview__party-meta">{billedBy.email}</p>
+            <p className="text-slate-500 mb-0.5 text-[10px] sm:text-xs">
+              {billedBy.email}
+            </p>
           )}
           {billedBy.phone && (
-            <p className="invoice-preview__party-meta">{billedBy.phone}</p>
+            <p className="text-slate-500 mb-0.5 text-[10px] sm:text-xs">
+              {billedBy.phone}
+            </p>
           )}
           {billedBy.address && (
-            <p className="invoice-preview__party-meta">{billedBy.address}</p>
+            <p className="text-slate-500 mb-0.5 text-[10px] sm:text-xs">
+              {billedBy.address}
+            </p>
           )}
         </div>
         <div>
-          <h3>Billed To</h3>
-          <p className="invoice-preview__party-name">
+          <h3 className="uppercase text-slate-500 text-[11px] mb-2 sm:text-sm sm:mb-3">
+            Billed To
+          </h3>
+          <p className="font-semibold mb-1 text-[13px] sm:text-base">
             {billedTo.name || billedTo.company || "-"}
           </p>
           {billedTo.company && (
-            <p className="invoice-preview__party-meta">{billedTo.company}</p>
+            <p className="text-slate-500 mb-0.5 text-[10px] sm:text-xs">
+              {billedTo.company}
+            </p>
           )}
           {billedTo.email && (
-            <p className="invoice-preview__party-meta">{billedTo.email}</p>
+            <p className="text-slate-500 mb-0.5 text-[10px] sm:text-xs">
+              {billedTo.email}
+            </p>
           )}
           {billedTo.phone && (
-            <p className="invoice-preview__party-meta">{billedTo.phone}</p>
+            <p className="text-slate-500 mb-0.5 text-[10px] sm:text-xs">
+              {billedTo.phone}
+            </p>
           )}
           {billedTo.address && (
-            <p className="invoice-preview__party-meta">{billedTo.address}</p>
+            <p className="text-slate-500 mb-0.5 text-[10px] sm:text-xs">
+              {billedTo.address}
+            </p>
           )}
         </div>
       </div>
 
-      <div className="invoice-preview__table">
-        <table>
+      <div className="overflow-x-auto overflow-y-hidden rounded-[13px] border border-slate-100 sm:overflow-hidden">
+        <table className="w-full border-collapse text-xs rounded-xl overflow-hidden min-w-[480px] sm:min-w-0">
           <thead>
             <tr>
-              <th style={{ width: "20%" }}>Service ID</th>
-              <th style={{ width: "40%" }}>Service</th>
-              <th style={{ width: "10%", textAlign: "center" }}>Qty</th>
-              <th style={{ width: "15%", textAlign: "right" }}>Price</th>
-              <th style={{ width: "15%", textAlign: "right" }}>Subtotal</th>
+              <th
+                className="text-left bg-slate-100 p-3 border-b border-slate-100 text-[11px] uppercase tracking-[0.5px] text-slate-500"
+                style={{ width: "20%" }}
+              >
+                Service ID
+              </th>
+              <th
+                className="text-left bg-slate-100 p-3 border-b border-slate-100 text-[11px] uppercase tracking-[0.5px] text-slate-500"
+                style={{ width: "40%" }}
+              >
+                Service
+              </th>
+              <th
+                className="text-left bg-slate-100 p-3 border-b border-slate-100 text-[11px] uppercase tracking-[0.5px] text-slate-500"
+                style={{ width: "10%", textAlign: "center" }}
+              >
+                Qty
+              </th>
+              <th
+                className="text-left bg-slate-100 p-3 border-b border-slate-100 text-[11px] uppercase tracking-[0.5px] text-slate-500"
+                style={{ width: "15%", textAlign: "right" }}
+              >
+                Price
+              </th>
+              <th
+                className="text-left bg-slate-100 p-3 border-b border-slate-100 text-[11px] uppercase tracking-[0.5px] text-slate-500"
+                style={{ width: "15%", textAlign: "right" }}
+              >
+                Subtotal
+              </th>
             </tr>
           </thead>
           <tbody>
             {items.map((item, idx) => (
               <tr key={`${item.serviceId}-${idx}`}>
-                <td>{item.serviceId}</td>
-                <td>
-                  <div className="invoice-preview__service-name">
+                <td className="py-3.5 px-3 border-b border-slate-100 align-top">
+                  {item.serviceId}
+                </td>
+                <td className="py-3.5 px-3 border-b border-slate-100 align-top">
+                  <div className="font-semibold mb-1 text-slate-900">
                     {item.serviceName}
                   </div>
                   {item.deliverables && (
                     <div
-                      className="invoice-preview__service-desc"
+                      className="text-slate-500 text-[11px] leading-[1.4] [&_p]:my-1 [&_ul]:my-1 [&_ul]:pl-4 [&_ol]:my-1 [&_ol]:pl-4 [&_li]:my-0.5"
                       dangerouslySetInnerHTML={{ __html: item.deliverables }}
                     ></div>
                   )}
                 </td>
-                <td style={{ textAlign: "center" }}>{item.quantity}</td>
-                <td style={{ textAlign: "right" }}>
+                <td
+                  className="py-3.5 px-3 border-b border-slate-100 align-top"
+                  style={{ textAlign: "center" }}
+                >
+                  {item.quantity}
+                </td>
+                <td
+                  className="py-3.5 px-3 border-b border-slate-100 align-top"
+                  style={{ textAlign: "right" }}
+                >
                   {formatCurrency(item.price, currency)}
                 </td>
-                <td style={{ textAlign: "right" }}>
+                <td
+                  className="py-3.5 px-3 border-b border-slate-100 align-top"
+                  style={{ textAlign: "right" }}
+                >
                   {formatCurrency(
                     item.subtotal || item.quantity * item.price,
                     currency
@@ -203,74 +282,80 @@ const InvoicePreview = forwardRef(function InvoicePreview(
         </table>
       </div>
 
-      <div className="invoice-preview__totals">
-        <div>
-          <span>Subtotal</span>
-          <strong>{formatCurrency(subtotal ?? total, currency)}</strong>
+      <div className="flex flex-col items-end gap-3">
+        <div className="flex items-center justify-between gap-4 min-w-0 sm:gap-20 sm:min-w-[240px]">
+          <span className="text-slate-500 text-xs uppercase">Subtotal</span>
+          <strong className="text-base text-slate-900">
+            {formatCurrency(subtotal ?? total, currency)}
+          </strong>
         </div>
-        <div>
-          <span>Total</span>
-          <strong>{formatCurrency(total ?? subtotal, currency)}</strong>
+        <div className="flex items-center justify-between gap-4 min-w-0 sm:gap-20 sm:min-w-[240px]">
+          <span className="text-slate-500 text-xs uppercase">Total</span>
+          <strong className="text-base text-slate-900">
+            {formatCurrency(total ?? subtotal, currency)}
+          </strong>
         </div>
       </div>
 
-      <div className="invoice-payment-card">
-        <div className="invoice-payment-card__logo">
+      <div className="mt-6 border border-slate-100 rounded-[14px] bg-slate-100 flex items-center flex-wrap gap-3 p-3 sm:gap-6 sm:p-4">
+        <div className="relative flex items-center justify-center overflow-hidden rounded-[18px] bg-white w-12 h-12 sm:w-16 sm:h-16">
           {logoSrc ? (
             <Image
               src={logoSrc}
               alt={`${providerName} logo`}
               fill
               sizes="64px"
-              className="invoice-payment-card__logo-img"
+              className="object-cover"
               style={{ objectFit: "cover" }}
             />
           ) : (
-            <span className="invoice-payment-card__logo-fallback">
+            <span className="text-lg font-semibold text-slate-500">
               {fallbackInitials}
             </span>
           )}
         </div>
-        <div className="invoice-payment-card__content">
-          <div className="invoice-payment-card__provider">
+        <div className="flex-1 min-w-[220px] flex flex-col gap-2">
+          <div className="uppercase tracking-[0.6px] text-slate-500 text-[9px] sm:text-[11px]">
             {type === "bank_transfer" ? "Bank Transfer" : "E-Wallet"}
           </div>
-          <div className="invoice-payment-card__title">{providerName}</div>
-          <div className="invoice-payment-card__details">
+          <div className="font-semibold text-slate-900 text-sm sm:text-lg">
+            {providerName}
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-[repeat(auto-fit,minmax(160px,1fr))] sm:gap-3">
             {type === "bank_transfer" ? (
               <>
-                <div className="invoice-payment-card__detail">
-                  <span className="invoice-payment-card__label">
+                <div className="flex flex-col gap-1">
+                  <span className="uppercase tracking-[0.5px] text-slate-500 text-[9px] sm:text-[11px]">
                     Account Name
                   </span>
-                  <span className="invoice-payment-card__value">
+                  <span className="text-slate-900 break-words text-[11px] sm:text-[13px]">
                     {bank.accountName || "-"}
                   </span>
                 </div>
-                <div className="invoice-payment-card__detail">
-                  <span className="invoice-payment-card__label">
+                <div className="flex flex-col gap-1">
+                  <span className="uppercase tracking-[0.5px] text-slate-500 text-[9px] sm:text-[11px]">
                     Account Number
                   </span>
-                  <span className="invoice-payment-card__value">
+                  <span className="text-slate-900 break-words text-[11px] sm:text-[13px]">
                     {displayAccountNumber || "-"}
                   </span>
                 </div>
               </>
             ) : (
               <>
-                <div className="invoice-payment-card__detail">
-                  <span className="invoice-payment-card__label">
+                <div className="flex flex-col gap-1">
+                  <span className="uppercase tracking-[0.5px] text-slate-500 text-[9px] sm:text-[11px]">
                     Account Name
                   </span>
-                  <span className="invoice-payment-card__value">
+                  <span className="text-slate-900 break-words text-[11px] sm:text-[13px]">
                     {ewallet.accountName || "-"}
                   </span>
                 </div>
-                <div className="invoice-payment-card__detail">
-                  <span className="invoice-payment-card__label">
+                <div className="flex flex-col gap-1">
+                  <span className="uppercase tracking-[0.5px] text-slate-500 text-[9px] sm:text-[11px]">
                     Phone Number
                   </span>
-                  <span className="invoice-payment-card__value">
+                  <span className="text-slate-900 break-words text-[11px] sm:text-[13px]">
                     {ewallet.phoneNumber || "-"}
                   </span>
                 </div>
@@ -281,21 +366,22 @@ const InvoicePreview = forwardRef(function InvoicePreview(
       </div>
 
       {(terms || footer) && (
-        <div className="invoice-preview__footer">
+        <div className="grid grid-cols-1 gap-5 sm:gap-8">
           {terms && (
-            <div className="invoice-preview__section">
-              <h4>Terms &amp; Conditions</h4>
+            <div className="flex flex-col gap-3">
+              <h4 className="mb-2 text-[13px] uppercase text-slate-500">
+                Terms &amp; Conditions
+              </h4>
               <div
-                className="invoice-preview__richtext"
+                className="text-slate-800 break-words text-[13px] sm:text-xs [&_p]:mb-2 [&_ul]:my-1.5 [&_ul]:pl-[18px] [&_ol]:my-1.5 [&_ol]:pl-[18px] [&_li]:mb-1"
                 dangerouslySetInnerHTML={{ __html: terms }}
               ></div>
             </div>
           )}
           {footer && (
-            <div className="invoice-preview__section">
+            <div className="flex flex-col gap-3">
               <div
-                className="invoice-preview__richtext"
-                style={{ textAlign: "center" }}
+                className="text-slate-800 break-words text-[13px] sm:text-xs text-center [&_p]:mb-2 [&_ul]:my-1.5 [&_ul]:pl-[18px] [&_ol]:my-1.5 [&_ol]:pl-[18px] [&_li]:mb-1"
                 dangerouslySetInnerHTML={{ __html: footer }}
               ></div>
             </div>
@@ -303,17 +389,17 @@ const InvoicePreview = forwardRef(function InvoicePreview(
         </div>
       )}
 
-      <div className="invoice-preview__footnote">
+      <div className="mt-2 flex items-center justify-center gap-1.5 text-[11px] text-slate-500 tracking-[0.5px]">
         <span>Smart invoicing powered by</span>
         <Image
           src="/images/logo-freyn.png"
           alt="Freyn logo"
           width={16}
           height={16}
-          className="invoice-preview__footnote-logo"
+          className="!w-4 !h-4 !object-contain block"
           unoptimized
         />
-        <span className="invoice-preview__footnote-brand">Freyn</span>
+        <span className="font-bold text-slate-900">Freyn</span>
       </div>
     </div>
   );

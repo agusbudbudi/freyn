@@ -1,200 +1,96 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 
 const testimonials = [
   {
     id: 1,
-    text: "Finally found a freelance management tool that actually gets it! Managing 15+ clients was chaos before. Now I can track every project milestone, see which clients need attention, and never miss a deadline. Game changer for my design business.",
+    text: "Akhirnya menemukan alat manajemen freelance yang sangat memahami kebutuhan desainer! Dulu mengelola 15+ klien sangat berantakan. Sekarang saya bisa memantau setiap milestone proyek dan tidak pernah terlambat kirim.",
     author: "Rina Dewi",
-    role: "Graphic Designer",
+    role: "Desainer Grafis & Brand",
     image: "/images/testimony-1.png",
+    tag: "🟢 Terverifikasi",
+    tagColor: "mint",
+    rating: 5,
   },
   {
     id: 2,
-    text: "The client portal feature is brilliant. My clients can now check project progress themselves without constantly messaging me. Plus the automated invoice generation? Saved me at least 5 hours per week on admin work alone.",
+    text: "Fitur portal penyerahan hasil proyek (Result) sangat luar biasa. Klien saya sekarang bisa mengecek progres proyek sendiri tanpa terus menerus berkirim pesan. Tagihan otomatisnya juga menghemat 5 jam admin per minggu.",
     author: "Budi Wijaya",
-    role: "Freelance Developer",
+    role: "Pengembang Web Fullstack",
     image: "/images/testimony-2.png",
+    rating: 5,
+    tag: "🟣 Studio Dev",
+    tagColor: "lavender",
   },
   {
     id: 3,
-    text: "Switched from spreadsheets to this platform 3 months ago. Revenue tracking is incredibly detailed - I can see exactly which services are most profitable. Also love how easy it is to share design results with clients through the secure portal.",
+    text: "Beralih dari spreadsheet ke Freyn 3 bulan lalu. Pelacakan pendapatannya sangat mendalam — saya bisa melihat layanan mana yang paling menguntungkan dan membagikan portofolio publik (`/portfolio/ayu`) dengan cepat.",
     author: "Ayu Safitri",
-    role: "Brand Designer",
-    image: "/images/testimony-3.png",
-  },
-  {
-    id: 4,
-    text: "As someone juggling 20+ projects monthly, this system keeps me sane. The dashboard shows everything at a glance - what's overdue, what's in progress, which clients haven't paid. No more mental overload trying to remember everything.",
-    author: "Fajar Hidayat",
     role: "UI/UX Designer",
-    image: "/images/testimony-4.png",
-  },
-  {
-    id: 5,
-    text: "Best investment for my freelance career. Client management alone is worth it - all communication history, project files, and payment records in one place. When clients come back after 6 months, I have everything at my fingertips.",
-    author: "Linda Maharani",
-    role: "Creative Director",
-    image: "/images/testimony-5.png",
+    image: "/images/testimony-3.png",
+    rating: 5,
+    tag: "🟡 Pro User",
+    tagColor: "yellow",
   },
 ];
 
+const badgeColor = {
+  yellow: "bg-[#fef9c3] text-[#a16207]",
+  mint: "bg-[#dcfce7] text-[#15803d]",
+  pink: "bg-[#ffe4e6] text-[#be123c]",
+  lavender: "bg-[#f3e8ff] text-[#6b21a8]",
+  peach: "bg-[#ffedd5] text-[#c2410c]",
+  blue: "bg-[#e0f2fe] text-[#0369a1]",
+};
+
 export default function TestimonialSlider() {
-  const [currentCenter, setCurrentCenter] = useState(1); // Start with second testimonial as center
-  const [isHovered, setIsHovered] = useState(false);
-  const autoPlayRef = useRef(null);
-
-  // Auto-play functionality
-  useEffect(() => {
-    if (!isHovered) {
-      autoPlayRef.current = setInterval(() => {
-        setCurrentCenter((prev) => {
-          if (prev < testimonials.length - 1) {
-            return prev + 1;
-          } else {
-            return 0; // Loop back to first
-          }
-        });
-      }, 4000); // Change slide every 4 seconds
-    }
-
-    return () => {
-      if (autoPlayRef.current) {
-        clearInterval(autoPlayRef.current);
-      }
-    };
-  }, [isHovered]);
-
-  const nextSlide = () => {
-    if (currentCenter < testimonials.length - 1) {
-      setCurrentCenter(currentCenter + 1);
-    }
-  };
-
-  const prevSlide = () => {
-    if (currentCenter > 0) {
-      setCurrentCenter(currentCenter - 1);
-    }
-  };
-
-  const goToSlide = (index) => {
-    setCurrentCenter(index);
-  };
-
-  // Calculate card dimensions for positioning
-  const getCardDimensions = () => {
-    if (typeof window !== "undefined") {
-      const isMobile = window.innerWidth <= 768;
-      if (isMobile) {
-        const mobileCardWidth = Math.min(window.innerWidth * 0.75, 300);
-        return {
-          cardWidth: mobileCardWidth,
-          cardGap: 16,
-          cardWidthWithGap: mobileCardWidth + 16,
-        };
-      }
-    }
-    return {
-      cardWidth: 500,
-      cardGap: 32,
-      cardWidthWithGap: 532,
-    };
-  };
-
-  const { cardWidthWithGap } = getCardDimensions();
-
-  // Calculate transform for centering
-  const getTransform = () => {
-    if (typeof window !== "undefined") {
-      const containerWidth =
-        window.innerWidth > 1200 ? 1200 : window.innerWidth;
-      const { cardWidth } = getCardDimensions();
-      const offsetToCenter = (containerWidth - cardWidth) / 2;
-      const translateX = offsetToCenter - currentCenter * cardWidthWithGap;
-      return `translateX(${translateX}px)`;
-    }
-    return "translateX(0)";
-  };
-
   return (
-    <div
-      className="testimonials-slider"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <div className="testimonials-wrapper">
-        <div
-          className="testimonials-track"
-          style={{
-            transform: getTransform(),
-            transition: "transform 0.5s ease",
-          }}
-        >
-          {testimonials.map((testimonial, index) => {
-            const isActive = index === currentCenter;
-            const isSide = Math.abs(index - currentCenter) === 1;
-
-            return (
-              <div
-                key={testimonial.id}
-                className={`testimonial-card ${isActive ? "active" : ""} ${
-                  isSide ? "side" : ""
-                }`}
-              >
-                <p className="testimonial-text">{testimonial.text}</p>
-                <div className="testimonial-author">
-                  <div className="author-avatar">
-                    <Image
-                      src={testimonial.image}
-                      alt={testimonial.author}
-                      width={40}
-                      height={40}
-                      className="testimony-img"
-                    />
-                  </div>
-                  <div className="author-info">
-                    <h4>{testimonial.author}</h4>
-                    <p>{testimonial.role}</p>
-                  </div>
+    <div className="max-w-[1180px] mx-auto">
+      <div className="grid grid-cols-1 wide:grid-cols-3 gap-4 sm:gap-7">
+        {testimonials.map((item) => (
+          <div
+            key={item.id}
+            className="bg-white border border-slate-100 rounded-[20px] py-8 px-7 text-left shadow-card transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col justify-between gap-5 hover:-translate-y-1.5 hover:shadow-float hover:border-sky-wash"
+          >
+            {/* Header: Avatar, Name, Role & Tag */}
+            <div className="flex justify-between items-start gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-full overflow-hidden shrink-0 border-2 border-slate-100">
+                  <Image
+                    src={item.image}
+                    alt={item.author}
+                    width={44}
+                    height={44}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <h4 className="text-[15px] font-bold text-slate-900 m-0 mb-0.5 leading-tight">{item.author}</h4>
+                  <span className="text-xs text-slate-500 font-medium block">{item.role}</span>
                 </div>
               </div>
-            );
-          })}
-        </div>
-      </div>
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-tags align-middle font-semibold text-[11px] py-[3px] px-2.5 whitespace-nowrap shrink-0 ${badgeColor[item.tagColor]}`}
+              >
+                {item.tag}
+              </span>
+            </div>
 
-      {/* Navigation Dots */}
-      <div className="slider-dots">
-        {testimonials.map((_, index) => (
-          <span
-            key={index}
-            className={`dot ${index === currentCenter ? "active" : ""}`}
-            onClick={() => goToSlide(index)}
-            style={{ cursor: "pointer" }}
-          />
+            {/* Quote Body */}
+            <p className="text-sm leading-[1.65] text-slate-500 m-0 tracking-[-0.01em]">"{item.text}"</p>
+
+            {/* Footer: Rating Stars */}
+            <div className="flex justify-between items-center pt-3.5 border-t border-slate-50">
+              <div className="flex gap-[3px] text-amber-500 text-[13px]">
+                {[...Array(item.rating)].map((_, i) => (
+                  <i key={i} className="fas fa-star"></i>
+                ))}
+              </div>
+              <span className="text-xs font-bold text-slate-900">5.0 / 5.0</span>
+            </div>
+          </div>
         ))}
-      </div>
-
-      {/* Navigation Buttons */}
-      <div className="slider-navigation">
-        <button
-          className="slider-btn slider-prev"
-          onClick={prevSlide}
-          disabled={currentCenter === 0}
-          aria-label="Previous testimonial"
-        >
-          <i className="fas fa-chevron-left"></i>
-        </button>
-        <button
-          className="slider-btn slider-next"
-          onClick={nextSlide}
-          disabled={currentCenter === testimonials.length - 1}
-          aria-label="Next testimonial"
-        >
-          <i className="fas fa-chevron-right"></i>
-        </button>
       </div>
     </div>
   );

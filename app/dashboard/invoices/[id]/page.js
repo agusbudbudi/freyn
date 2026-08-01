@@ -5,6 +5,10 @@ import { useParams, useRouter } from "next/navigation";
 import InvoicePreview from "@/components/invoices/InvoicePreview";
 import InvoiceStatusBadge from "@/components/invoices/InvoiceStatusBadge";
 import { toast } from "@/components/ui/toast";
+import { Card } from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import BackButton from "@/components/ui/BackButton";
+import Select from "@/components/ui/Select";
 
 const STATUS_OPTIONS = [
   { value: "draft", label: "Draft" },
@@ -17,8 +21,8 @@ function getAuthHeaders() {
   const token = localStorage.getItem("token");
   return token
     ? {
-        Authorization: `Bearer ${token}`,
-      }
+      Authorization: `Bearer ${token}`,
+    }
     : {};
 }
 
@@ -125,45 +129,41 @@ export default function InvoiceDetailPage() {
 
   if (loading) {
     return (
-      <div className="content-body">
-        <div className="content-card" style={{ padding: "32px" }}>
+      <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
+        <Card className="p-8">
           <p>Loading invoice...</p>
-        </div>
+        </Card>
       </div>
     );
   }
 
   if (error || !invoice) {
     return (
-      <div className="content-body">
-        <div className="content-card" style={{ padding: "32px" }}>
+      <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
+        <Card className="p-8">
           <p>{error || "Invoice not found"}</p>
-          <button
-            className="btn btn-secondary"
+          <Button
+            variant="secondary"
+            className="mt-3"
             onClick={() => router.push("/dashboard/invoices")}
           >
             Back to invoices
-          </button>
-        </div>
+          </Button>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="content-body">
-      <div className="content-card" style={{ padding: "16px" }}>
-        <div className="invoice-detail-header">
-          <div className="invoice-detail-heading">
-            <button
-              className="btn btn-back"
-              onClick={() => router.push("/dashboard/invoices")}
-            >
-              <i className="uil uil-arrow-left"></i>
-            </button>
-            <div className="invoice-detail-title">
-              <h2 className="card-title">
+    <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
+      <Card className="p-4">
+        <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <BackButton onClick={() => router.push("/dashboard/invoices")} />
+            <div className="flex flex-row items-center gap-3 flex-wrap">
+              <h2 className="text-base font-semibold text-slate-900 m-0 flex flex-wrap gap-2 items-center">
                 <span>Invoice</span>
-                <span className="invoice-detail-number">
+                <span className="font-semibold text-slate-900">
                   {invoice.invoiceNumber}
                 </span>
               </h2>
@@ -171,52 +171,45 @@ export default function InvoiceDetailPage() {
             </div>
           </div>
 
-          <div className="invoice-detail-actions">
-            <div className="invoice-detail-status">
-              <label>Status</label>
-              <div className="select-wrapper">
-                <select
-                  className="form-control"
-                  value={invoice.status}
-                  disabled={updatingStatus}
-                  onChange={(e) => handleStatusChange(e.target.value)}
-                >
-                  {STATUS_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <i
-                  className="uil uil-angle-down select-icon"
-                  aria-hidden="true"
-                ></i>
-              </div>
+          <div className="flex gap-4 items-center flex-wrap justify-end flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 min-w-[160px]">
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-[0.5px]">Status</label>
+              <Select
+                value={invoice.status}
+                disabled={updatingStatus}
+                onChange={(e) => handleStatusChange(e.target.value)}
+              >
+                {STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
             </div>
-            <div className="invoice-detail-buttons">
-              <button
-                className="btn btn-secondary"
+            <div className="flex gap-3 flex-wrap">
+              <Button
+                variant="secondary"
                 onClick={() =>
                   router.push(`/dashboard/invoices/${invoice.id}/edit`)
                 }
               >
                 <i className="uil uil-edit"></i>
                 Edit
-              </button>
-              <button
-                className="btn btn-primary"
+              </Button>
+              <Button
+                variant="primary"
                 onClick={handleDownloadPdf}
                 disabled={downloading}
               >
                 <i className="uil uil-import"></i>
                 {downloading ? "Exporting..." : "Export"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
 
         <InvoicePreview invoice={invoice} ref={previewRef} showStatus />
-      </div>
+      </Card>
     </div>
   );
 }

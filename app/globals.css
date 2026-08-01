@@ -1,4 +1,7 @@
 /* Global CSS - Will be imported from existing CSS files */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 * {
   margin: 0;
@@ -38,6 +41,10 @@ a {
 button {
   font-family: inherit;
   cursor: pointer;
+  border-style: solid;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: none;
 }
 
 input,
@@ -46,41 +53,15 @@ select {
   font-family: inherit;
 }
 
-/* Utility Classes */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1rem;
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select {
+  border-style: solid;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: none;
 }
 
 .text-center {
   text-align: center;
 }
-
-.mt-1 {
-  margin-top: 0.5rem;
-}
-.mt-2 {
-  margin-top: 1rem;
-}
-.mt-3 {
-  margin-top: 1.5rem;
-}
-.mt-4 {
-  margin-top: 2rem;
-}
-
-.mb-1 {
-  margin-bottom: 0.5rem;
-}
-.mb-2 {
-  margin-bottom: 1rem;
-}
-.mb-3 {
-  margin-bottom: 1.5rem;
-}
-.mb-4 {
-  margin-bottom: 2rem;
-}
-
-/* This file will be extended with existing CSS files */

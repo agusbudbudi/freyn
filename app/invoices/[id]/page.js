@@ -2,10 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import SiteHeader from "@/components/SiteHeader";
 import InvoicePreview from "@/components/invoices/InvoicePreview";
 import InvoiceStatusBadge from "@/components/invoices/InvoiceStatusBadge";
 import LoadingState from "@/components/LoadingState";
 import { toast } from "@/components/ui/toast";
+import Button from "@/components/ui/Button";
+import BackButton from "@/components/ui/BackButton";
 
 export default function PublicInvoicePage() {
   const params = useParams();
@@ -76,81 +79,68 @@ export default function PublicInvoicePage() {
 
   if (loading) {
     return (
-      <div className="public-invoice__layout">
-        <div className="public-invoice__card">
-          <div className="public-invoice__card-inner">
-            <div
-              className="public-invoice__content"
-              style={{ alignItems: "center" }}
-            >
-              <LoadingState
-                message="Loading invoice..."
-                description="Tunggu sebentar invoice sedang kami persiapkan."
-              />
-            </div>
+      <>
+        <SiteHeader />
+        <div className="min-h-screen bg-slate-50 flex justify-center items-start p-0 sm:p-4 pt-16 sm:pt-24">
+          <div className="w-full max-w-[960px] flex flex-col items-center justify-center gap-5 px-4 py-6 sm:p-6">
+            <LoadingState
+              message="Loading invoice..."
+              description="Tunggu sebentar invoice sedang kami persiapkan."
+            />
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (error || !invoice) {
     return (
-      <div className="public-invoice__layout">
-        <div className="public-invoice__card">
-          <div
-            className="public-invoice__card-inner"
-            style={{ gap: "16px", textAlign: "center", padding: "32px" }}
-          >
+      <>
+        <SiteHeader />
+        <div className="min-h-screen bg-slate-50 flex justify-center items-start p-0 sm:p-4 pt-16 sm:pt-24">
+          <div className="w-full max-w-[960px] flex flex-col items-center gap-4 px-4 py-6 sm:p-8 text-center">
             <p>{error || "Invoice not found"}</p>
-            <button className="btn btn-secondary" onClick={() => router.back()}>
+            <Button variant="secondary" onClick={() => router.back()}>
               Back
-            </button>
+            </Button>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="public-invoice__layout">
-      <div className="public-invoice__card">
-        <div className="public-invoice__card-inner">
-          <div className="public-invoice__content">
-            <header className="public-invoice__header">
-              <div className="public-invoice__heading">
-                <button
-                  type="button"
-                  className="btn btn-outline public-invoice__back"
-                  onClick={() => router.back()}
-                >
-                  <i className="uil uil-arrow-left"></i> Back
-                </button>
-                <div className="public-invoice__title">
-                  <h1>
-                    Invoice <span>#{invoice.invoiceNumber}</span>
-                  </h1>
-                  <InvoiceStatusBadge status={invoice.status} />
-                </div>
-                <p className="public-invoice__subtitle">
-                  Jika kamu membutuhkan versi PDF, hubungi Freelencers.
-                </p>
-              </div>
-
-              {/* hide for now need to fixing pdf export for mobile version */}
-
-              {/* <div className="public-invoice__actions">
-                <button className="btn btn-primary" onClick={handleDownloadPdf}>
-                  <i className="uil uil-import"></i>
-                  Download PDF
-                </button>
-              </div> */}
-            </header>
-
-            <InvoicePreview invoice={invoice} ref={previewRef} />
+    <>
+      <SiteHeader />
+      <div className="min-h-screen bg-slate-50 flex justify-center items-start p-0 sm:p-4 pt-16 sm:pt-24">
+        <div className="w-full max-w-[960px] flex flex-col gap-5 px-4 py-6 sm:p-6">
+        <header className="flex flex-col items-stretch gap-4">
+          <div className="flex flex-col gap-3 flex-1">
+            <div className="flex items-center gap-3 flex-wrap">
+              <BackButton onClick={() => router.back()} />
+              <h1 className="m-0 text-base flex items-center gap-2.5 text-slate-900">
+                <span className="font-semibold">#{invoice.invoiceNumber}</span>
+              </h1>
+              <InvoiceStatusBadge status={invoice.status} />
+            </div>
+            <p className="m-0 text-xs text-slate-500">
+              Jika kamu membutuhkan versi PDF, hubungi Freelencers.
+            </p>
           </div>
+
+          {/* hide for now need to fixing pdf export for mobile version */}
+
+          {/* <div className="flex gap-3 items-center">
+            <Button onClick={handleDownloadPdf}>
+              <i className="uil uil-import"></i>
+              Download PDF
+            </Button>
+          </div> */}
+        </header>
+
+        <InvoicePreview invoice={invoice} ref={previewRef} constrained={false} />
         </div>
       </div>
-    </div>
+    </>
   );
 }

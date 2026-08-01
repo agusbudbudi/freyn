@@ -4,14 +4,15 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import InvoiceForm from "@/components/invoices/InvoiceForm";
 import { toast } from "@/components/ui/toast";
+import { Card } from "@/components/ui/Card";
 
 function getAuthHeaders() {
   if (typeof window === "undefined") return {};
   const token = localStorage.getItem("token");
   return token
     ? {
-        Authorization: `Bearer ${token}`,
-      }
+      Authorization: `Bearer ${token}`,
+    }
     : {};
 }
 
@@ -54,20 +55,20 @@ export default function EditInvoicePage() {
 
   if (loading) {
     return (
-      <div className="content-body">
-        <div className="content-card" style={{ padding: "32px" }}>
+      <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
+        <Card className="p-8">
           <p>Loading invoice...</p>
-        </div>
+        </Card>
       </div>
     );
   }
 
   if (error || !invoice) {
     return (
-      <div className="content-body">
-        <div className="content-card" style={{ padding: "32px" }}>
+      <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
+        <Card className="p-8">
           <p>{error || "Invoice not found"}</p>
-        </div>
+        </Card>
       </div>
     );
   }

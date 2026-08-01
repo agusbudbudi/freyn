@@ -4,12 +4,10 @@ import Image from "next/image";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import "../../styles/dashboard.css";
-import "../../styles/mobile.css";
 import "../../styles/invoices.css";
-import ProfileModal from "@/components/ProfileModal";
 import { toast } from "@/components/ui/toast";
 import workspacePermissionsConfig from "@/lib/workspacePermissions.json";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 const MENU_ITEMS_CONFIG = Array.isArray(workspacePermissionsConfig?.menuItems)
   ? workspacePermissionsConfig.menuItems
@@ -59,6 +57,7 @@ const RAW_NAV_SECTIONS = [
         icon: "uil-invoice",
         label: "Invoices",
         badge: "New",
+        badgeStatus: "status-waiting",
         permission: "invoices",
       },
     ],
@@ -77,26 +76,8 @@ const RAW_NAV_SECTIONS = [
         icon: "uil-palette",
         label: "Portfolio",
         badge: "New",
+        badgeStatus: "status-waiting",
         permission: "portfolio",
-      },
-    ],
-  },
-  {
-    section: "Tools",
-    items: [
-      {
-        href: "https://splitbill-alpha.vercel.app/invoice.html",
-        icon: "uil-invoice",
-        label: "Invoice Split Bill",
-        external: true,
-        permission: "invoice-split",
-      },
-      {
-        href: "#",
-        icon: "uil-chart",
-        label: "Reports",
-        badge: "Soon",
-        permission: "reports",
       },
     ],
   },
@@ -117,7 +98,6 @@ const ROUTE_PERMISSION_RULES = [
     permission: "workspace-settings",
   },
   { pattern: /^\/dashboard\/portfolio(?:\/|$)/, permission: "portfolio" },
-  { pattern: /^\/dashboard\/reports(?:\/|$)/, permission: "reports" },
 ];
 
 const getDefaultPermissionsForRole = (role) => {
@@ -136,7 +116,6 @@ export default function DashboardLayout({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [currentWorkspace, setCurrentWorkspace] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [workspaceOptions, setWorkspaceOptions] = useState([]);
   const [workspaceOptionsLoading, setWorkspaceOptionsLoading] = useState(false);
   const [workspaceOptionsError, setWorkspaceOptionsError] = useState("");
@@ -204,7 +183,7 @@ export default function DashboardLayout({ children }) {
       localStorage.removeItem("token");
       localStorage.removeItem("workspace");
       document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-    } catch (e) {}
+    } catch (e) { }
     setCurrentUser(null);
     setCurrentWorkspace(null);
     setIsProfileMenuOpen(false);
@@ -222,7 +201,7 @@ export default function DashboardLayout({ children }) {
       if (rawWorkspace) {
         setCurrentWorkspace(JSON.parse(rawWorkspace));
       }
-    } catch (e) {}
+    } catch (e) { }
   }, []);
 
   // Auth guard: ensure token exists and is valid, otherwise redirect
@@ -277,7 +256,7 @@ export default function DashboardLayout({ children }) {
     const handleClick = (e) => {
       if (!isProfileMenuOpen) return;
       const inButton = e.target.closest(".profile-button");
-      const inMenu = e.target.closest(".profile-menu-dropdown");
+      const inMenu = e.target.closest(".js-profile-menu-dropdown");
       if (!inButton && !inMenu) {
         setIsProfileMenuOpen(false);
       }
@@ -327,6 +306,20 @@ export default function DashboardLayout({ children }) {
         "workspace-permissions-updated",
         handlePermissionsUpdated
       );
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleProfileUpdated = (e) => {
+      if (e.detail) {
+        setCurrentUser(e.detail);
+      }
+    };
+
+    window.addEventListener("profile-updated", handleProfileUpdated);
+
+    return () => {
+      window.removeEventListener("profile-updated", handleProfileUpdated);
     };
   }, []);
 
@@ -413,8 +406,8 @@ export default function DashboardLayout({ children }) {
   const avatarUrl = currentUser?.profileImage
     ? currentUser.profileImage
     : `https://api.dicebear.com/9.x/personas/svg?backgroundColor=b6e3f4&scale=100&seed=${encodeURIComponent(
-        currentUser?.email || currentUser?.fullName || "default"
-      )}`;
+      currentUser?.email || currentUser?.fullName || "default"
+    )}`;
 
   const firstName =
     (currentUser?.fullName || currentUser?.name || "")
@@ -497,6 +490,10 @@ export default function DashboardLayout({ children }) {
       title: "Projects",
       subtitle: "Manage all your projects 👨🏻‍💻",
     },
+    "/dashboard/projects/add": {
+      title: "Create Project",
+      subtitle: "Add a new project 👨🏻‍💻",
+    },
     "/dashboard/clients": {
       title: "Clients",
       subtitle: "Manage your clients 👥",
@@ -521,7 +518,23 @@ export default function DashboardLayout({ children }) {
       title: "Portfolio",
       subtitle: "Build and publish your public portfolio ✨",
     },
+    "/dashboard/portfolio/edit": {
+      title: "Edit Portfolio",
+      subtitle: "Update your public portfolio details ✨",
+    },
+    "/dashboard/profile": {
+      title: "Edit Profile",
+      subtitle: "Manage your personal information 👤",
+    },
   };
+
+  const activeNavHref =
+    navItems
+      .flatMap((section) => section.items)
+      .filter((item) => !item.external)
+      .map((item) => item.href)
+      .filter((href) => pathname === href || pathname.startsWith(`${href}/`))
+      .sort((a, b) => b.length - a.length)[0] || null;
 
   const defaultPageMeta = pageMetadata["/dashboard"];
 
@@ -536,8 +549,8 @@ export default function DashboardLayout({ children }) {
     authChecked && currentPermissionKey && !canAccessMenu(currentPermissionKey);
 
   const restrictedContent = (
-    <div className="content-body">
-      <div className="alert alert-error">
+    <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
+      <div className="p-4 rounded-lg border bg-red-50 text-red-800 border-red-200 flex items-center gap-2">
         <i className="uil uil-lock"></i>
         This page cannot be accessed due to workspace permission restrictions.
       </div>
@@ -545,26 +558,31 @@ export default function DashboardLayout({ children }) {
   );
 
   return (
-    <div className="app-container">
+    <div className="flex h-screen">
       {/* Sidebar */}
-      <div className={`sidebar ${isSidebarOpen ? "open" : ""}`}>
-        <div className="sidebar-header">
-          <div className="logo sidebar-logo">
-            <div className="logo-icon">
-              {/* <i className="fas fa-palette"></i> */}
+      <div
+        className={`w-[200px] bg-white text-ink flex flex-col fixed h-screen overflow-y-auto z-[1000] border-r border-slate-400 shadow-card transition-transform duration-300 md:translate-x-0 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+      >
+        <div className="p-5 relative">
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 text-[26px] font-bold text-ink justify-start"
+          >
+            <div className="w-8 h-8 flex">
               <Image
                 src="/images/logo-freyn.png"
                 alt="Logo"
                 width={32}
                 height={32}
-                className="logo-img"
+                className="w-full h-full object-contain"
                 priority
               />
             </div>
             <span>Freyn</span>
-          </div>
+          </Link>
           <button
-            className="sidebar-close-btn"
+            className="flex md:hidden absolute top-[25px] right-5 bg-surface-bg border border-border-subtle text-base text-graphite cursor-pointer py-[3px] px-[7px] rounded-full transition-all duration-200 hover:bg-slate-100 hover:text-ink"
             onClick={closeSidebar}
             aria-label="Close sidebar"
           >
@@ -572,22 +590,19 @@ export default function DashboardLayout({ children }) {
           </button>
         </div>
 
-        <div className="sidebar-nav">
+        <div className="flex-1 py-4">
           {navItems.map((section, idx) => (
-            <div key={idx} className="nav-section">
-              <div className="nav-section-title">{section.section}</div>
+            <div key={idx} className="mb-5">
+              <div className="text-xs font-semibold text-pencil-gray uppercase tracking-[0.5px] mx-5 mb-3">{section.section}</div>
               {section.items.map((item, itemIdx) => {
-                const isActive =
-                  pathname === item.href ||
-                  (item.href === "/dashboard/invoices" &&
-                    pathname.startsWith("/dashboard/invoices/"));
+                const isActive = item.href === activeNavHref;
 
                 if (item.external) {
                   return (
                     <a
                       key={itemIdx}
                       href={item.href}
-                      className="nav-item"
+                      className="flex items-center py-2 px-3 mx-3 my-0.5 rounded-lg text-xs font-medium gap-2.5 text-graphite no-underline transition-all duration-200 hover:bg-surface-bg hover:text-ink [&>i:first-child]:w-5 [&>i:first-child]:mr-1.5 [&>i:first-child]:text-base"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -602,15 +617,16 @@ export default function DashboardLayout({ children }) {
                   <Link
                     key={itemIdx}
                     href={item.href}
-                    className={`nav-item ${isActive ? "active" : ""}`}
+                    className={`flex items-center py-2 px-3 mx-3 my-0.5 rounded-lg text-xs font-medium gap-2.5 no-underline transition-all duration-200 [&>i:first-child]:w-5 [&>i:first-child]:mr-1.5 [&>i:first-child]:text-base ${isActive
+                      ? "bg-signal-blue/10 text-signal-blue"
+                      : "text-graphite hover:bg-surface-bg hover:text-ink"
+                      }`}
                     onClick={closeSidebar}
                   >
                     <i className={`uil ${item.icon}`}></i>
                     {item.label}
                     {item.badge && (
-                      <span className="status-badge status-review">
-                        {item.badge}
-                      </span>
+                      <StatusBadge status={item.badgeStatus || "status-review"}>{item.badge}</StatusBadge>
                     )}
                   </Link>
                 );
@@ -619,44 +635,45 @@ export default function DashboardLayout({ children }) {
           ))}
         </div>
 
-        <div className="sidebar-footer">
+        <div className="mt-auto py-4 px-5 text-[10px] text-pencil-gray text-center">
           © 2025 Freyn | Freelance Management
         </div>
       </div>
 
       {/* Mobile Overlay */}
       <div
-        className={`mobile-overlay ${isSidebarOpen ? "active" : ""}`}
+        className={`md:hidden fixed inset-0 bg-black/50 z-[999] transition-opacity duration-300 ${isSidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          }`}
         onClick={closeSidebar}
       ></div>
 
       {/* Main Content */}
-      <div className="main-content">
+      <div className="flex-1 md:ml-[200px] bg-slate-50 min-h-screen overflow-y-auto">
         {/* Header */}
-        <div className="content-header">
-          <div className="header-top">
-            <div className="mobile-header">
-              <div className="header-title">
+        <div className="bg-white border-b border-slate-400 shadow-card py-1.5 px-8 fixed top-0 right-0 left-0 md:left-[200px] z-[100] max-md:py-3 max-md:px-5">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center w-full justify-between">
+              <div className="flex items-center">
                 <button
-                  className="mobile-menu-btn"
+                  className="flex md:hidden items-center justify-center w-10 h-10 shrink-0 bg-transparent text-xl text-slate-900 cursor-pointer rounded-lg transition-all duration-200 mr-5 border border-[#e7e7e7] hover:bg-slate-50"
                   onClick={toggleSidebar}
                   aria-label="Toggle sidebar"
                 >
                   <i className="fas fa-bars"></i>
                 </button>
                 <div>
-                  <h1 className="page-title" id="page-title">
+                  <h1 className="text-lg font-semibold text-slate-900 m-0" id="page-title">
                     {currentPageMeta.title}
                   </h1>
-                  <p className="page-subtitle" id="page-subtitle">
+                  <p className="text-xs text-slate-500 m-0" id="page-subtitle">
                     {currentPageMeta.subtitle}
                   </p>
                 </div>
               </div>
-              <div className="profile-menu">
+              <div className="text-[22px] items-center flex relative">
                 <button
                   type="button"
-                  className="profile-right profile-button"
+                  className="profile-button group flex items-center gap-2 border-none bg-transparent py-1 px-2 rounded-[10px] cursor-pointer transition-shadow duration-200"
                   onClick={toggleProfileMenu}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
@@ -667,20 +684,20 @@ export default function DashboardLayout({ children }) {
                   aria-label="Toggle profile menu"
                 >
                   {(firstName || currentWorkspace?.name) && (
-                    <div className="profile-greeting">
+                    <div className="hidden md:flex flex-col items-end text-sm text-slate-900 mr-2 leading-[1.2]">
                       {firstName && (
                         <span>
                           Hi, <strong>{firstName}</strong>!
                         </span>
                       )}
                       {currentWorkspace?.name && (
-                        <span className="profile-greeting-workspace">
-                          <span className="profile-greeting-workspace-name">
-                            <i className="uil uil-folder-check"></i>
+                        <span className="hidden sm:inline-flex items-center gap-1 mt-1">
+                          <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+                            <i className="uil uil-folder-check bg-blue-100 text-blue-700 py-0.5 px-1 rounded-full text-xs"></i>
                             {currentWorkspace.name}
                           </span>
                           {userRole && (
-                            <span className="profile-role-label">
+                            <span className="inline-flex items-center text-[10px] font-semibold capitalize bg-signal-blue/[0.12] text-signal-blue py-0.5 px-2 rounded-full">
                               {formatWorkspaceRole(userRole)}
                             </span>
                           )}
@@ -688,10 +705,10 @@ export default function DashboardLayout({ children }) {
                       )}
                     </div>
                   )}
-                  <span className="avatar-wrapper">
+                  <span className="inline-flex items-center justify-center">
                     <Image
                       src={avatarUrl}
-                      className="avatar-profile"
+                      className="w-10 h-10 rounded-full object-cover border-2 border-[#e7e7e7] transition-all duration-200 group-hover:border-sky-wash group-hover:scale-105"
                       alt={
                         currentUser?.fullName || currentUser?.name || "Profile"
                       }
@@ -706,18 +723,9 @@ export default function DashboardLayout({ children }) {
               {/* Profile Menu Dropdown */}
               {isProfileMenuOpen && (
                 <>
-                  <div className="profile-menu-dropdown show">
-                    <div className="profile-header">
-                      <div
-                        className="profile-image"
-                        style={{
-                          borderRadius: "50%",
-                          background: "#b6e3f4",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
+                  <div className="js-profile-menu-dropdown absolute top-[80%] right-5 w-[260px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.01),0_6px_20px_rgba(0,0,0,0.05)] border border-slate-200 z-[1100] overflow-hidden">
+                    <div className="py-2.5 px-3.5 relative rounded-t-2xl flex justify-start gap-4 border-b border-slate-100 items-center">
+                      <div className="w-10 h-10 rounded-full relative overflow-hidden shrink-0" style={{ background: "#b6e3f4" }}>
                         <Image
                           src={avatarUrl}
                           alt={
@@ -727,49 +735,48 @@ export default function DashboardLayout({ children }) {
                           }
                           fill
                           sizes="64px"
-                          style={{ objectFit: "cover" }}
+                          className="object-cover"
                           unoptimized
                         />
                       </div>
                       <div>
-                        <div className="profile-name">
+                        <div className="text-base font-semibold text-slate-900 mb-0.5">
                           {currentUser?.fullName || currentUser?.name || "User"}
                         </div>
-                        <div className="profile-email">
+                        <div className="text-xs text-slate-500">
                           {currentUser?.email || "user@example.com"}
                         </div>
                       </div>
                     </div>
 
-                    <div className="profile-menu-items">
+                    <div className="p-2.5">
                       <button
-                        className="profile-menu-item"
+                        className="flex items-center gap-3 py-2 px-2 rounded-md no-underline text-slate-900 text-sm transition-all duration-200 cursor-pointer border-none bg-transparent w-full text-left hover:bg-slate-50 [&>i]:w-5 [&>i]:text-center [&>i]:text-slate-500"
                         onClick={handleToggleWorkspaceSwitcher}
                         type="button"
                       >
                         <i className="uil uil-folder-check"></i>
                         Select Workspace
                         <i
-                          className={`uil ${
-                            isWorkspaceSwitcherOpen
-                              ? "uil-angle-up"
-                              : "uil-angle-down"
-                          } workspace-switcher-caret`}
+                          className={`uil ${isWorkspaceSwitcherOpen
+                            ? "uil-angle-up"
+                            : "uil-angle-down"
+                            } ml-auto text-slate-500`}
                         ></i>
                       </button>
 
                       {isWorkspaceSwitcherOpen && (
-                        <div className="workspace-switcher">
+                        <div className="flex flex-col gap-1 p-1 bg-white rounded-md border border-slate-100 mb-2">
                           {workspaceOptionsLoading ? (
-                            <div className="workspace-switcher-placeholder">
+                            <div className="text-xs text-slate-500 py-1.5 px-1">
                               Loading workspaces...
                             </div>
                           ) : workspaceOptionsError ? (
-                            <div className="workspace-switcher-placeholder error">
+                            <div className="text-xs text-red-500 py-1.5 px-1">
                               {workspaceOptionsError}
                             </div>
                           ) : workspaceOptions.length === 0 ? (
-                            <div className="workspace-switcher-placeholder">
+                            <div className="text-xs text-slate-500 py-1.5 px-1">
                               No additional workspaces yet.
                             </div>
                           ) : (
@@ -783,9 +790,8 @@ export default function DashboardLayout({ children }) {
                                 <button
                                   key={optionId || option.slug || option.name}
                                   type="button"
-                                  className={`workspace-switcher-item ${
-                                    isActive ? "active" : ""
-                                  }`}
+                                  className={`flex justify-between items-center gap-3 py-1 px-2 rounded-md border-none cursor-pointer transition-all duration-200 text-xs text-slate-900 disabled:cursor-not-allowed disabled:opacity-70 ${isActive ? "bg-blue-100" : "bg-transparent hover:bg-slate-50"
+                                    }`}
                                   onClick={() =>
                                     handleSwitchWorkspace(optionId)
                                   }
@@ -793,27 +799,26 @@ export default function DashboardLayout({ children }) {
                                     switchingWorkspace || !optionId || isActive
                                   }
                                 >
-                                  <div className="workspace-switcher-left">
+                                  <div className="flex items-center gap-2">
                                     <span
-                                      className={`workspace-switcher-dot ${
-                                        isActive ? "active" : ""
-                                      }`}
+                                      className={`w-2.5 h-2.5 rounded-full ${isActive ? "bg-[#16a34a] shadow-[0_0_0_2px_rgba(22,163,74,0.15)]" : "bg-slate-100"
+                                        }`}
                                     ></span>
-                                    <div className="workspace-switcher-text">
-                                      <span className="workspace-switcher-name">
+                                    <div className="flex flex-col items-start gap-0.5">
+                                      <span className="font-semibold text-[10px] text-slate-900 text-left max-w-[130px] whitespace-nowrap overflow-hidden text-ellipsis">
                                         {option.name || "Workspace"}
                                       </span>
-                                      <span className="workspace-switcher-meta">
+                                      <span className="text-[9px] text-slate-500 capitalize">
                                         {formatWorkspaceRole(option.role)}
                                       </span>
                                     </div>
                                   </div>
-                                  <span className="workspace-switcher-action">
+                                  <span className={`text-[10px] font-medium ${isActive ? "text-slate-500" : "text-signal-blue"}`}>
                                     {isActive
                                       ? "Current"
                                       : switchingWorkspace
-                                      ? "Switching..."
-                                      : "Switch"}
+                                        ? "Switching..."
+                                        : "Switch"}
                                   </span>
                                 </button>
                               );
@@ -823,17 +828,17 @@ export default function DashboardLayout({ children }) {
                       )}
 
                       <button
-                        className="profile-menu-item"
+                        className="flex items-center gap-3 py-2 px-2 rounded-md no-underline text-slate-900 text-sm transition-all duration-200 cursor-pointer border-none bg-transparent w-full text-left hover:bg-slate-50 [&>i]:w-5 [&>i]:text-center [&>i]:text-slate-500"
                         onClick={() => {
                           setIsProfileMenuOpen(false);
-                          setIsProfileModalOpen(true);
+                          router.push("/dashboard/profile");
                         }}
                       >
                         <i className="uil uil-user"></i>
                         View Profile
                       </button>
                       <button
-                        className="profile-menu-item logout"
+                        className="flex items-center gap-3 py-2 px-2 rounded-md no-underline text-red-500 text-sm transition-all duration-200 cursor-pointer border-none bg-transparent w-full text-left hover:bg-red-50 [&>i]:w-5 [&>i]:text-center [&>i]:text-red-500"
                         onClick={handleLogout}
                       >
                         <i className="uil uil-sign-out-alt"></i>
@@ -841,19 +846,15 @@ export default function DashboardLayout({ children }) {
                       </button>
                     </div>
                   </div>
-                  <div className="profile-overlay show"></div>
+                  <div
+                    className="fixed inset-0 z-[1099]"
+                    onClick={() => setIsProfileMenuOpen(false)}
+                  ></div>
                 </>
               )}
             </div>
           </div>
         </div>
-
-        {/* Profile Modal */}
-        <ProfileModal
-          isOpen={isProfileModalOpen}
-          onClose={() => setIsProfileModalOpen(false)}
-          onSaved={(u) => setCurrentUser(u)}
-        />
 
         {/* Page Content */}
         <div key={activeWorkspaceId || "default"}>

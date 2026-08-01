@@ -1,17 +1,22 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import ClientModal from "@/components/ClientModal";
+import { useRouter } from "next/navigation";
 import LoadingState from "@/components/LoadingState";
 import { toast } from "@/components/ui/toast";
 import { useWorkspaceSwitchListener } from "@/lib/hooks/useWorkspaceSwitchListener";
+import { Card, CardHeader, CardBody } from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import SearchInput from "@/components/ui/SearchInput";
+import ActionButton from "@/components/ui/ActionButton";
+import EmptyState from "@/components/ui/EmptyState";
+import Alert from "@/components/ui/Alert";
 
 export default function ClientsPage() {
+  const router = useRouter();
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingClient, setEditingClient] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   const getAuthHeaders = useCallback(() => {
@@ -19,8 +24,8 @@ export default function ClientsPage() {
     const token = localStorage.getItem("token");
     return token
       ? {
-          Authorization: `Bearer ${token}`,
-        }
+        Authorization: `Bearer ${token}`,
+      }
       : {};
   }, []);
 
@@ -55,13 +60,11 @@ export default function ClientsPage() {
   useWorkspaceSwitchListener(fetchClients);
 
   const handleAddClient = () => {
-    setEditingClient(null);
-    setIsModalOpen(true);
+    router.push("/dashboard/clients/add");
   };
 
   const handleEditClient = (client) => {
-    setEditingClient(client);
-    setIsModalOpen(true);
+    router.push(`/dashboard/clients/${client.clientId}/edit`);
   };
 
   const handleDeleteClient = async (client) => {
@@ -91,11 +94,6 @@ export default function ClientsPage() {
     }
   };
 
-  const handleSaveClient = () => {
-    fetchClients();
-    setIsModalOpen(false);
-  };
-
   const filteredClients = clients.filter(
     (client) =>
       client.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -105,72 +103,54 @@ export default function ClientsPage() {
 
   if (loading) {
     return (
-      <div className="content-body">
+      <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
         <LoadingState message="Loading clients..." />
       </div>
     );
   }
 
   return (
-    <div className="content-body">
+    <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
       {error && (
-        <div className="alert alert-error">
+        <Alert type="error">
           <i className="uil uil-exclamation-triangle"></i> {error}
-        </div>
+        </Alert>
       )}
 
-      <div className="content-card">
-        <div className="card-header">
-          <h2 className="card-title">All Clients</h2>
-          <button className="btn btn-primary" onClick={handleAddClient}>
+      <Card>
+        <CardHeader className="flex-wrap">
+          <SearchInput
+            placeholder="Search clients by name, company, or phone..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onClear={() => setSearchTerm("")}
+          />
+          <Button onClick={handleAddClient}>
             <i className="uil uil-plus"></i>
             Add Client
-          </button>
-        </div>
+          </Button>
+        </CardHeader>
 
-        <div className="card-header-search">
-          <div className="search-input-container">
-            <i className="uil uil-search search-icon"></i>
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search clients by name, company, or phone..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            {searchTerm && (
-              <button
-                className="search-clear-btn"
-                onClick={() => setSearchTerm("")}
-                style={{ display: "flex" }}
-              >
-                <i className="uil uil-times"></i>
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="card-body">
+        <CardBody>
           {filteredClients.length > 0 ? (
-            <div className="table-container">
-              <table className="table">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
                 <thead>
                   <tr>
-                    <th>Client ID</th>
-                    <th>Client Name</th>
-                    <th>Company Name</th>
-                    <th>Contact</th>
-                    <th>Address</th>
-                    <th>Actions</th>
+                    {["Client ID", "Client Name", "Company Name", "Contact", "Address", "Actions"].map((h) => (
+                      <th key={h} className="py-3.5 px-5 text-left bg-slate-100 border-y border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-[0.5px]">
+                        {h}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filteredClients.map((client) => (
-                    <tr key={client._id}>
-                      <td>
+                    <tr key={client._id} className="odd:bg-white even:bg-slate-50 hover:bg-slate-100 [&:last-child_td]:border-b-0">
+                      <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">
                         <a
                           href="#"
-                          className="link"
+                          className="text-blue-500 no-underline cursor-pointer whitespace-nowrap hover:underline"
                           onClick={(e) => {
                             e.preventDefault();
                             handleEditClient(client);
@@ -179,11 +159,11 @@ export default function ClientsPage() {
                           <strong>{client.clientId}</strong>
                         </a>
                       </td>
-                      <td>{client.clientName}</td>
+                      <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">{client.clientName}</td>
 
-                      <td>{client.companyName || "-"}</td>
+                      <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">{client.companyName || "-"}</td>
 
-                      <td>
+                      <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">
                         <div>
                           {client.phoneNumber && (
                             <span>
@@ -195,13 +175,7 @@ export default function ClientsPage() {
                           {client.email && (
                             <>
                               <br />
-                              <span
-                                style={{
-                                  fontSize: "11px",
-                                  color: "#9ca3af",
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
+                              <span className="text-[11px] text-gray-400 whitespace-nowrap">
                                 <i className="uil uil-envelope"></i>{" "}
                                 {client.email}
                               </span>
@@ -209,34 +183,28 @@ export default function ClientsPage() {
                           )}
                         </div>
                       </td>
-                      <td style={{ maxWidth: "240px" }}>
+                      <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs max-w-[240px]">
                         <div
-                          style={{
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
+                          className="overflow-hidden text-ellipsis whitespace-nowrap"
                           title={client.address || "-"}
                         >
                           {client.address || "-"}
                         </div>
                       </td>
-                      <td>
-                        <div className="action-buttons">
-                          <button
-                            className="action-btn edit"
+                      <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">
+                        <div className="flex gap-2">
+                          <ActionButton
+                            variant="edit"
+                            icon="uil uil-edit"
                             onClick={() => handleEditClient(client)}
                             title="Edit Client"
-                          >
-                            <i className="uil uil-edit"></i>
-                          </button>
-                          <button
-                            className="action-btn delete"
+                          />
+                          <ActionButton
+                            variant="delete"
+                            icon="uil uil-trash-alt"
                             onClick={() => handleDeleteClient(client)}
                             title="Delete Client"
-                          >
-                            <i className="uil uil-trash-alt"></i>
-                          </button>
+                          />
                         </div>
                       </td>
                     </tr>
@@ -245,27 +213,18 @@ export default function ClientsPage() {
               </table>
             </div>
           ) : (
-            <div className="empty-state">
-              <i className="uil uil-users-alt"></i>
-              <h3>{searchTerm ? "No clients found" : "No clients yet"}</h3>
-              <p>
-                {searchTerm
+            <EmptyState
+              icon="uil uil-users-alt"
+              title={searchTerm ? "No clients found" : "No clients yet"}
+              description={
+                searchTerm
                   ? "Try adjusting your search"
-                  : "Start by adding your first client"}
-              </p>
-            </div>
+                  : "Start by adding your first client"
+              }
+            />
           )}
-        </div>
-      </div>
-
-      {isModalOpen && (
-        <ClientModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onSave={handleSaveClient}
-          editClient={editingClient}
-        />
-      )}
+        </CardBody>
+      </Card>
     </div>
   );
 }

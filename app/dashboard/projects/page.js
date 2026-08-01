@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import ProjectModal from "../../../components/ProjectModal";
+import { useRouter } from "next/navigation";
 import LoadingState from "@/components/LoadingState";
 import { toast } from "@/components/ui/toast";
 import Pagination from "@/components/Pagination";
@@ -10,13 +10,18 @@ import StatusFilter from "@/components/StatusFilter";
 import { usePagination } from "@/lib/hooks/usePagination";
 import { useStatusFilter } from "@/lib/hooks/useStatusFilter";
 import { useWorkspaceSwitchListener } from "@/lib/hooks/useWorkspaceSwitchListener";
+import { Card, CardHeader, CardBody } from "@/components/ui/Card";
+import Button, { buttonClasses } from "@/components/ui/Button";
+import SearchInput from "@/components/ui/SearchInput";
+import EmptyState from "@/components/ui/EmptyState";
+import Alert from "@/components/ui/Alert";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 export default function ProjectsPage() {
+  const router = useRouter();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingProject, setEditingProject] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [openActionId, setOpenActionId] = useState(null);
   const [actionMenuPlacement, setActionMenuPlacement] = useState("bottom");
@@ -29,8 +34,8 @@ export default function ProjectsPage() {
     const token = localStorage.getItem("token");
     return token
       ? {
-          Authorization: `Bearer ${token}`,
-        }
+        Authorization: `Bearer ${token}`,
+      }
       : {};
   }, []);
 
@@ -116,14 +121,12 @@ export default function ProjectsPage() {
     return labelMap[status] || status;
   };
 
-  const openModal = (project = null) => {
-    setEditingProject(project);
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setEditingProject(null);
+  const goToProject = (project = null) => {
+    if (project) {
+      router.push(`/dashboard/projects/${project._id}/edit`);
+    } else {
+      router.push("/dashboard/projects/add");
+    }
   };
 
   useEffect(() => {
@@ -186,13 +189,13 @@ export default function ProjectsPage() {
         const style =
           nextPlacement === "top"
             ? {
-                top: "auto",
-                bottom: `calc(100% + ${gap}px)`
-              }
+              top: "auto",
+              bottom: `calc(100% + ${gap}px)`
+            }
             : {
-                top: `calc(100% + ${gap}px)`,
-                bottom: "auto"
-              };
+              top: `calc(100% + ${gap}px)`,
+              bottom: "auto"
+            };
         if (maxHeight) {
           style.maxHeight = `${Math.max(maxHeight, 120)}px`;
           style.overflowY = "auto";
@@ -223,29 +226,6 @@ export default function ProjectsPage() {
       cancelAnimationFrame(rafId);
     };
   }, [openActionId]);
-
-  const handleSave = (updatedProject, meta) => {
-    if (meta?.source === "comment") {
-      if (updatedProject) {
-        setEditingProject(updatedProject);
-        // keep table data in sync without full refetch
-        setProjects((prev) =>
-          prev.map((p) => (p._id === updatedProject._id ? updatedProject : p))
-        );
-      }
-      return; // avoid full refetch on comment submit
-    }
-    // Normal save: refresh list and close modal
-    fetchProjects(); // Refresh the main projects list
-    if (updatedProject) {
-      // Optimistically update local list to reflect changes immediately
-      setProjects((prev) =>
-        prev.map((p) => (p._id === updatedProject._id ? updatedProject : p))
-      );
-    }
-    setIsModalOpen(false);
-    setEditingProject(null);
-  };
 
   const deleteProject = async (projectId) => {
     if (!confirm("Are you sure you want to delete this project?")) {
@@ -353,7 +333,7 @@ export default function ProjectsPage() {
 
   if (loading) {
     return (
-      <div className="content-body">
+      <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
         <LoadingState message="Loading projects..." />
       </div>
     );
@@ -361,251 +341,209 @@ export default function ProjectsPage() {
 
   if (error) {
     return (
-      <div className="content-body">
-        <div className="content-card">
-          <div className="card-body">
-            <div
-              style={{ textAlign: "center", padding: "2rem", color: "#ef4444" }}
-            >
-              <i
-                className="uil uil-exclamation-triangle"
-                style={{ fontSize: "2rem" }}
-              ></i>
+      <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
+        <Card>
+          <CardBody className="p-6">
+            <div className="text-center py-8 text-red-500">
+              <i className="uil uil-exclamation-triangle text-3xl"></i>
               <p>{error}</p>
-              <button
-                onClick={fetchProjects}
-                className="btn btn-primary"
-                style={{ marginTop: "1rem" }}
-              >
+              <Button onClick={fetchProjects} className="mt-4">
                 Try Again
-              </button>
+              </Button>
             </div>
-          </div>
-        </div>
+          </CardBody>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="content-body">
-      <div className="content-card">
-        <div className="card-header">
-          <h2 className="card-title">All Projects</h2>
-          <div style={{ display: "flex", gap: "8px" }}>
+    <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
+      <Card>
+        <CardHeader className="flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap">
+            <SearchInput
+              placeholder="Search projects by name, client, order no, or status..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onClear={() => setSearchTerm("")}
+            />
+            {filteredProjects.length > 0 && (
+              <StatusFilter
+                options={statusFilter.options}
+                value={statusFilter.activeStatus}
+                onChange={(value) => {
+                  statusFilter.setActiveStatus(value);
+                  pagination.goToPage(1);
+                }}
+              />
+            )}
+          </div>
+          <div className="flex gap-2">
             <Link
               href="/dashboard/projects/calendar"
-              className="btn btn-outline"
+              className={buttonClasses({ variant: "outline" })}
             >
               <i className="uil uil-schedule"></i>
               Calendar
             </Link>
-            <button className="btn btn-primary" onClick={() => openModal()}>
+            <Button onClick={() => goToProject()}>
               <i className="uil uil-plus"></i>
               Add
-            </button>
+            </Button>
           </div>
-        </div>
+        </CardHeader>
 
-        <div className="card-header-search">
-          <div className="search-input-container">
-            <i className="uil uil-search search-icon"></i>
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search projects by name, client, order no, or status..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            {searchTerm && (
-              <button
-                className="search-clear-btn"
-                onClick={() => setSearchTerm("")}
-                style={{ display: "flex" }}
-              >
-                <i className="uil uil-times"></i>
-              </button>
-            )}
-          </div>
-          {filteredProjects.length > 0 && (
-            <StatusFilter
-              options={statusFilter.options}
-              value={statusFilter.activeStatus}
-              onChange={(value) => {
-                statusFilter.setActiveStatus(value);
-                pagination.goToPage(1);
-              }}
-            />
-          )}
-        </div>
-
-        <div className="card-body">
+        <CardBody>
           {filteredProjects.length === 0 ? (
-            <div className="empty-state">
-              <i className="uil uil-folder-open"></i>
-              <h3>{searchTerm ? "No projects found" : "No projects yet"}</h3>
-              <p>
-                {searchTerm
+            <EmptyState
+              icon="uil uil-folder-open"
+              title={searchTerm ? "No projects found" : "No projects yet"}
+              description={
+                searchTerm
                   ? "Try adjusting your search"
-                  : "Start by adding your first project"}
-              </p>
-            </div>
+                  : "Start by adding your first project"
+              }
+            />
           ) : (
             <>
-              <div className="table-container">
-                <table className="table">
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
                   <thead>
                     <tr>
-                      <th>Order No</th>
-                      <th>Project Name</th>
-                      <th>Client</th>
-                      <th>Due Date</th>
-                      <th>Total Price</th>
-                      <th>Deliverables</th>
-                      <th>Status</th>
-                      <th>Actions</th>
+                      {["Order No", "Project Name", "Client", "Due Date", "Total Price", "Deliverables", "Status", "Actions"].map((h) => (
+                        <th key={h} className="py-3.5 px-5 text-left bg-slate-100 border-y border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-[0.5px]">
+                          {h}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
                     {displayedProjects.map((project) => (
-                      <tr key={project._id}>
-                      <td>
-                        <a
-                          href="#"
-                          className="link"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            openModal(project);
-                          }}
-                        >
-                          <strong>{project.numberOrder}</strong>
-                        </a>
-                      </td>
-                      <td>
-                        <div className="project-name">
-                          {project.projectName}
-                        </div>
-                      </td>
-                      <td>{project.clientName}</td>
-                      <td>
-                        <div>{formatDate(project.deadline)}</div>
-                        {project.status?.toLowerCase() !== "done" &&
-                          getOverdueDays(project.deadline) > 0 && (
-                            <span
-                              className="overdue-badge"
-                              style={{
-                                display: "inline-block",
-                                marginTop: "4px",
-                              }}
-                            >
-                              Overdue {getOverdueDays(project.deadline)}{" "}
-                              {getOverdueDays(project.deadline) > 1
-                                ? "days"
-                                : "day"}
-                            </span>
-                          )}
-                      </td>
-                      <td className="currency">
-                        {formatCurrency(project.totalPrice)}
-                      </td>
-                      <td>
-                        <a
-                          href={`/result/${project._id}`}
-                          target="_blank"
-                          className="link"
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                          }}
-                        >
-                          <i className="uil uil-external-link-alt"></i>
-                          View Result
-                        </a>
-                      </td>
-                      <td>
-                        <span
-                          className={`status-badge ${getStatusClass(
-                            project.status
-                          )}`}
-                        >
-                          {getStatusLabel(project.status)}
-                        </span>
-                      </td>
-                      <td>
-                        <div
-                          className="action-menu"
-                          ref={
-                            openActionId === project._id ? actionMenuRef : null
-                          }
-                        >
-                          <button
-                            type="button"
-                            className="action-menu__trigger"
-                            aria-haspopup="true"
-                            aria-expanded={openActionId === project._id}
-                            title="Actions"
-                            onClick={() => toggleActionMenu(project._id)}
+                      <tr key={project._id} className="odd:bg-white even:bg-slate-50 hover:bg-slate-100 [&:last-child_td]:border-b-0">
+                        <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">
+                          <a
+                            href="#"
+                            className="text-blue-500 no-underline cursor-pointer whitespace-nowrap hover:underline"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              goToProject(project);
+                            }}
+                          >
+                            <strong>{project.numberOrder}</strong>
+                          </a>
+                        </td>
+                        <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">
+                          <div className="font-semibold text-slate-800 mb-1 text-xs">
+                            {project.projectName}
+                          </div>
+                        </td>
+                        <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">{project.clientName}</td>
+                        <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">
+                          <div>{formatDate(project.deadline)}</div>
+                          {project.status?.toLowerCase() !== "done" &&
+                            getOverdueDays(project.deadline) > 0 && (
+                              <span className="inline-block mt-1 py-0.5 px-1.5 rounded-full text-[10px] leading-[1.4] text-red-800 bg-red-100 border border-red-200">
+                                Overdue {getOverdueDays(project.deadline)}{" "}
+                                {getOverdueDays(project.deadline) > 1
+                                  ? "days"
+                                  : "day"}
+                              </span>
+                            )}
+                        </td>
+                        <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs font-bold text-emerald-600">
+                          {formatCurrency(project.totalPrice)}
+                        </td>
+                        <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">
+                          <a
+                            href={`/result/${project._id}`}
+                            target="_blank"
+                            className="inline-flex items-center gap-1.5 text-blue-500 no-underline hover:underline"
+                          >
+                            <i className="uil uil-external-link-alt"></i>
+                            View Result
+                          </a>
+                        </td>
+                        <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">
+                          <StatusBadge status={getStatusClass(project.status)}>
+                            {getStatusLabel(project.status)}
+                          </StatusBadge>
+                        </td>
+                        <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">
+                          <div
+                            className="relative inline-block"
                             ref={
-                              openActionId === project._id
-                                ? actionTriggerRef
-                                : null
+                              openActionId === project._id ? actionMenuRef : null
                             }
                           >
-                            <i className="uil uil-ellipsis-h"></i>
-                          </button>
-                          {openActionId === project._id && (
-                            <div
-                              className={`action-menu__tray ${
-                                actionMenuPlacement === "top"
-                                  ? "action-menu__tray--dropup"
-                                  : ""
-                              }`}
-                              style={actionMenuStyle}
+                            <button
+                              type="button"
+                              className="inline-flex items-center justify-center w-8 h-8 border-none rounded-lg cursor-pointer transition-all duration-200 text-base bg-slate-100 text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                              aria-haspopup="true"
+                              aria-expanded={openActionId === project._id}
+                              title="Actions"
+                              onClick={() => toggleActionMenu(project._id)}
+                              ref={
+                                openActionId === project._id
+                                  ? actionTriggerRef
+                                  : null
+                              }
                             >
-                              <button
-                                type="button"
-                                className="action-menu__item"
-                                onClick={() => {
-                                  setOpenActionId(null);
-                                  openModal(project);
-                                }}
+                              <i className="uil uil-ellipsis-h"></i>
+                            </button>
+                            {openActionId === project._id && (
+                              <div
+                                className="absolute right-0 min-w-[180px] bg-white border border-slate-100 rounded-xl shadow-[0_5px_10px_rgba(15,23,42,0.05)] p-2 z-10"
+                                style={
+                                  actionMenuPlacement === "top"
+                                    ? { ...actionMenuStyle, transformOrigin: "bottom right" }
+                                    : actionMenuStyle
+                                }
                               >
-                                <i className="uil uil-edit-alt"></i>
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                className="action-menu__item"
-                                onClick={() => {
-                                  setOpenActionId(null);
-                                  handleShareWhatsApp(project);
-                                }}
-                              >
-                                <i className="uil uil-whatsapp"></i>
-                                Share to WhatsApp
-                              </button>
-                              <button
-                                type="button"
-                                className="action-menu__item action-menu__item--danger"
-                                onClick={() => {
-                                  setOpenActionId(null);
-                                  deleteProject(project._id);
-                                }}
-                              >
-                                <i className="uil uil-trash-alt"></i>
-                                Delete
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
+                                <button
+                                  type="button"
+                                  className="w-full border-none bg-transparent text-slate-900 text-xs font-medium flex items-center gap-2 py-2 px-3.5 cursor-pointer whitespace-nowrap rounded-lg hover:bg-slate-50"
+                                  onClick={() => {
+                                    setOpenActionId(null);
+                                    goToProject(project);
+                                  }}
+                                >
+                                  <i className="uil uil-edit-alt text-base"></i>
+                                  Edit
+                                </button>
+                                <button
+                                  type="button"
+                                  className="w-full border-none bg-transparent text-slate-900 text-xs font-medium flex items-center gap-2 py-2 px-3.5 cursor-pointer whitespace-nowrap rounded-lg hover:bg-slate-50"
+                                  onClick={() => {
+                                    setOpenActionId(null);
+                                    handleShareWhatsApp(project);
+                                  }}
+                                >
+                                  <i className="uil uil-whatsapp text-base"></i>
+                                  Share to WhatsApp
+                                </button>
+                                <button
+                                  type="button"
+                                  className="w-full border-none bg-transparent text-red-500 text-xs font-medium flex items-center gap-2 py-2 px-3.5 cursor-pointer whitespace-nowrap rounded-lg hover:bg-slate-50 hover:text-red-600"
+                                  onClick={() => {
+                                    setOpenActionId(null);
+                                    deleteProject(project._id);
+                                  }}
+                                >
+                                  <i className="uil uil-trash-alt text-base"></i>
+                                  Delete
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
               {pagination.totalPages > 1 && (
-                <div className="pagination-wrapper">
+                <div className="flex justify-center p-4 border-t border-slate-100">
                   <Pagination
                     currentPage={pagination.currentPage}
                     totalPages={pagination.totalPages}
@@ -618,16 +556,8 @@ export default function ProjectsPage() {
               )}
             </>
           )}
-        </div>
-      </div>
-
-      {/* Project Modal */}
-      <ProjectModal
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        onSave={handleSave}
-        editProject={editingProject}
-      />
+        </CardBody>
+      </Card>
     </div>
   );
 }

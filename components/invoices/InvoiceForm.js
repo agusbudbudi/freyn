@@ -15,6 +15,14 @@ import {
   calculateInvoiceTotals,
 } from "./utils";
 import "react-quill/dist/quill.snow.css";
+import { Card, CardBody } from "@/components/ui/Card";
+import Button, { buttonClasses } from "@/components/ui/Button";
+import BackButton from "@/components/ui/BackButton";
+import FormField from "@/components/ui/FormField";
+import Input, { Textarea } from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
+import Modal from "@/components/ui/Modal";
+import ActionButton from "@/components/ui/ActionButton";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
@@ -168,8 +176,8 @@ function getAuthHeaders() {
   const token = localStorage.getItem("token");
   return token
     ? {
-        Authorization: `Bearer ${token}`,
-      }
+      Authorization: `Bearer ${token}`,
+    }
     : {};
 }
 
@@ -789,38 +797,25 @@ export default function InvoiceForm({
 
   if (fetching || projectLoading) {
     return (
-      <div className="content-body">
-        <div className="content-card" style={{ padding: "32px" }}>
+      <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
+        <Card className="p-8">
           <p>Loading invoice data...</p>
-        </div>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="content-body">
-      <div className="content-card">
-        <div
-          className="card-header"
-          style={{
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "16px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <button
-              className="btn btn-back"
-              type="button"
-              onClick={() => router.back()}
-            >
-              <i className="uil uil-arrow-left"></i>
-            </button>
+    <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px] grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+      <Card>
+        <div className="p-6 flex justify-between items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <BackButton onClick={() => router.back()} />
             <div>
-              <h2 className="card-title">
+              <h2 className="text-base font-semibold text-slate-900 m-0">
                 {isEditing ? "Edit Invoice" : "Create Invoice"}
               </h2>
-              <p className="card-subtitle">
+              <p className="text-xs text-slate-500 mt-1 mb-0">
                 Fill out the invoice details below
               </p>
             </div>
@@ -828,73 +823,55 @@ export default function InvoiceForm({
           <InvoiceStatusBadge status={form.status} />
         </div>
 
-        <form
-          className="card-body"
-          style={{ padding: "16px" }}
-          onSubmit={handleSubmit}
-        >
-          <div className="invoice-form-grid">
-            <div className="form-group">
-              <label>Invoice Number</label>
-              <input
+        <form className="p-6" onSubmit={handleSubmit}>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-4">
+            <FormField label="Invoice Number">
+              <Input
                 type="text"
-                className="form-control"
                 value={form.invoiceNumber}
                 onChange={(e) => handleChange("invoiceNumber", e.target.value)}
               />
-              <small className="information-text">
+              <small className="inline-flex items-center gap-1.5 text-xs text-slate-500">
                 <i className="uil uil-info-circle"></i> Auto-generated, but you
                 can customize if needed.
               </small>
-            </div>
+            </FormField>
 
-            <div className="form-group">
-              <label>Status</label>
-              <div className="select-wrapper">
-                <select
-                  className="form-control"
-                  value={form.status}
-                  onChange={(e) => handleChange("status", e.target.value)}
-                >
-                  {STATUS_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <i
-                  className="uil uil-angle-down select-icon"
-                  aria-hidden="true"
-                ></i>
-              </div>
-            </div>
+            <FormField label="Status">
+              <Select
+                value={form.status}
+                onChange={(e) => handleChange("status", e.target.value)}
+              >
+                {STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
 
-            <div className="form-group">
-              <label>Invoice Date</label>
-              <input
+            <FormField label="Invoice Date">
+              <Input
                 type="date"
-                className="form-control"
                 value={form.invoiceDate}
                 onChange={(e) => handleChange("invoiceDate", e.target.value)}
               />
-            </div>
+            </FormField>
 
-            <div className="form-group">
-              <label>Due Date</label>
-              <input
+            <FormField label="Due Date">
+              <Input
                 type="date"
-                className="form-control"
                 value={form.dueDate}
                 onChange={(e) => handleChange("dueDate", e.target.value)}
               />
-            </div>
+            </FormField>
           </div>
 
-          <div style={{ marginTop: "24px" }}>
-            <h3 className="card-title" style={{ fontSize: "14px" }}>
+          <div className="mt-6">
+            <h3 className="text-sm font-semibold text-slate-900">
               Company Branding
             </h3>
-            <div className="invoice-logo-upload" style={{ marginTop: "12px" }}>
+            <div className="mt-3 border border-dashed border-[#e7e7e7] rounded-xl p-6 flex flex-col items-center justify-center gap-3 bg-slate-50 text-center">
               {logo ? (
                 <>
                   <Image
@@ -902,44 +879,44 @@ export default function InvoiceForm({
                     alt="Invoice logo preview"
                     width={160}
                     height={120}
-                    className="invoice-logo-preview"
+                    className="max-w-[160px] max-h-[120px] object-contain rounded-lg"
                     unoptimized
                   />
-                  <div style={{ display: "flex", gap: "12px" }}>
-                    <label className="btn btn-secondary">
+                  <div className="flex gap-3">
+                    <label className={buttonClasses({ variant: "secondary", size: "sm" })}>
                       <i className="uil uil-upload"></i>
                       Change Logo
                       <input
                         type="file"
                         accept="image/*"
+                        className="hidden"
                         onChange={handleLogoChange}
                       />
                     </label>
-                    <button
+                    <Button
                       type="button"
-                      className="btn btn-danger"
+                      variant="danger"
+                      size="sm"
                       onClick={handleLogoRemove}
                     >
                       <i className="uil uil-times"></i>
                       Remove
-                    </button>
+                    </Button>
                   </div>
                 </>
               ) : (
                 <>
-                  <i
-                    className="uil uil-image-upload"
-                    style={{ fontSize: "32px", color: "#9ca3af" }}
-                  ></i>
-                  <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                  <i className="uil uil-image-upload text-3xl text-gray-400"></i>
+                  <p className="text-xs text-slate-500">
                     Upload your company logo (max 900KB)
                   </p>
-                  <label className="btn btn-secondary">
+                  <label className={buttonClasses({ variant: "secondary", size: "sm" })}>
                     <i className="uil uil-upload"></i>
                     Upload Logo
                     <input
                       type="file"
                       accept="image/*"
+                      className="hidden"
                       onChange={handleLogoChange}
                     />
                   </label>
@@ -948,172 +925,140 @@ export default function InvoiceForm({
             </div>
           </div>
 
-          <div style={{ marginTop: "32px" }}>
-            <h3 className="card-title" style={{ fontSize: "14px" }}>
+          <div className="mt-8">
+            <h3 className="text-sm font-semibold text-slate-900">
               Billed By
             </h3>
-            <div className="invoice-form-grid" style={{ marginTop: "12px" }}>
-              <div className="form-group">
-                <label>Name</label>
-                <input
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-4 mt-3">
+              <FormField label="Name">
+                <Input
                   type="text"
-                  className="form-control"
                   value={form.billedBy.name}
                   onChange={(e) => handleBilledByChange("name", e.target.value)}
                   disabled={billedByLocked}
                 />
-              </div>
-              <div className="form-group">
-                <label>Email</label>
-                <input
+              </FormField>
+              <FormField label="Email">
+                <Input
                   type="email"
-                  className="form-control"
                   value={form.billedBy.email}
                   onChange={(e) =>
                     handleBilledByChange("email", e.target.value)
                   }
                   disabled={billedByLocked}
                 />
-              </div>
-              <div className="form-group">
-                <label>Phone</label>
-                <input
+              </FormField>
+              <FormField label="Phone">
+                <Input
                   type="text"
-                  className="form-control"
                   value={form.billedBy.phone}
                   onChange={(e) =>
                     handleBilledByChange("phone", e.target.value)
                   }
                   disabled={billedByLocked}
                 />
-              </div>
-              <div className="form-group">
-                <label>Company</label>
-                <input
+              </FormField>
+              <FormField label="Company">
+                <Input
                   type="text"
-                  className="form-control"
                   value={form.billedBy.company}
                   onChange={(e) =>
                     handleBilledByChange("company", e.target.value)
                   }
                 />
-              </div>
-              <div className="form-group" style={{ gridColumn: "span 2" }}>
-                <label>Address</label>
-                <textarea
-                  className="form-control"
+              </FormField>
+              <FormField label="Address" className="sm:col-span-2">
+                <Textarea
                   rows={2}
                   value={form.billedBy.address}
                   onChange={(e) =>
                     handleBilledByChange("address", e.target.value)
                   }
-                ></textarea>
-              </div>
+                ></Textarea>
+              </FormField>
             </div>
-            <button
+            <Button
               type="button"
-              className="btn btn-warning"
-              style={{
-                marginTop: "8px",
-                fontSize: "12px",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
+              variant="warning"
+              size="sm"
+              className="mt-2"
               onClick={() => setBilledByLocked((prev) => !prev)}
             >
               <i
                 className={`uil ${billedByLocked ? "uil-lock" : "uil-unlock"}`}
               ></i>
               {billedByLocked ? "Unlock fields" : "Lock fields"}
-            </button>
+            </Button>
           </div>
 
-          <div style={{ marginTop: "32px" }}>
-            <h3 className="card-title" style={{ fontSize: "14px" }}>
+          <div className="mt-8">
+            <h3 className="text-sm font-semibold text-slate-900">
               Billed To
             </h3>
-            <div className="invoice-form-grid" style={{ marginTop: "12px" }}>
-              <div className="form-group">
-                <label>Select Client</label>
-                <div className="select-wrapper">
-                  <select
-                    className="form-control"
-                    value={form.billedTo.clientId}
-                    onChange={(e) => handleClientSelect(e.target.value)}
-                  >
-                    <option value="">Select client</option>
-                    {clients.map((client) => (
-                      <option
-                        key={client._id}
-                        value={client.clientId || client.id}
-                      >
-                        {client.clientName}
-                      </option>
-                    ))}
-                  </select>
-                  <i
-                    className="uil uil-angle-down select-icon"
-                    aria-hidden="true"
-                  ></i>
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Email</label>
-                <input
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-4 mt-3">
+              <FormField label="Select Client">
+                <Select
+                  value={form.billedTo.clientId}
+                  onChange={(e) => handleClientSelect(e.target.value)}
+                >
+                  <option value="">Select client</option>
+                  {clients.map((client) => (
+                    <option
+                      key={client._id}
+                      value={client.clientId || client.id}
+                    >
+                      {client.clientName}
+                    </option>
+                  ))}
+                </Select>
+              </FormField>
+              <FormField label="Email">
+                <Input
                   type="email"
-                  className="form-control"
                   value={form.billedTo.email}
                   onChange={(e) =>
                     handleBilledToChange("email", e.target.value)
                   }
                 />
-              </div>
-              <div className="form-group">
-                <label>Phone</label>
-                <input
+              </FormField>
+              <FormField label="Phone">
+                <Input
                   type="text"
-                  className="form-control"
                   value={form.billedTo.phone}
                   onChange={(e) =>
                     handleBilledToChange("phone", e.target.value)
                   }
                 />
-              </div>
-              <div className="form-group">
-                <label>Company</label>
-                <input
+              </FormField>
+              <FormField label="Company">
+                <Input
                   type="text"
-                  className="form-control"
                   value={form.billedTo.company}
                   onChange={(e) =>
                     handleBilledToChange("company", e.target.value)
                   }
                 />
-              </div>
-              <div className="form-group" style={{ gridColumn: "span 2" }}>
-                <label>Address</label>
-                <textarea
-                  className="form-control"
+              </FormField>
+              <FormField label="Address" className="sm:col-span-2">
+                <Textarea
                   rows={2}
                   value={form.billedTo.address}
                   onChange={(e) =>
                     handleBilledToChange("address", e.target.value)
                   }
-                ></textarea>
-              </div>
+                ></Textarea>
+              </FormField>
             </div>
           </div>
 
-          <div style={{ marginTop: "32px" }}>
-            <h3 className="card-title" style={{ fontSize: "14px" }}>
+          <div className="mt-8">
+            <h3 className="text-sm font-semibold text-slate-900">
               Invoice Items
             </h3>
 
-            <div className="invoice-items-actions">
-              <div className="select-wrapper" style={{ minWidth: "260px" }}>
-                <select
-                  className="form-control"
+            <div className="flex justify-between items-center mt-4 gap-3 w-full sm:w-1/2 flex-wrap">
+              <div className="min-w-[260px] flex-1">
+                <Select
                   value={selectedServiceId}
                   onChange={(e) => setSelectedServiceId(e.target.value)}
                 >
@@ -1126,90 +1071,73 @@ export default function InvoiceForm({
                       {service.serviceName}
                     </option>
                   ))}
-                </select>
-                <i
-                  className="uil uil-angle-down select-icon"
-                  aria-hidden="true"
-                ></i>
+                </Select>
               </div>
-              <button
-                type="button"
-                className="btn btn-outline"
-                onClick={handleAddService}
-              >
+              <Button type="button" variant="outline" onClick={handleAddService}>
                 <i className="uil uil-plus"></i>
                 Add Service
-              </button>
+              </Button>
             </div>
 
             {items.length > 0 ? (
-              <div className="invoice-items-wrapper">
-                <table>
+              <div className="mt-3 border border-slate-100 rounded-xl overflow-hidden overflow-x-auto">
+                <table className="w-full border-collapse min-w-[680px]">
                   <thead>
                     <tr>
-                      <th>Service ID</th>
-                      <th>Service</th>
-                      <th style={{ width: "100px" }}>Qty</th>
-                      <th style={{ width: "140px" }}>Price</th>
-                      <th style={{ width: "150px" }}>Subtotal</th>
-                      <th style={{ width: "50px" }}></th>
+                      <th className="border-b border-slate-100 p-3 text-xs uppercase tracking-wide text-slate-500 bg-slate-100 text-left">Service ID</th>
+                      <th className="border-b border-slate-100 p-3 text-xs uppercase tracking-wide text-slate-500 bg-slate-100 text-left">Service</th>
+                      <th className="border-b border-slate-100 p-3 text-xs uppercase tracking-wide text-slate-500 bg-slate-100 text-left w-[100px]">Qty</th>
+                      <th className="border-b border-slate-100 p-3 text-xs uppercase tracking-wide text-slate-500 bg-slate-100 text-left w-[140px]">Price</th>
+                      <th className="border-b border-slate-100 p-3 text-xs uppercase tracking-wide text-slate-500 bg-slate-100 text-left w-[150px]">Subtotal</th>
+                      <th className="border-b border-slate-100 p-3 text-xs uppercase tracking-wide text-slate-500 bg-slate-100 text-left w-[50px]"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {items.map((item, idx) => (
                       <tr key={`${item.serviceId}-${idx}`}>
-                        <td>{item.serviceId}</td>
-                        <td>
-                          <div style={{ fontWeight: 600 }}>
+                        <td className="border-b border-slate-100 p-3 text-xs">{item.serviceId}</td>
+                        <td className="border-b border-slate-100 p-3 text-xs">
+                          <div className="font-semibold">
                             {item.serviceName}
                           </div>
                           {item.deliverables && (
                             <div
-                              style={{
-                                fontSize: "11px",
-                                color: "var(--text-muted)",
-                                marginTop: "4px",
-                              }}
+                              className="text-[11px] text-slate-500 mt-1"
                               dangerouslySetInnerHTML={{
                                 __html: item.deliverables,
                               }}
                             ></div>
                           )}
                         </td>
-                        <td>
-                          <input
+                        <td className="border-b border-slate-100 p-3 text-xs">
+                          <Input
                             type="number"
                             min={1}
-                            className="form-control"
                             value={item.quantity}
                             onChange={(e) =>
                               handleItemChange(idx, "quantity", e.target.value)
                             }
                           />
                         </td>
-                        <td>
-                          <input
+                        <td className="border-b border-slate-100 p-3 text-xs">
+                          <Input
                             type="text"
                             inputMode="decimal"
-                            className="form-control"
                             value={item.price}
                             onChange={(e) =>
                               handleItemChange(idx, "price", e.target.value)
                             }
                           />
                         </td>
-                        <td style={{ textAlign: "right" }}>
+                        <td className="border-b border-slate-100 p-3 text-xs text-right">
                           {formatCurrency(item.subtotal, form.currency)}
                         </td>
-                        <td style={{ textAlign: "right" }}>
-                          <button
-                            type="button"
-                            className="action-btn delete"
-                            style={{ border: "none" }}
+                        <td className="border-b border-slate-100 p-3 text-xs text-right">
+                          <ActionButton
+                            variant="delete"
+                            icon="uil uil-trash-alt"
                             onClick={() => handleRemoveItem(idx)}
-                          >
-                            <i className="uil uil-trash-alt"></i>
-                          </button>
+                          />
                         </td>
                       </tr>
                     ))}
@@ -1217,47 +1145,34 @@ export default function InvoiceForm({
                 </table>
               </div>
             ) : (
-              <div
-                style={{
-                  marginTop: "16px",
-                  padding: "24px",
-                  border: "1px dashed var(--border-muted)",
-                  borderRadius: "12px",
-                  textAlign: "center",
-                  color: "var(--text-muted)",
-                  fontSize: "12px",
-                }}
-              >
+              <div className="mt-4 p-6 border border-dashed border-[#e7e7e7] rounded-xl text-center text-slate-500 text-xs">
                 Select a service to add it to this invoice.
               </div>
             )}
 
-            <div style={{ marginTop: "16px" }}>
-              <div className="invoice-summary-card">
-                <div>
-                  <span>Subtotal</span>
-                  <strong>
+            <div className="mt-4">
+              <div className="bg-slate-100 rounded-xl p-4 flex flex-col gap-2 max-w-[340px] ml-auto">
+                <div className="flex justify-between text-[13px]">
+                  <span className="text-slate-500">Subtotal</span>
+                  <strong className="text-slate-900">
                     {formatCurrency(totals.subtotal, form.currency)}
                   </strong>
                 </div>
-                <div>
-                  <span>Total</span>
-                  <strong>{formatCurrency(totals.total, form.currency)}</strong>
+                <div className="flex justify-between text-[13px]">
+                  <span className="text-slate-500">Total</span>
+                  <strong className="text-slate-900">{formatCurrency(totals.total, form.currency)}</strong>
                 </div>
               </div>
             </div>
           </div>
 
-        <div style={{ marginTop: "32px" }}>
-          <h3 className="card-title" style={{ fontSize: "14px" }}>
-            Payment Method
-          </h3>
-          <div className="invoice-form-grid" style={{ marginTop: "12px" }}>
-            <div className="form-group">
-              <label>Payment Method Type</label>
-              <div className="select-wrapper">
-                <select
-                  className="form-control"
+          <div className="mt-8">
+            <h3 className="text-sm font-semibold text-slate-900">
+              Payment Method
+            </h3>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-4 mt-3">
+              <FormField label="Payment Method Type">
+                <Select
                   value={paymentMethodState.type}
                   onChange={(e) =>
                     handlePaymentMethodTypeChange(e.target.value)
@@ -1268,22 +1183,14 @@ export default function InvoiceForm({
                       {option.label}
                     </option>
                   ))}
-                </select>
-                <i
-                  className="uil uil-angle-down select-icon"
-                  aria-hidden="true"
-                ></i>
-              </div>
+                </Select>
+              </FormField>
             </div>
-          </div>
 
-          {paymentMethodState.type === "bank_transfer" && (
-            <div className="invoice-form-grid" style={{ marginTop: "12px" }}>
-              <div className="form-group">
-                <label>Bank Name</label>
-                <div className="select-wrapper">
-                  <select
-                    className="form-control"
+            {paymentMethodState.type === "bank_transfer" && (
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-4 mt-3">
+                <FormField label="Bank Name">
+                  <Select
                     value={form.paymentMethod?.bank?.name || ""}
                     onChange={(e) =>
                       handlePaymentDetailsChange("bank", "name", e.target.value)
@@ -1295,53 +1202,41 @@ export default function InvoiceForm({
                         {bank}
                       </option>
                     ))}
-                  </select>
-                  <i
-                    className="uil uil-angle-down select-icon"
-                    aria-hidden="true"
-                  ></i>
-                </div>
+                  </Select>
+                </FormField>
+                <FormField label="Account Holder Name">
+                  <Input
+                    type="text"
+                    value={form.paymentMethod?.bank?.accountName || ""}
+                    onChange={(e) =>
+                      handlePaymentDetailsChange("bank", "accountName", e.target.value)
+                    }
+                    placeholder="Enter account holder name"
+                  />
+                </FormField>
+                <FormField label="Account Number">
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={form.paymentMethod?.bank?.accountNumber || ""}
+                    onChange={(e) =>
+                      handlePaymentDetailsChange(
+                        "bank",
+                        "accountNumber",
+                        e.target.value.replace(/[^0-9]/g, "")
+                      )
+                    }
+                    placeholder="Enter account number"
+                  />
+                </FormField>
               </div>
-              <div className="form-group">
-                <label>Account Holder Name</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={form.paymentMethod?.bank?.accountName || ""}
-                  onChange={(e) =>
-                    handlePaymentDetailsChange("bank", "accountName", e.target.value)
-                  }
-                  placeholder="Enter account holder name"
-                />
-              </div>
-              <div className="form-group">
-                <label>Account Number</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  className="form-control"
-                  value={form.paymentMethod?.bank?.accountNumber || ""}
-                  onChange={(e) =>
-                    handlePaymentDetailsChange(
-                      "bank",
-                      "accountNumber",
-                      e.target.value.replace(/[^0-9]/g, "")
-                    )
-                  }
-                  placeholder="Enter account number"
-                />
-              </div>
-            </div>
-          )}
+            )}
 
-          {paymentMethodState.type === "e_wallet" && (
-            <div className="invoice-form-grid" style={{ marginTop: "12px" }}>
-              <div className="form-group">
-                <label>E-Wallet</label>
-                <div className="select-wrapper">
-                  <select
-                    className="form-control"
+            {paymentMethodState.type === "e_wallet" && (
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-4 mt-3">
+                <FormField label="E-Wallet">
+                  <Select
                     value={form.paymentMethod?.ewallet?.provider || ""}
                     onChange={(e) =>
                       handlePaymentDetailsChange(
@@ -1357,53 +1252,44 @@ export default function InvoiceForm({
                         {provider}
                       </option>
                     ))}
-                  </select>
-                  <i
-                    className="uil uil-angle-down select-icon"
-                    aria-hidden="true"
-                  ></i>
-                </div>
+                  </Select>
+                </FormField>
+                <FormField label="Account Name">
+                  <Input
+                    type="text"
+                    value={form.paymentMethod?.ewallet?.accountName || ""}
+                    onChange={(e) =>
+                      handlePaymentDetailsChange(
+                        "ewallet",
+                        "accountName",
+                        e.target.value
+                      )
+                    }
+                    placeholder="Enter account name"
+                  />
+                </FormField>
+                <FormField label="Phone Number">
+                  <Input
+                    type="text"
+                    inputMode="tel"
+                    pattern="[0-9+]*"
+                    value={form.paymentMethod?.ewallet?.phoneNumber || ""}
+                    onChange={(e) =>
+                      handlePaymentDetailsChange(
+                        "ewallet",
+                        "phoneNumber",
+                        e.target.value
+                      )
+                    }
+                    placeholder="Enter phone number"
+                  />
+                </FormField>
               </div>
-              <div className="form-group">
-                <label>Account Name</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={form.paymentMethod?.ewallet?.accountName || ""}
-                  onChange={(e) =>
-                    handlePaymentDetailsChange(
-                      "ewallet",
-                      "accountName",
-                      e.target.value
-                    )
-                  }
-                  placeholder="Enter account name"
-                />
-              </div>
-              <div className="form-group">
-                <label>Phone Number</label>
-                <input
-                  type="text"
-                  inputMode="tel"
-                  pattern="[0-9+]*"
-                  className="form-control"
-                  value={form.paymentMethod?.ewallet?.phoneNumber || ""}
-                  onChange={(e) =>
-                    handlePaymentDetailsChange(
-                      "ewallet",
-                      "phoneNumber",
-                      e.target.value
-                    )
-                  }
-                  placeholder="Enter phone number"
-                />
-              </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
 
-          <div style={{ marginTop: "32px" }}>
-            <h3 className="card-title" style={{ fontSize: "14px" }}>
+          <div className="mt-8">
+            <h3 className="text-sm font-semibold text-slate-900">
               Terms &amp; Conditions
             </h3>
             <ReactQuill
@@ -1412,8 +1298,8 @@ export default function InvoiceForm({
             />
           </div>
 
-          <div style={{ marginTop: "32px" }}>
-            <h3 className="card-title" style={{ fontSize: "14px" }}>
+          <div className="mt-8">
+            <h3 className="text-sm font-semibold text-slate-900">
               Footer Notes
             </h3>
             <ReactQuill
@@ -1422,67 +1308,56 @@ export default function InvoiceForm({
             />
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginTop: "36px",
-              gap: "16px",
-            }}
-          >
-            <button
+          <div className="flex justify-between mt-9 gap-4 flex-wrap">
+            <Button
               type="button"
-              className="btn btn-outline"
+              variant="outline"
+              className="xl:hidden"
               onClick={() => setPreviewOpen(true)}
               disabled={loading}
             >
               <i className="uil uil-eye"></i>
               Preview
-            </button>
+            </Button>
 
-            <div style={{ display: "flex", gap: "12px" }}>
-              <button
+            <div className="flex gap-3">
+              <Button
                 type="button"
-                className="btn btn-secondary"
+                variant="secondary"
                 onClick={() => router.back()}
                 disabled={loading}
               >
                 Cancel
-              </button>
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={loading}
-              >
+              </Button>
+              <Button type="submit" variant="primary" disabled={loading}>
                 {loading
                   ? "Saving..."
                   : isEditing
-                  ? "Save Changes"
-                  : "Create Invoice"}
-              </button>
+                    ? "Save Changes"
+                    : "Create Invoice"}
+              </Button>
             </div>
           </div>
         </form>
+      </Card>
+
+      <div className="hidden xl:block sticky top-[86px] max-h-[calc(100vh-106px)] overflow-y-auto">
+        <div className="invoice-preview-live relative rounded-2xl overflow-hidden">
+          <span className="absolute top-0 right-0 rounded-bl-lg bg-signal-blue text-white text-[10px] font-semibold uppercase tracking-wide py-1 px-3 shadow-md z-10">
+            Live Preview
+          </span>
+          <InvoicePreview invoice={previewData} showStatus />
+        </div>
       </div>
 
       {previewOpen && (
-        <div className="invoice-preview-modal" role="dialog">
-          <div className="invoice-preview-modal__content">
-            <div className="modal-header">
-              <h2 className="modal-title">Preview Invoice</h2>
-              <button
-                className="close"
-                onClick={() => setPreviewOpen(false)}
-                aria-label="Close preview"
-              >
-                <i className="uil uil-times"></i>
-              </button>
-            </div>
-            <div className="modal-body invoice-preview-modal__body">
-              <InvoicePreview invoice={previewData} showStatus />
-            </div>
-          </div>
-        </div>
+        <Modal
+          title="Preview Invoice"
+          onClose={() => setPreviewOpen(false)}
+          fullScreenOnMobile
+        >
+          <InvoicePreview invoice={previewData} showStatus />
+        </Modal>
       )}
     </div>
   );

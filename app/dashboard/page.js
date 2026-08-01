@@ -2,21 +2,27 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import LoadingState from "@/components/LoadingState";
-import { toast } from "@/components/ui/toast";
 import PieChart from "@/components/charts/PieChart";
 import DoughnutChart from "@/components/charts/DoughnutChart";
 import LineChart from "@/components/charts/LineChart";
 import BarChart from "@/components/charts/BarChart";
-import ProjectModal from "@/components/ProjectModal";
 import { useWorkspaceSwitchListener } from "@/lib/hooks/useWorkspaceSwitchListener";
+import { Card, CardHeader, CardTitle, CardSubtitle, CardBody } from "@/components/ui/Card";
+import TitleIcon from "@/components/ui/TitleIcon";
+import StatCard from "@/components/ui/StatCard";
+import StatusBadge from "@/components/ui/StatusBadge";
+import EmptyState from "@/components/ui/EmptyState";
+import Alert from "@/components/ui/Alert";
+import ShortcutCard from "@/components/ui/ShortcutCard";
+import { buttonClasses } from "@/components/ui/Button";
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
-  const [selectedProject, setSelectedProject] = useState(null);
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -55,49 +61,8 @@ export default function DashboardPage() {
 
   useWorkspaceSwitchListener(fetchDashboardData);
 
-  const handleProjectClick = async (project) => {
-    try {
-      const token =
-        typeof window !== "undefined" ? localStorage.getItem("token") : null;
-      const headers = token
-        ? {
-            Authorization: `Bearer ${token}`,
-          }
-        : undefined;
-
-      const res = await fetch(`/api/projects/${project.id}`, {
-        headers,
-      });
-      const data = await res.json();
-      if (data.success && data.data?.project) {
-        setSelectedProject(data.data.project);
-        setIsProjectModalOpen(true);
-      } else {
-        toast.error(data.message || "Failed to load project details");
-      }
-    } catch (e) {
-      console.error(e);
-      toast.error("Failed to load project details");
-    }
-  };
-
-  const handleCloseModal = () => {
-    setIsProjectModalOpen(false);
-    setSelectedProject(null);
-  };
-
-  const handleSaveProject = async (updatedProject, meta) => {
-    // If comment was added from modal, refresh only the comment list in the modal
-    if (meta?.source === "comment") {
-      if (updatedProject) {
-        setSelectedProject(updatedProject);
-      }
-      return; // avoid full dashboard refetch
-    }
-    // Close modal immediately on successful save, then refresh dashboard data
-    setIsProjectModalOpen(false);
-    setSelectedProject(null);
-    await fetchDashboardData();
+  const handleProjectClick = (project) => {
+    router.push(`/dashboard/projects/${project.id}/edit`);
   };
 
   const formatCurrency = (amount) => {
@@ -106,6 +71,21 @@ export default function DashboardPage() {
       currency: "IDR",
       minimumFractionDigits: 0,
     }).format(amount);
+  };
+
+  const formatCompactCurrency = (amount) => {
+    const value = Number(amount) || 0;
+    const abs = Math.abs(value);
+
+    const round = (num) => {
+      const rounded = Math.round((num + Number.EPSILON) * 10) / 10;
+      return Number.isInteger(rounded) ? rounded.toString() : rounded.toFixed(1);
+    };
+
+    if (abs >= 1_000_000_000) return `Rp ${round(value / 1_000_000_000)}M`;
+    if (abs >= 1_000_000) return `Rp ${round(value / 1_000_000)}jt`;
+    if (abs >= 100_000) return `Rp ${round(value / 1_000)}rb`;
+    return formatCurrency(value);
   };
 
   const formatStatus = (status) => {
@@ -268,7 +248,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="content-body">
+      <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
         <LoadingState message="Loading dashboard..." />
       </div>
     );
@@ -276,178 +256,111 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <div className="content-body">
-        <div className="alert alert-error">
+      <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
+        <Alert type="error">
           <i className="uil uil-exclamation-triangle"></i> {error}
-        </div>
+        </Alert>
       </div>
     );
   }
 
   return (
-    <div className="content-body">
+    <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
       {/* Stats Cards */}
-      <div className="stats-grid">
-        <div className="stat-card total">
-          <div className="stat-header">
-            <div>
-              <div className="stat-number">
-                {dashboardData?.stats?.total || 0}
-              </div>
-              <div className="stat-label">Total Projects</div>
-            </div>
-            <div className="stat-icon total">
-              <i className="uil uil-folder-open"></i>
-            </div>
-          </div>
-        </div>
-
-        <div className="stat-card ongoing">
-          <div className="stat-header">
-            <div>
-              <div className="stat-number">
-                {dashboardData?.stats?.ongoing || 0}
-              </div>
-              <div className="stat-label">Ongoing Projects</div>
-            </div>
-            <div className="stat-icon ongoing">
-              <i className="uil uil-clock-three"></i>
-            </div>
-          </div>
-        </div>
-
-        <div className="stat-card completed">
-          <div className="stat-header">
-            <div>
-              <div className="stat-number">
-                {dashboardData?.stats?.completed || 0}
-              </div>
-              <div className="stat-label">Completed Projects</div>
-            </div>
-            <div className="stat-icon completed">
-              <i className="uil uil-check-circle"></i>
-            </div>
-          </div>
-        </div>
-
-        <div className="stat-card revenue">
-          <div className="stat-header">
-            <div>
-              <div className="stat-number currency">
-                {formatCurrency(dashboardData?.stats?.totalRevenue || 0)}
-              </div>
-              <div className="stat-label">Total Revenue</div>
-            </div>
-            <div className="stat-icon revenue">
-              <i className="uil uil-money-bill"></i>
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-2 md:[grid-template-columns:repeat(auto-fit,minmax(280px,1fr))] gap-3">
+        <StatCard
+          variant="total"
+          icon={<i className="uil uil-folder-open"></i>}
+          number={dashboardData?.stats?.total || 0}
+          label="Total Projects"
+        />
+        <StatCard
+          variant="ongoing"
+          icon={<i className="uil uil-clock-three"></i>}
+          number={dashboardData?.stats?.ongoing || 0}
+          label="Ongoing Projects"
+        />
+        <StatCard
+          variant="completed"
+          icon={<i className="uil uil-check-circle"></i>}
+          number={dashboardData?.stats?.completed || 0}
+          label="Completed Projects"
+        />
+        <StatCard
+          variant="revenue"
+          icon={<i className="uil uil-money-bill"></i>}
+          number={formatCompactCurrency(dashboardData?.stats?.totalRevenue || 0)}
+          label="Total Revenue"
+        />
       </div>
 
       {/* Shortcuts */}
-      <div className="card-header">
-        <div
-          className="card-title"
-          style={{ display: "flex", alignItems: "center", gap: "8px" }}
-        >
+      <div className="p-4 flex justify-between items-center gap-3">
+        <div className="text-base font-semibold text-slate-900 flex items-center gap-2">
           <span>⚡ Quick Actions</span>
-          <span className="badge-new" aria-label="New">
-            New
-          </span>
         </div>
       </div>
-      <div className="shortcut-grid">
-        <Link
+      <div className="grid [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))] gap-3 my-2.5 mb-6">
+        <ShortcutCard
           href="/dashboard/projects"
-          className="shortcut-card highlight"
-          aria-label="Go to All Projects"
-        >
-          <span className="shortcut-icon icon-projects">
-            <i className="uil uil-folder-open"></i>
-          </span>
-          <div className="shortcut-content">
-            <div className="shortcut-title">All Projects</div>
-            <div className="shortcut-desc">Browse, and manage all projects</div>
-          </div>
-          <i className="uil uil-angle-right-b shortcut-arrow"></i>
-        </Link>
-
-        <Link
+          ariaLabel="Go to All Projects"
+          iconVariant="projects"
+          icon={<i className="uil uil-folder-open"></i>}
+          title="All Projects"
+          description="Browse, and manage all projects"
+        />
+        <ShortcutCard
           href="/dashboard/projects/calendar"
-          className="shortcut-card"
-          aria-label="Go to Calendar View"
-        >
-          <span className="shortcut-icon icon-calendar">
-            <i className="uil uil-schedule"></i>
-          </span>
-          <div className="shortcut-content">
-            <div className="shortcut-title">Calendar View</div>
-            <div className="shortcut-desc">
-              See upcoming deadlines in a calendar
-            </div>
-          </div>
-          <i className="uil uil-angle-right-b shortcut-arrow"></i>
-        </Link>
-
-        <Link
+          ariaLabel="Go to Calendar View"
+          iconVariant="calendar"
+          icon={<i className="uil uil-schedule"></i>}
+          title="Calendar View"
+          description="See upcoming deadlines in a calendar"
+        />
+        <ShortcutCard
           href="/dashboard/invoices/add"
-          className="shortcut-card highlight"
-          aria-label="Create new invoice"
-        >
-          <span className="shortcut-icon title-icon--trophy">
-            <i className="uil uil-invoice"></i>
-          </span>
-          <div className="shortcut-content">
-            <div className="shortcut-title">Create Invoice</div>
-            <div className="shortcut-desc">
-              Build and send invoices from Freyn
-            </div>
-          </div>
-          <i className="uil uil-angle-right-b shortcut-arrow"></i>
-        </Link>
+          ariaLabel="Create new invoice"
+          iconVariant="invoice"
+          icon={<i className="uil uil-invoice"></i>}
+          title="Create Invoice"
+          description="Build and send invoices from Freyn"
+        />
       </div>
 
       {/* Charts Grid */}
-      <div className="charts-grid">
+      <div className="grid [grid-template-columns:repeat(auto-fit,minmax(400px,1fr))] gap-6 mb-6">
         {/* Status Distribution */}
-        <div className="content-card">
-          <div className="card-header">
-            <div className="card-header-title">
-              <h3 className="card-title">
-                <span className="title-icon title-icon--pie">
-                  <i className="uil uil-chart-pie"></i>
-                </span>
+        <Card>
+          <CardHeader>
+            <div>
+              <CardTitle icon={<TitleIcon variant="pie"><i className="uil uil-chart-pie"></i></TitleIcon>}>
                 Project Status Distribution
-              </h3>
-              <p className="card-subtitle">
+              </CardTitle>
+              <CardSubtitle>
                 Distribusi jumlah proyek berdasarkan status saat ini.
-              </p>
+              </CardSubtitle>
             </div>
-          </div>
-          <div className="card-body" style={{ padding: "24px" }}>
+          </CardHeader>
+          <CardBody className="p-6">
             <div style={{ height: "200px" }}>
               {getStatusChartData() && <PieChart data={getStatusChartData()} />}
             </div>
-          </div>
-        </div>
+          </CardBody>
+        </Card>
 
         {/* Top Clients */}
-        <div className="content-card">
-          <div className="card-header">
-            <div className="card-header-title">
-              <h3 className="card-title">
-                <span className="title-icon title-icon--trophy">
-                  <i className="uil uil-trophy"></i>
-                </span>
+        <Card>
+          <CardHeader>
+            <div>
+              <CardTitle icon={<TitleIcon variant="trophy"><i className="uil uil-trophy"></i></TitleIcon>}>
                 Top Clients
-              </h3>
-              <p className="card-subtitle">
+              </CardTitle>
+              <CardSubtitle>
                 Klien dengan jumlah proyek terbanyak.
-              </p>
+              </CardSubtitle>
             </div>
-          </div>
-          <div className="card-body" style={{ padding: "24px" }}>
+          </CardHeader>
+          <CardBody className="p-6">
             <div style={{ height: "200px" }}>
               {getTopClientsChartData() && (
                 <BarChart
@@ -466,25 +379,22 @@ export default function DashboardPage() {
                 />
               )}
             </div>
-          </div>
-        </div>
+          </CardBody>
+        </Card>
 
         {/* Top Clients by Revenue */}
-        <div className="content-card">
-          <div className="card-header">
-            <div className="card-header-title">
-              <h3 className="card-title">
-                <span className="title-icon title-icon--wallet">
-                  <i className="uil uil-chart-growth"></i>
-                </span>
+        <Card>
+          <CardHeader>
+            <div>
+              <CardTitle icon={<TitleIcon variant="wallet"><i className="uil uil-chart-growth"></i></TitleIcon>}>
                 Top Clients by Revenue
-              </h3>
-              <p className="card-subtitle">
+              </CardTitle>
+              <CardSubtitle>
                 Lima klien dengan pendapatan terbesar.
-              </p>
+              </CardSubtitle>
             </div>
-          </div>
-          <div className="card-body" style={{ padding: "24px" }}>
+          </CardHeader>
+          <CardBody className="p-6">
             <div style={{ height: "200px" }}>
               {getTopClientsRevenueChartData() && (
                 <BarChart
@@ -502,25 +412,22 @@ export default function DashboardPage() {
                 />
               )}
             </div>
-          </div>
-        </div>
+          </CardBody>
+        </Card>
 
         {/* Revenue Split */}
-        <div className="content-card">
-          <div className="card-header">
-            <div className="card-header-title">
-              <h3 className="card-title">
-                <span className="title-icon title-icon--money">
-                  <i className="uil uil-money-withdraw"></i>
-                </span>
+        <Card>
+          <CardHeader>
+            <div>
+              <CardTitle icon={<TitleIcon variant="money"><i className="uil uil-money-withdraw"></i></TitleIcon>}>
                 Revenue Breakdown
-              </h3>
-              <p className="card-subtitle">
+              </CardTitle>
+              <CardSubtitle>
                 Perbandingan pendapatan proyek selesai dan masih berjalan.
-              </p>
+              </CardSubtitle>
             </div>
-          </div>
-          <div className="card-body" style={{ padding: "24px" }}>
+          </CardHeader>
+          <CardBody className="p-6">
             <div style={{ height: "200px" }}>
               {getRevenueSplitChartData() && (
                 <DoughnutChart
@@ -593,34 +500,24 @@ export default function DashboardPage() {
                 />
               )}
             </div>
-          </div>
-        </div>
+          </CardBody>
+        </Card>
       </div>
 
       {/* Revenue & Projects Over Time */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr",
-          gap: "24px",
-          marginBottom: "24px",
-        }}
-      >
-        <div className="content-card">
-          <div className="card-header">
-            <div className="card-header-title">
-              <h3 className="card-title">
-                <span className="title-icon title-icon--line">
-                  <i className="uil uil-chart-line"></i>
-                </span>
+      <div className="grid grid-cols-1 gap-6 mb-6">
+        <Card>
+          <CardHeader>
+            <div>
+              <CardTitle icon={<TitleIcon variant="line"><i className="uil uil-chart-line"></i></TitleIcon>}>
                 Revenue Trend (Last 6 Months)
-              </h3>
-              <p className="card-subtitle">
+              </CardTitle>
+              <CardSubtitle>
                 Tren pendapatan per bulan dalam 6 bulan terakhir.
-              </p>
+              </CardSubtitle>
             </div>
-          </div>
-          <div className="card-body" style={{ padding: "24px" }}>
+          </CardHeader>
+          <CardBody className="p-6">
             <div style={{ height: "200px" }}>
               {getRevenueChartData() && (
                 <LineChart
@@ -639,65 +536,62 @@ export default function DashboardPage() {
                 />
               )}
             </div>
-          </div>
-        </div>
+          </CardBody>
+        </Card>
 
-        <div className="content-card">
-          <div className="card-header">
-            <div className="card-header-title">
-              <h3 className="card-title">
-                <span className="title-icon title-icon--schedule">
-                  <i className="uil uil-schedule"></i>
-                </span>
+        <Card>
+          <CardHeader>
+            <div>
+              <CardTitle icon={<TitleIcon variant="schedule"><i className="uil uil-schedule"></i></TitleIcon>}>
                 Projects Timeline (Last 6 Months)
-              </h3>
-              <p className="card-subtitle">
+              </CardTitle>
+              <CardSubtitle>
                 Jumlah proyek per bulan dalam 6 bulan terakhir.
-              </p>
+              </CardSubtitle>
             </div>
-          </div>
-          <div className="card-body" style={{ padding: "24px" }}>
+          </CardHeader>
+          <CardBody className="p-6">
             <div style={{ height: "200px" }}>
               {getProjectsChartData() && (
                 <BarChart data={getProjectsChartData()} />
               )}
             </div>
-          </div>
-        </div>
+          </CardBody>
+        </Card>
       </div>
 
       {/* Recent Projects */}
-      <div className="content-card">
-        <div className="card-header">
-          <h3 className="card-title">Recent Projects</h3>
-          <Link href="/dashboard/projects" className="btn btn-sm btn-primary">
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Projects</CardTitle>
+          <Link href="/dashboard/projects" className={buttonClasses({ variant: "primary", size: "sm" })}>
             View All
             <i className="uil uil-angle-right-b"></i>
           </Link>
-        </div>
-        <div className="card-body">
+        </CardHeader>
+        <CardBody>
           {dashboardData?.recentProjects?.length > 0 ? (
-            <div className="table-container">
-              <table className="table">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
                 <thead>
                   <tr>
-                    <th>Order No</th>
-                    <th>Project Name</th>
-                    <th>Client</th>
-                    <th>Status</th>
-                    <th>Revenue</th>
-                    <th>Deadline</th>
+                    <th className="py-3.5 px-5 text-left bg-slate-100 border-y border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-[0.5px]">Order No</th>
+                    <th className="py-3.5 px-5 text-left bg-slate-100 border-y border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-[0.5px]">Project Name</th>
+                    <th className="py-3.5 px-5 text-left bg-slate-100 border-y border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-[0.5px]">Client</th>
+                    <th className="py-3.5 px-5 text-left bg-slate-100 border-y border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-[0.5px]">Status</th>
+                    <th className="py-3.5 px-5 text-left bg-slate-100 border-y border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-[0.5px]">Revenue</th>
+                    <th className="py-3.5 px-5 text-left bg-slate-100 border-y border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-[0.5px]">Deadline</th>
                   </tr>
                 </thead>
                 <tbody>
                   {dashboardData.recentProjects.map((project) => {
                     const statusInfo = formatStatus(project.status);
                     return (
-                      <tr key={project.id}>
-                        <td>
+                      <tr key={project.id} className="odd:bg-white even:bg-slate-50 hover:bg-slate-100 [&:last-child_td]:border-b-0">
+                        <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">
                           <a
                             href="#"
-                            className="link"
+                            className="text-blue-500 no-underline cursor-pointer whitespace-nowrap hover:underline"
                             onClick={(e) => {
                               e.preventDefault();
                               handleProjectClick(project);
@@ -706,17 +600,17 @@ export default function DashboardPage() {
                             <strong>{project.numberOrder}</strong>
                           </a>
                         </td>
-                        <td>{project.projectName}</td>
-                        <td>{project.clientName}</td>
-                        <td>
-                          <span className={`status-badge ${statusInfo.class}`}>
+                        <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">{project.projectName}</td>
+                        <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">{project.clientName}</td>
+                        <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">
+                          <StatusBadge status={statusInfo.class}>
                             {statusInfo.label}
-                          </span>
+                          </StatusBadge>
                         </td>
-                        <td className="currency">
+                        <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs font-bold text-emerald-600">
                           {formatCurrency(project.totalPrice)}
                         </td>
-                        <td>
+                        <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">
                           {new Date(project.deadline).toLocaleDateString(
                             "id-ID",
                             {
@@ -733,22 +627,14 @@ export default function DashboardPage() {
               </table>
             </div>
           ) : (
-            <div className="empty-state">
-              <i className="uil uil-file-slash"></i>
-              <h3>No Recent Projects</h3>
-              <p>Start by creating your first project</p>
-            </div>
+            <EmptyState
+              icon="uil uil-file-slash"
+              title="No Recent Projects"
+              description="Start by creating your first project"
+            />
           )}
-        </div>
-      </div>
-
-      {/* Project Modal */}
-      <ProjectModal
-        isOpen={isProjectModalOpen}
-        onClose={handleCloseModal}
-        onSave={handleSaveProject}
-        editProject={selectedProject}
-      />
+        </CardBody>
+      </Card>
     </div>
   );
 }

@@ -1,17 +1,22 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import ServiceModal from "@/components/ServiceModal";
+import { useRouter } from "next/navigation";
 import LoadingState from "@/components/LoadingState";
 import { toast } from "@/components/ui/toast";
 import { useWorkspaceSwitchListener } from "@/lib/hooks/useWorkspaceSwitchListener";
+import { Card, CardHeader, CardBody } from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import SearchInput from "@/components/ui/SearchInput";
+import ActionButton from "@/components/ui/ActionButton";
+import EmptyState from "@/components/ui/EmptyState";
+import Alert from "@/components/ui/Alert";
 
 export default function ServicesPage() {
+  const router = useRouter();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingService, setEditingService] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   const getAuthHeaders = useCallback(() => {
@@ -19,8 +24,8 @@ export default function ServicesPage() {
     const token = localStorage.getItem("token");
     return token
       ? {
-          Authorization: `Bearer ${token}`,
-        }
+        Authorization: `Bearer ${token}`,
+      }
       : {};
   }, []);
 
@@ -55,13 +60,11 @@ export default function ServicesPage() {
   useWorkspaceSwitchListener(fetchServices);
 
   const handleAddService = () => {
-    setEditingService(null);
-    setIsModalOpen(true);
+    router.push("/dashboard/services/add");
   };
 
   const handleEditService = (service) => {
-    setEditingService(service);
-    setIsModalOpen(true);
+    router.push(`/dashboard/services/${service.id}/edit`);
   };
 
   const handleDeleteService = async (service) => {
@@ -91,11 +94,6 @@ export default function ServicesPage() {
     }
   };
 
-  const handleSaveService = () => {
-    fetchServices();
-    setIsModalOpen(false);
-  };
-
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -118,73 +116,54 @@ export default function ServicesPage() {
 
   if (loading) {
     return (
-      <div className="content-body">
+      <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
         <LoadingState message="Loading services..." />
       </div>
     );
   }
 
   return (
-    <div className="content-body">
+    <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
       {error && (
-        <div className="alert alert-error">
+        <Alert type="error">
           <i className="uil uil-exclamation-triangle"></i> {error}
-        </div>
+        </Alert>
       )}
 
-      <div className="content-card">
-        <div className="card-header">
-          <h2 className="card-title">All Services</h2>
-          <button className="btn btn-primary" onClick={handleAddService}>
+      <Card>
+        <CardHeader className="flex-wrap">
+          <SearchInput
+            placeholder="Search services by name or category..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onClear={() => setSearchTerm("")}
+          />
+          <Button onClick={handleAddService}>
             <i className="uil uil-plus"></i>
             Add Service
-          </button>
-        </div>
+          </Button>
+        </CardHeader>
 
-        <div className="card-header-search">
-          <div className="search-input-container">
-            <i className="uil uil-search search-icon"></i>
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search services by name or category..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            {searchTerm && (
-              <button
-                className="search-clear-btn"
-                onClick={() => setSearchTerm("")}
-                style={{ display: "flex" }}
-              >
-                <i className="uil uil-times"></i>
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="card-body">
+        <CardBody>
           {filteredServices.length > 0 ? (
-            <div className="table-container">
-              <table className="table">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
                 <thead>
                   <tr>
-                    <th>Service ID</th>
-                    <th>Service Name</th>
-                    <th>Price</th>
-                    <th>Duration of Work</th>
-                    <th>Total Revision</th>
-                    <th>Deliverables</th>
-                    <th>Action</th>
+                    {["Service ID", "Service Name", "Price", "Duration of Work", "Total Revision", "Deliverables", "Action"].map((h) => (
+                      <th key={h} className="py-3.5 px-5 text-left bg-slate-100 border-y border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-[0.5px]">
+                        {h}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filteredServices.map((service) => (
-                    <tr key={service._id}>
-                      <td>
+                    <tr key={service._id} className="odd:bg-white even:bg-slate-50 hover:bg-slate-100 [&:last-child_td]:border-b-0">
+                      <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">
                         <a
                           href="#"
-                          className="link"
+                          className="text-blue-500 no-underline cursor-pointer whitespace-nowrap hover:underline"
                           onClick={(e) => {
                             e.preventDefault();
                             handleEditService(service);
@@ -193,30 +172,24 @@ export default function ServicesPage() {
                           <strong>{service.id}</strong>
                         </a>
                       </td>
-                      <td>{service.serviceName}</td>
-                      <td className="currency">
+                      <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">{service.serviceName}</td>
+                      <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs font-bold text-emerald-600">
                         {formatCurrency(service.servicePrice || 0)}
                       </td>
-                      <td>
+                      <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">
                         {service.durationOfWork
                           ? `${service.durationOfWork} days`
                           : "-"}
                       </td>
-                      <td>
+                      <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">
                         {service.unlimitedRevision ||
-                        service.totalRevision === -1 ||
-                        service.totalRevision === null
+                          service.totalRevision === -1 ||
+                          service.totalRevision === null
                           ? "Unlimited"
                           : service.totalRevision || "0"}
                       </td>
-                      <td style={{ maxWidth: "200px" }}>
-                        <div
-                          style={{
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
+                      <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs max-w-[200px]">
+                        <div className="overflow-hidden text-ellipsis whitespace-nowrap">
                           {service.deliverables
                             ? stripHtml(service.deliverables).substring(0, 50)
                             : "-"}
@@ -225,22 +198,20 @@ export default function ServicesPage() {
                             "..."}
                         </div>
                       </td>
-                      <td>
-                        <div className="action-buttons">
-                          <button
-                            className="action-btn edit"
+                      <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">
+                        <div className="flex gap-2">
+                          <ActionButton
+                            variant="edit"
+                            icon="uil uil-edit"
                             onClick={() => handleEditService(service)}
                             title="Edit Service"
-                          >
-                            <i className="uil uil-edit"></i>
-                          </button>
-                          <button
-                            className="action-btn delete"
+                          />
+                          <ActionButton
+                            variant="delete"
+                            icon="uil uil-trash-alt"
                             onClick={() => handleDeleteService(service)}
                             title="Delete Service"
-                          >
-                            <i className="uil uil-trash-alt"></i>
-                          </button>
+                          />
                         </div>
                       </td>
                     </tr>
@@ -249,27 +220,18 @@ export default function ServicesPage() {
               </table>
             </div>
           ) : (
-            <div className="empty-state">
-              <i className="uil uil-package"></i>
-              <h3>{searchTerm ? "No services found" : "No services yet"}</h3>
-              <p>
-                {searchTerm
+            <EmptyState
+              icon="uil uil-package"
+              title={searchTerm ? "No services found" : "No services yet"}
+              description={
+                searchTerm
                   ? "Try adjusting your search"
-                  : "Start by adding your first service"}
-              </p>
-            </div>
+                  : "Start by adding your first service"
+              }
+            />
           )}
-        </div>
-      </div>
-
-      {isModalOpen && (
-        <ServiceModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onSave={handleSaveService}
-          editService={editingService}
-        />
-      )}
+        </CardBody>
+      </Card>
     </div>
   );
 }

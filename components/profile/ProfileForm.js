@@ -1,26 +1,32 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/toast";
+import { Card } from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import BackButton from "@/components/ui/BackButton";
+import FormField from "@/components/ui/FormField";
+import Input, { Textarea } from "@/components/ui/Input";
 
-export default function ProfileModal({ isOpen, onClose, onSaved }) {
+export default function ProfileForm() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     phone: "",
     bio: "",
   });
+  const [fetching, setFetching] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!isOpen) return;
-    setError("");
-
     const token =
       typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (!token) {
       setError("Session expired. Please login again.");
+      setFetching(false);
       return;
     }
 
@@ -43,13 +49,13 @@ export default function ProfileModal({ isOpen, onClose, onSaved }) {
       } catch (e) {
         setError("Failed to load profile");
         console.error(e);
+      } finally {
+        setFetching(false);
       }
     };
 
     fetchProfile();
-  }, [isOpen]);
-
-  if (!isOpen) return null;
+  }, []);
 
   const handleChange = (e) =>
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -105,9 +111,11 @@ export default function ProfileModal({ isOpen, onClose, onSaved }) {
             bio: data.data.user.bio || "",
           };
           localStorage.setItem("user", JSON.stringify(updatedUser));
-          onSaved?.(updatedUser);
-        } catch {}
-        onClose();
+          window.dispatchEvent(
+            new CustomEvent("profile-updated", { detail: updatedUser })
+          );
+        } catch { }
+        router.back();
       } else {
         setError(data.message || "Failed to update profile");
         toast.error(data.message || "Failed to update profile");
@@ -121,99 +129,100 @@ export default function ProfileModal({ isOpen, onClose, onSaved }) {
     }
   };
 
+  if (fetching) {
+    return (
+      <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
+        <Card className="p-8">
+          <p>Loading profile...</p>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="modal" style={{ display: "block" }}>
-      <div className="modal-content" style={{ maxWidth: "520px" }}>
-        <div className="modal-header">
-          <h2 className="modal-title">Edit Profile</h2>
-          <button className="close" onClick={onClose} disabled={loading}>
-            <i className="uil uil-times"></i>
-          </button>
+    <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
+      <Card>
+        <div className="p-6 flex items-center gap-3">
+          <BackButton onClick={() => router.back()} />
+          <div>
+            <h2 className="text-base font-semibold text-slate-900 m-0">
+              Edit Profile
+            </h2>
+            <p className="text-xs text-slate-500 mt-1 mb-0">
+              Manage your personal information
+            </p>
+          </div>
         </div>
 
-        <div className="modal-body">
+        <form className="p-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="alert alert-error">
+            <div className="mb-4 p-3 rounded-lg border border-red-200 bg-red-50 text-red-800 text-sm flex items-center gap-2">
               <i className="uil uil-exclamation-triangle"></i> {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit}>
-            <div className="form-grid">
-              <div className="form-group">
-                <label className="form-label">Full Name</label>
-                <input
-                  type="text"
-                  name="fullName"
-                  className="form-control"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  placeholder="Enter your full name"
-                  required
-                />
-              </div>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-4">
+            <FormField label="Full Name">
+              <Input
+                type="text"
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleChange}
+                placeholder="Enter your full name"
+                required
+              />
+            </FormField>
 
-              <div className="form-group">
-                <label className="form-label">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  className="form-control"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="Enter your email address"
-                  disabled
-                  readOnly
-                  title="Email tidak dapat diubah"
-                />
-              </div>
+            <FormField label="Email">
+              <Input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Enter your email address"
+                disabled
+                readOnly
+                title="Email tidak dapat diubah"
+              />
+            </FormField>
 
-              <div className="form-group">
-                <label className="form-label">Phone</label>
-                <input
-                  type="tel"
-                  name="phone"
-                  className="form-control"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  placeholder="e.g. +62..."
-                />
-              </div>
+            <FormField label="Phone">
+              <Input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="e.g. +62..."
+              />
+            </FormField>
 
-              <div className="form-group">
-                <label className="form-label">Bio</label>
-                <textarea
-                  name="bio"
-                  className="form-control"
-                  rows="3"
-                  value={formData.bio}
-                  onChange={handleChange}
-                  placeholder="Tell us about yourself..."
-                />
-              </div>
-            </div>
+            <FormField label="Bio" className="[grid-column:1/-1]">
+              <Textarea
+                name="bio"
+                rows="3"
+                value={formData.bio}
+                onChange={handleChange}
+                placeholder="Tell us about yourself..."
+              />
+            </FormField>
+          </div>
 
-            <div className="modal-buttons-sticky">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={onClose}
-                disabled={loading}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={loading}
-              >
-                <i className="uil uil-save"></i>
-                {loading ? "Saving..." : "Save Changes"}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => router.back()}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" disabled={loading}>
+              <i className="uil uil-save"></i>
+              {loading ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        </form>
+      </Card>
     </div>
   );
 }

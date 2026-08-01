@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Calendar, dateFnsLocalizer, Views } from "react-big-calendar";
 import { format, parse, startOfWeek as dfStartOfWeek, getDay } from "date-fns";
 import enUS from "date-fns/locale/en-US";
 import LoadingState from "@/components/LoadingState";
-import ProjectModal from "@/components/ProjectModal";
 import { useWorkspaceSwitchListener } from "@/lib/hooks/useWorkspaceSwitchListener";
+import { Card, CardBody } from "@/components/ui/Card";
 
 const locales = { "en-US": enUS };
 
@@ -36,38 +37,42 @@ function getContrastColor(hsl) {
   return l > 55 ? "#111" : "#fff";
 }
 
+const eventInnerClasses = "flex items-center justify-between gap-1.5 w-full";
+const eventTitleClasses =
+  "font-semibold text-[11px] overflow-hidden text-ellipsis whitespace-nowrap";
+const eventTimeClasses = "font-normal text-[11px] whitespace-nowrap ml-2";
+
 // Custom event renderer to control label placement (title left, time right)
 function EventItem({ event }) {
   try {
     const startStr = format(event.start, "HH:mm");
     const endStr = format(event.end, "HH:mm");
     return (
-      <div className="project-event-inner">
-        <span className="project-event-title">{event.title}</span>
-        <span className="project-event-time">
+      <div className={eventInnerClasses}>
+        <span className={eventTitleClasses}>{event.title}</span>
+        <span className={eventTimeClasses}>
           {startStr} - {endStr}
         </span>
       </div>
     );
   } catch (e) {
-    return <div className="project-event-inner">{event.title}</div>;
+    return <div className={eventInnerClasses}>{event.title}</div>;
   }
 }
 
 function MonthEvent({ event }) {
   return (
-    <div className="project-event-inner">
-      <span className="project-event-title">{event.title}</span>
+    <div className={eventInnerClasses}>
+      <span className={eventTitleClasses}>{event.title}</span>
     </div>
   );
 }
 
 export default function ProjectsCalendarPage() {
+  const router = useRouter();
   const [projects, setProjects] = useState([]);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedProject, setSelectedProject] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   // Control calendar navigation and view explicitly to ensure toolbar works
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState(Views.MONTH);
@@ -77,8 +82,8 @@ export default function ProjectsCalendarPage() {
     const token = localStorage.getItem("token");
     return token
       ? {
-          Authorization: `Bearer ${token}`,
-        }
+        Authorization: `Bearer ${token}`,
+      }
       : {};
   }, []);
 
@@ -161,50 +166,21 @@ export default function ProjectsCalendarPage() {
           borderRadius: "6px",
           padding: "2px 6px",
         },
-        className: "project-event",
+        className: "cursor-pointer",
       };
     };
   }, []);
 
   const handleSelectEvent = (event) => {
-    setSelectedProject(event.resource);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedProject(null);
-  };
-
-  const handleProjectSaved = (updatedProject) => {
-    // Biarkan ProjectModal yang mengelola animasi close-nya sendiri (handleStartClose memanggil onClose setelah ~220ms)
-    // Jangan panggil handleCloseModal di sini untuk menghindari race condition dengan animasi internal modal.
-
-    // Optimistic update agar event di calendar langsung ter-update
-    if (updatedProject && (updatedProject._id || updatedProject.id)) {
-      setProjects((prev) =>
-        prev.map((p) =>
-          String(p._id || p.id) ===
-          String(updatedProject._id || updatedProject.id)
-            ? updatedProject
-            : p
-        )
-      );
-    }
-
-    // Refresh data dari server setelah animasi selesai supaya popup benar-benar tertutup sebelum fetch
-    setTimeout(() => {
-      loadProjects({ silent: true });
-    }, 260);
+    const projectId = event.resource?._id || event.resource?.id;
+    if (!projectId) return;
+    router.push(`/dashboard/projects/${projectId}/edit`);
   };
 
   return (
-    <div className="content-body">
-      <div className="content-card">
-        {/* <div className="card-header">
-          <h2 className="card-title">Projects Calendar</h2>
-        </div> */}
-        <div className="card-body" style={{ height: "85dvh" }}>
+    <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
+      <Card>
+        <CardBody className="h-[85dvh]">
           {!loading && (
             <Calendar
               localizer={localizer}
@@ -238,15 +214,8 @@ export default function ProjectsCalendarPage() {
             />
           )}
           {loading && <LoadingState message="Loading calendar..." />}
-        </div>
-      </div>
-
-      <ProjectModal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        onSave={handleProjectSaved}
-        editProject={selectedProject}
-      />
+        </CardBody>
+      </Card>
     </div>
   );
 }

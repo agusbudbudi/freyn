@@ -2,7 +2,6 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import sanitizeHtml from "sanitize-html";
 import { getPublicPortfolioBySlug } from "@/lib/portfolioPublic";
-import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -136,10 +135,10 @@ export async function generateMetadata({ params }) {
         `Explore ${portfolio.title} by ${ownerName} on Freyn and discover their creative journey.`,
       images: portfolio.coverImage
         ? [
-            {
-              url: portfolio.coverImage,
-            },
-          ]
+          {
+            url: portfolio.coverImage,
+          },
+        ]
         : undefined,
     },
     twitter: {
@@ -252,51 +251,59 @@ export default async function PortfolioPublicPage({ params }) {
   const socialLinks = buildSocialLinks(portfolio.socials);
 
   return (
-    <div className={styles.page}>
-      <div className={styles.hero}>
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center pt-12 px-4 pb-16 gap-4 max-sm:p-3">
+      <div className="relative w-full max-w-[480px]">
         {portfolio.coverImage ? (
           <img
             src={portfolio.coverImage}
             alt={`${portfolio.title} cover image`}
-            className={styles.coverImage}
+            className="w-full max-h-[300px] rounded-2xl object-cover"
           />
         ) : (
-          <div className={styles.coverPlaceholder} aria-hidden="true">
-            <div className={styles.coverAccent}></div>
-            <div className={styles.coverAccentSecondary}></div>
-          </div>
+          <div
+            className="relative w-full h-[clamp(220px,40vw,320px)] rounded-3xl overflow-hidden bg-signal-blue"
+            aria-hidden="true"
+          ></div>
         )}
-        <div className={styles.avatarWrapper}>
-          <div className={styles.avatarRing}>
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-[-72px] w-[152px] h-[152px] bg-white rounded-full flex items-center justify-center shadow-card p-2 max-sm:w-[100px] max-sm:h-[100px] max-sm:bottom-[-64px]">
+          <div className="w-full h-full rounded-full bg-signal-blue p-1.5 flex items-center justify-center">
             <img
               src={profileImage}
               alt={`${displayName} avatar`}
-              className={styles.avatarImage}
+              className="w-full h-full rounded-full object-cover bg-[#eff6ff] border-4 border-white"
             />
           </div>
         </div>
       </div>
 
-      <main className={styles.content}>
-        <header className={styles.header}>
-          <div className={styles.titleGroup}>
-            <span className={styles.label}>Portfolio</span>
-            <h1 className={styles.name}>{displayName}</h1>
+      <main className="w-full max-w-[480px] bg-white rounded-2xl border border-slate-100 pt-[60px] px-5 pb-8 shadow-card flex flex-col gap-5">
+        <header className="text-center flex flex-col gap-2 items-center border-b border-slate-100">
+          <div className="flex flex-col gap-2 items-center">
+            <span className="uppercase tracking-[0.2em] text-xs text-signal-blue/70 font-semibold">
+              Portfolio
+            </span>
+            <h1 className="text-[clamp(24px,5vw,30px)] font-bold text-slate-900">
+              {displayName}
+            </h1>
           </div>
-          {bio && <p className={styles.bio}>{bio}</p>}
+          {bio && (
+            <p className="max-w-[640px] text-slate-600 text-base leading-[1.7] max-sm:text-[15px]">
+              {bio}
+            </p>
+          )}
           {socialLinks.length > 0 && (
-            <div className={styles.socialSection}>
-              <div className={styles.socialList}>
+            <div className="flex justify-center w-full mt-5 mb-5">
+              <div className="flex gap-3 flex-wrap items-center justify-center max-sm:gap-2.5">
                 {socialLinks.map((social) => (
                   <a
                     key={social.key}
                     href={social.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={styles.socialButton}
+                    className="w-[38px] h-[38px] rounded-full inline-flex items-center justify-center bg-signal-blue/10 text-signal-blue border border-signal-blue/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-signal-blue hover:text-white hover:shadow-glow-blue"
                     aria-label={social.label}
                   >
-                    <i className={`${social.icon} ${styles.socialIcon}`}></i>
+                    <i className={`${social.icon} text-xl`}></i>
                   </a>
                 ))}
               </div>
@@ -304,15 +311,17 @@ export default async function PortfolioPublicPage({ params }) {
           )}
         </header>
 
-        <section className={styles.portfolioSection}>
-          <h2 className={styles.portfolioTitle}>{portfolio.title}</h2>
+        <section className="flex flex-col gap-4">
+          <h2 className="text-[clamp(20px,4vw,28px)] font-semibold text-slate-800">
+            {portfolio.title}
+          </h2>
           {sanitizedDescription ? (
             <div
-              className={styles.description}
+              className="text-slate-700 text-sm leading-[1.75] flex flex-col gap-4 [&_p]:mb-2 [&_ul]:mb-4 [&_ul]:pl-5 [&_ol]:mb-4 [&_ol]:pl-5 [&_li]:mb-2 [&_a]:text-signal-blue [&_a]:underline [&_code]:rounded-md [&_code]:bg-slate-100 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_pre]:overflow-x-auto [&_pre]:rounded-xl [&_pre]:bg-slate-900 [&_pre]:p-4 [&_pre]:text-slate-200"
               dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
             />
           ) : (
-            <p className={styles.emptyDescription}>
+            <p className="text-slate-400 text-[15px]">
               This creator hasn&apos;t added a description yet, but stay tuned
               for an inspiring story.
             </p>
@@ -320,25 +329,31 @@ export default async function PortfolioPublicPage({ params }) {
         </section>
 
         {portfolio.links.length > 0 && (
-          <section className={styles.linksSection}>
-            <h3 className={styles.linksTitle}>Featured Links</h3>
-            <div className={styles.linksGrid}>
+          <section className="flex flex-col gap-5">
+            <h3 className="text-xl font-semibold text-gray-800">
+              Featured Links
+            </h3>
+            <div className="grid gap-[18px] grid-cols-[repeat(auto-fit,minmax(240px,1fr))] max-split:grid-cols-[repeat(auto-fit,minmax(200px,1fr))] max-sm:grid-cols-1">
               {portfolio.links.map((link, index) => (
                 <a
                   key={`${link.url}-${index}`}
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={styles.linkCard}
+                  className="bg-slate-50 rounded-lg py-3 px-3.5 flex items-center gap-[18px] border border-slate-100 transition-all duration-200 text-inherit no-underline hover:-translate-y-1 hover:shadow-float"
                 >
-                  <div className={styles.linkIcon}>
+                  <div className="w-10 h-10 rounded-[10px] bg-white flex items-center justify-center overflow-hidden text-xl font-semibold text-signal-blue shrink-0">
                     {link.icon ? (
-                      <img src={link.icon} alt={`${link.name} icon`} />
+                      <img
+                        src={link.icon}
+                        alt={`${link.name} icon`}
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       <span>{getLinkInitial(link.name, link.url)}</span>
                     )}
                   </div>
-                  <div className={styles.linkContent}>
+                  <div className="flex flex-col gap-1.5 overflow-hidden">
                     {(() => {
                       const normalizedName = link.name || formatLinkUrl(link.url);
                       const displayName = truncateText(normalizedName, 28);
@@ -347,13 +362,13 @@ export default async function PortfolioPublicPage({ params }) {
                       return (
                         <>
                           <span
-                            className={styles.linkName}
+                            className="font-semibold text-sm text-slate-800 capitalize whitespace-nowrap overflow-hidden text-ellipsis"
                             title={normalizedName}
                           >
                             {displayName}
                           </span>
                           <span
-                            className={styles.linkUrl}
+                            className="text-xs text-slate-500 whitespace-nowrap overflow-hidden text-ellipsis"
                             title={displayUrl}
                           >
                             {truncatedUrl}
@@ -362,9 +377,7 @@ export default async function PortfolioPublicPage({ params }) {
                       );
                     })()}
                   </div>
-                  <i
-                    className={`uil uil-external-link-alt ${styles.linkExternal}`}
-                  ></i>
+                  <i className="uil uil-external-link-alt ml-auto text-xl text-signal-blue"></i>
                 </a>
               ))}
             </div>
@@ -372,11 +385,13 @@ export default async function PortfolioPublicPage({ params }) {
         )}
       </main>
 
-      <footer className={styles.footer}>
-        <div className={styles.footerBranding}>
-          <span className={styles.supported}>Powered by:</span>
-          <div className={styles.logoWrap}>
-            <div className={styles.logoIcon}>
+      <footer className="w-full max-w-[480px] bg-slate-900 rounded-2xl py-6 px-6 flex flex-col items-start gap-4 text-slate-200">
+        <div className="flex justify-center items-center gap-2 max-split:self-center max-split:text-center">
+          <span className="text-xs uppercase text-[rgba(226,232,240,0.7)]">
+            Powered by:
+          </span>
+          <div className="flex items-center gap-[5px] text-xl">
+            <div className="w-[30px] h-[30px] overflow-hidden flex items-center justify-center gap-3">
               <Image
                 src="/images/logo-freyn.png"
                 alt="Freyn"
@@ -385,14 +400,14 @@ export default async function PortfolioPublicPage({ params }) {
                 priority
               />
             </div>
-            <h3 class="social-title">Freyn</h3>
+            <h3 className="m-0 text-base font-semibold text-white">Freyn</h3>
           </div>
         </div>
         <a
           href={FREYN_LANDING_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className={styles.joinButton}
+          className="w-full text-center bg-signal-blue text-white py-3.5 px-8 rounded-full font-semibold transition-all duration-200 shadow-glow-blue hover:-translate-y-0.5 hover:shadow-glow-blue-lg"
         >
           Join {firstName} on Freyn
         </a>
