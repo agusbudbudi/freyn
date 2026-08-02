@@ -1,3 +1,5 @@
+import { cn } from "@/lib/cn";
+
 const variants = {
   primary: "bg-signal-blue text-white border border-transparent hover:bg-[#0070e0]",
   secondary: "bg-white text-slate-500 border border-slate-200 hover:bg-slate-50",
@@ -13,7 +15,12 @@ const sizes = {
 };
 
 export function buttonClasses({ variant = "primary", size = "md", className = "" } = {}) {
-  return `inline-flex items-center justify-center gap-2 font-medium whitespace-nowrap border-solid transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`;
+  return cn(
+    "inline-flex items-center justify-center gap-2 font-medium whitespace-nowrap border-solid transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed",
+    variants[variant],
+    sizes[size],
+    className
+  );
 }
 
 export default function Button({

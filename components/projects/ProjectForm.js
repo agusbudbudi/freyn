@@ -12,7 +12,7 @@ import BackButton from "@/components/ui/BackButton";
 import FormField from "@/components/ui/FormField";
 import Input, { Textarea } from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
-import StatusBadge from "@/components/ui/StatusBadge";
+import StatusBadge, { getStatusColors } from "@/components/ui/StatusBadge";
 import Tabs from "@/components/ui/Tabs";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -481,6 +481,7 @@ export default function ProjectForm({ mode = "create", initialProject = null }) 
   }, [projectDetails?.logs, initialProject?.logs]);
 
   const currentStatusKey = (formData.status || "").toLowerCase();
+  const statusFieldColors = getStatusColors(getStatusClass(currentStatusKey));
 
   const currentStatusIndex = useMemo(() => {
     const index = PROJECT_STATUS_FLOW.findIndex(
@@ -518,37 +519,40 @@ export default function ProjectForm({ mode = "create", initialProject = null }) 
 
   return (
     <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
-      <Card>
-        <div className="p-6 flex items-center gap-3">
-          <BackButton onClick={() => router.back()} />
-          <div>
-            <h2 className="text-base font-semibold text-slate-900 m-0">
-              {isEditing ? "Edit Project" : "Add New Project"}
-            </h2>
-            <p className="text-xs text-slate-500 mt-1 mb-0">
-              Fill out the project details below
-            </p>
+      <form onSubmit={handleSubmit}>
+        {error && (
+          <div className="mb-4 p-3 rounded-lg border border-red-200 bg-red-50 text-red-800 text-sm flex items-center gap-2">
+            <i className="uil uil-exclamation-triangle"></i> {error}
           </div>
-        </div>
+        )}
 
-        <form className="p-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="mb-4 p-3 rounded-lg border border-red-200 bg-red-50 text-red-800 text-sm flex items-center gap-2">
-              <i className="uil uil-exclamation-triangle"></i> {error}
-            </div>
-          )}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4 items-start">
+          {/* Main Content */}
+          <div className="flex flex-col gap-4 min-w-0">
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <BackButton onClick={() => router.back()} />
+                <div>
+                  <h2 className="text-base font-semibold text-slate-900 m-0">
+                    {isEditing ? "Edit Project" : "Add New Project"}
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-1 mb-0">
+                    Fill out the project details below
+                  </p>
+                </div>
+              </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-            {/* Main Content */}
-            <div className="flex flex-col gap-8 min-w-0">
               {isEditing && (
-                <div className="rounded-xl border border-slate-100 bg-white p-4">
+                <div className="mt-5 pt-4 border-0 border-t border-solid border-slate-100">
                   <div className="flex items-center justify-between mb-5">
                     <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                       <i className="uil uil-pathfinder"></i>
                       <span>Project Progress</span>
                     </div>
-                    <StatusBadge status={getStatusClass(currentStatusKey)}>
+                    <StatusBadge
+                      status={getStatusClass(currentStatusKey)}
+                      className="px-3 py-1 text-xs gap-1.5"
+                    >
                       {getStatusLabel(currentStatusKey)}
                     </StatusBadge>
                   </div>
@@ -590,171 +594,172 @@ export default function ProjectForm({ mode = "create", initialProject = null }) 
                   </div>
                 </div>
               )}
+            </Card>
 
-              <div>
-                <h3 className="text-sm font-semibold text-slate-900 mb-3">
-                  Project Information
-                </h3>
-                <FormField label="Project Name *">
+            <Card className="p-4">
+              <h3 className="text-sm font-semibold text-slate-900 mb-3">
+                Project Information
+              </h3>
+              <FormField label="Project Name *">
+                <Input
+                  type="text"
+                  name="projectName"
+                  value={formData.projectName}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Enter project name"
+                />
+              </FormField>
+              <FormField label="Project Brief" className="mt-4">
+                <ReactQuill
+                  theme="snow"
+                  value={formData.brief}
+                  onChange={handleBriefChange}
+                  modules={modules}
+                  placeholder="Describe your project requirements..."
+                />
+              </FormField>
+            </Card>
+
+            <Card className="p-4">
+              <h3 className="text-sm font-semibold text-slate-900 mb-3">
+                Pricing
+              </h3>
+              <FormField label="Service (optional)">
+                <Select
+                  name="serviceId"
+                  value={formData.serviceId}
+                  onChange={handleInputChange}
+                >
+                  <option value="">Select service</option>
+                  {services.map((s) => (
+                    <option key={String(s._id)} value={String(s._id)}>
+                      {s.serviceName}
+                    </option>
+                  ))}
+                </Select>
+              </FormField>
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mt-4">
+                <FormField label="Price (Rp) *">
+                  <Input
+                    type="number"
+                    name="price"
+                    value={formData.price}
+                    onChange={handleInputChange}
+                    min="0"
+                    required
+                    placeholder="0"
+                  />
+                </FormField>
+                <FormField label="Quantity *">
+                  <Input
+                    type="number"
+                    name="quantity"
+                    value={formData.quantity}
+                    onChange={handleInputChange}
+                    min="1"
+                    required
+                  />
+                </FormField>
+                <FormField label="Discount (Rp)">
+                  <Input
+                    type="number"
+                    name="discount"
+                    value={formData.discount}
+                    onChange={handleInputChange}
+                    min="0"
+                    placeholder="0"
+                  />
+                </FormField>
+                <FormField label="Total Price">
                   <Input
                     type="text"
-                    name="projectName"
-                    value={formData.projectName}
-                    onChange={handleInputChange}
-                    required
-                    placeholder="Enter project name"
-                  />
-                </FormField>
-                <FormField label="Project Brief" className="mt-4">
-                  <ReactQuill
-                    theme="snow"
-                    value={formData.brief}
-                    onChange={handleBriefChange}
-                    modules={modules}
-                    placeholder="Describe your project requirements..."
+                    value={formatCurrency(formData.totalPrice)}
+                    readOnly
+                    disabled
                   />
                 </FormField>
               </div>
+            </Card>
 
-              <div>
+            {isEditing && (
+              <Card className="p-4">
                 <h3 className="text-sm font-semibold text-slate-900 mb-3">
-                  Pricing
+                  Deliverables
                 </h3>
-                <FormField label="Service (optional)">
-                  <Select
-                    name="serviceId"
-                    value={formData.serviceId}
-                    onChange={handleInputChange}
-                  >
-                    <option value="">Select service</option>
-                    {services.map((s) => (
-                      <option key={String(s._id)} value={String(s._id)}>
-                        {s.serviceName}
-                      </option>
-                    ))}
-                  </Select>
+                <FormField label="Deliverables Link">
+                  <div className="flex gap-2">
+                    <Input
+                      type="url"
+                      name="deliverables"
+                      value={formData.deliverables}
+                      onChange={handleInputChange}
+                      placeholder="https://drive.google.com/..."
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() =>
+                        window.open(`/result/${initialProject._id}`, "_blank")
+                      }
+                    >
+                      <i className="uil uil-external-link-alt"></i>
+                      Open Result
+                    </Button>
+                  </div>
                 </FormField>
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mt-4">
-                  <FormField label="Price (Rp) *">
-                    <Input
-                      type="number"
-                      name="price"
-                      value={formData.price}
-                      onChange={handleInputChange}
-                      min="0"
-                      required
-                      placeholder="0"
-                    />
-                  </FormField>
-                  <FormField label="Quantity *">
-                    <Input
-                      type="number"
-                      name="quantity"
-                      value={formData.quantity}
-                      onChange={handleInputChange}
-                      min="1"
-                      required
-                    />
-                  </FormField>
-                  <FormField label="Discount (Rp)">
-                    <Input
-                      type="number"
-                      name="discount"
-                      value={formData.discount}
-                      onChange={handleInputChange}
-                      min="0"
-                      placeholder="0"
-                    />
-                  </FormField>
-                  <FormField label="Total Price">
-                    <Input
-                      type="text"
-                      value={formatCurrency(formData.totalPrice)}
-                      readOnly
-                      disabled
-                    />
-                  </FormField>
-                </div>
-              </div>
-
-              {isEditing && (
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-900 mb-3">
-                    Deliverables
-                  </h3>
-                  <FormField label="Deliverables Link">
+                <FormField label="Invoice" className="mt-4">
+                  {hasLinkedInvoice ? (
+                    <div className="flex gap-3 flex-wrap">
+                      <div className="flex-1 min-w-[200px] bg-blue-50 text-blue-900 rounded-lg px-4 py-3 text-[13px] font-medium leading-normal">
+                        Your invoice has already been generated
+                        <strong className="ml-1">
+                          #{invoiceDisplayNumber}
+                        </strong>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleInvoiceNavigation}
+                        disabled={!canNavigateInvoice}
+                      >
+                        <i className="uil uil-external-link-alt"></i>
+                        Open Invoice
+                      </Button>
+                    </div>
+                  ) : (
                     <div className="flex gap-2">
                       <Input
                         type="url"
-                        name="deliverables"
-                        value={formData.deliverables}
+                        name="invoice"
+                        value={formData.invoice}
                         onChange={handleInputChange}
-                        placeholder="https://drive.google.com/..."
+                        placeholder="https://splitbill-alpha.vercel.app/..."
                         className="flex-1"
                       />
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() =>
-                          window.open(`/result/${initialProject._id}`, "_blank")
-                        }
+                        onClick={handleInvoiceNavigation}
+                        disabled={!canNavigateInvoice}
                       >
-                        <i className="uil uil-external-link-alt"></i>
-                        Open Result
+                        <i className="uil uil-file-plus"></i>
+                        Create Invoice
                       </Button>
                     </div>
-                  </FormField>
-                  <FormField label="Invoice" className="mt-4">
-                    {hasLinkedInvoice ? (
-                      <div className="flex gap-3 flex-wrap">
-                        <div className="flex-1 min-w-[200px] bg-blue-50 text-blue-900 rounded-lg px-4 py-3 text-[13px] font-medium leading-normal">
-                          Your invoice has already been generated
-                          <strong className="ml-1">
-                            #{invoiceDisplayNumber}
-                          </strong>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={handleInvoiceNavigation}
-                          disabled={!canNavigateInvoice}
-                        >
-                          <i className="uil uil-external-link-alt"></i>
-                          Open Invoice
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex gap-2">
-                        <Input
-                          type="url"
-                          name="invoice"
-                          value={formData.invoice}
-                          onChange={handleInputChange}
-                          placeholder="https://splitbill-alpha.vercel.app/..."
-                          className="flex-1"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={handleInvoiceNavigation}
-                          disabled={!canNavigateInvoice}
-                        >
-                          <i className="uil uil-file-plus"></i>
-                          Create Invoice
-                        </Button>
-                      </div>
-                    )}
-                  </FormField>
-                </div>
-              )}
+                  )}
+                </FormField>
+              </Card>
+            )}
 
-              {isEditing && (
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-900 mb-3">
-                    Activity
-                  </h3>
+            {isEditing && (
+              <Card className="p-4">
+                <h3 className="text-sm font-semibold text-slate-900 mb-3">
+                  Activity
+                </h3>
 
-                  <Tabs
+                <Tabs
                     tabs={[
                       { value: "comment", label: "Comments" },
                       { value: "history", label: "History" },
@@ -915,36 +920,38 @@ export default function ProjectForm({ mode = "create", initialProject = null }) 
                       )}
                     </div>
                   )}
-                </div>
+                </Card>
               )}
             </div>
 
-            {/* Sidebar */}
-            <div className="rounded-xl border border-slate-100 p-4 flex flex-col gap-4 h-fit">
+          {/* Sidebar */}
+          <Card className="p-4 lg:sticky lg:top-[78px]">
+            <div className="flex flex-col gap-4">
               <FormField label="Order Number">
                 <Input value={formData.numberOrder} readOnly disabled />
               </FormField>
 
               <FormField label="Status">
-                <div className="flex flex-col gap-2">
-                  <StatusBadge status={getStatusClass(formData.status)}>
-                    {getStatusLabel(formData.status)}
-                  </StatusBadge>
-                  <Select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleInputChange}
-                  >
-                    <option value="to do">To Do</option>
-                    <option value="in progress">In Progress</option>
-                    <option value="waiting for payment">
-                      Waiting for Payment
-                    </option>
-                    <option value="in review">In Review</option>
-                    <option value="revision">Revision</option>
-                    <option value="done">Done</option>
-                  </Select>
-                </div>
+                <Select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleInputChange}
+                  className="font-medium capitalize"
+                  style={{
+                    backgroundColor: statusFieldColors.bg,
+                    color: statusFieldColors.text,
+                    borderColor: "transparent",
+                  }}
+                >
+                  <option value="to do">To Do</option>
+                  <option value="in progress">In Progress</option>
+                  <option value="waiting for payment">
+                    Waiting for Payment
+                  </option>
+                  <option value="in review">In Review</option>
+                  <option value="revision">Revision</option>
+                  <option value="done">Done</option>
+                </Select>
               </FormField>
 
               <FormField label="Client Name *">
@@ -983,25 +990,26 @@ export default function ProjectForm({ mode = "create", initialProject = null }) 
                   required
                 />
               </FormField>
-            </div>
-          </div>
 
-          <div className="flex justify-end gap-3 mt-4">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => router.back()}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary" disabled={loading}>
-              <i className="uil uil-save"></i>
-              {loading ? "Saving..." : "Save Project"}
-            </Button>
-          </div>
-        </form>
-      </Card>
+              <div className="flex flex-col gap-2 pt-2 border-0 border-t border-solid border-slate-100">
+                <Button type="submit" variant="primary" className="w-full justify-center" disabled={loading}>
+                  <i className="uil uil-save"></i>
+                  {loading ? "Saving..." : "Save Project"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-full justify-center"
+                  onClick={() => router.back()}
+                  disabled={loading}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </form>
     </div>
   );
 }

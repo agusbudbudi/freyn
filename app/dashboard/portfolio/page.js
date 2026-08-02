@@ -97,7 +97,7 @@ export default function PortfolioPage() {
           ) : portfolioItems.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               {portfolioItems.map((item, idx) => (
-                <div key={item.slug || idx} className="bg-white border border-slate-100 rounded-2xl overflow-hidden flex flex-col min-h-full">
+                <Card key={item.slug || idx} className="rounded-2xl shadow-none overflow-hidden flex flex-col min-h-full">
                   {item.coverImage ? (
                     <button
                       type="button"
@@ -150,27 +150,8 @@ export default function PortfolioPage() {
                         {stripHtml(item.description)}
                       </p>
                     )}
-                    {(item.links || []).length > 0 && (
-                      <div>
-                        <h4 className="mt-0 mb-2 text-sm font-semibold text-gray-600">Links</h4>
-                        <div className="flex flex-wrap gap-3">
-                          {item.links.map((link, linkIdx) => (
-                            <a
-                              key={`${link.url}-${linkIdx}`}
-                              href={link.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={`${buttonClasses({ variant: "secondary", size: "sm" })} text-xs`}
-                            >
-                              {link.name || link.url}
-                              <i className="uil uil-link"></i>
-                            </a>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
           ) : error ? (

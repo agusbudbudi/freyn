@@ -77,111 +77,125 @@ export default function ClientForm({ mode = "create", initialClient = null }) {
 
   return (
     <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
-      <Card>
-        <div className="p-6 flex items-center gap-3">
-          <BackButton onClick={() => router.push("/dashboard/clients")} />
-          <div>
-            <h2 className="text-base font-semibold text-slate-900 m-0">
-              {isEditing ? "Edit Client" : "Add New Client"}
-            </h2>
-            <p className="text-xs text-slate-500 mt-1 mb-0">
-              Fill out the client details below
-            </p>
+      <form onSubmit={handleSubmit}>
+        {error && (
+          <div className="mb-4 p-3 rounded-lg border border-red-200 bg-red-50 text-red-800 text-sm flex items-center gap-2">
+            <i className="uil uil-exclamation-triangle"></i> {error}
           </div>
-        </div>
+        )}
 
-        <form className="p-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="mb-4 p-3 rounded-lg border border-red-200 bg-red-50 text-red-800 text-sm flex items-center gap-2">
-              <i className="uil uil-exclamation-triangle"></i> {error}
-            </div>
-          )}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4 items-start">
+          {/* Main Content */}
+          <div className="flex flex-col gap-4 min-w-0">
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <BackButton onClick={() => router.push("/dashboard/clients")} />
+                <div>
+                  <h2 className="text-base font-semibold text-slate-900 m-0">
+                    {isEditing ? "Edit Client" : "Add New Client"}
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-1 mb-0">
+                    Fill out the client details below
+                  </p>
+                </div>
+              </div>
 
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-4">
-            {isEditing && (
-              <FormField label="Client ID">
-                <Input type="text" value={initialClient.clientId} readOnly disabled />
+              <h3 className="text-sm font-semibold text-slate-900 mt-5 pt-4 mb-3 border-0 border-t border-solid border-slate-100">
+                Client Information
+              </h3>
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4">
+                <FormField label="Client Name *">
+                  <Input
+                    type="text"
+                    name="clientName"
+                    value={formData.clientName}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="Enter client name"
+                  />
+                </FormField>
+
+                <FormField label="Company Name">
+                  <Input
+                    type="text"
+                    name="companyName"
+                    value={formData.companyName}
+                    onChange={handleInputChange}
+                    placeholder="Enter company name"
+                  />
+                </FormField>
+
+                <FormField label="Phone Number">
+                  <Input
+                    type="tel"
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={handleInputChange}
+                    placeholder="6281234567890"
+                  />
+                </FormField>
+
+                <FormField label="Email">
+                  <Input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="client@example.com"
+                  />
+                </FormField>
+
+                <FormField label="Address" className="[grid-column:1/-1]">
+                  <Textarea
+                    name="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    rows="2"
+                    placeholder="Enter client address"
+                  />
+                </FormField>
+              </div>
+            </Card>
+          </div>
+
+          {/* Sidebar */}
+          <Card className="p-4 lg:sticky lg:top-[78px]">
+            <div className="flex flex-col gap-4">
+              {isEditing && (
+                <FormField label="Client ID">
+                  <Input type="text" value={initialClient.clientId} readOnly disabled />
+                </FormField>
+              )}
+
+              <FormField label="Notes">
+                <Textarea
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleInputChange}
+                  rows="2"
+                  placeholder="Additional notes about the client"
+                />
               </FormField>
-            )}
 
-            <FormField label="Client Name *">
-              <Input
-                type="text"
-                name="clientName"
-                value={formData.clientName}
-                onChange={handleInputChange}
-                required
-                placeholder="Enter client name"
-              />
-            </FormField>
-
-            <FormField label="Company Name">
-              <Input
-                type="text"
-                name="companyName"
-                value={formData.companyName}
-                onChange={handleInputChange}
-                placeholder="Enter company name"
-              />
-            </FormField>
-
-            <FormField label="Phone Number">
-              <Input
-                type="tel"
-                name="phoneNumber"
-                value={formData.phoneNumber}
-                onChange={handleInputChange}
-                placeholder="6281234567890"
-              />
-            </FormField>
-
-            <FormField label="Email">
-              <Input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="client@example.com"
-              />
-            </FormField>
-
-            <FormField label="Address" className="[grid-column:1/-1]">
-              <Textarea
-                name="address"
-                value={formData.address}
-                onChange={handleInputChange}
-                rows="2"
-                placeholder="Enter client address"
-              />
-            </FormField>
-
-            <FormField label="Notes" className="[grid-column:1/-1]">
-              <Textarea
-                name="notes"
-                value={formData.notes}
-                onChange={handleInputChange}
-                rows="2"
-                placeholder="Additional notes about the client"
-              />
-            </FormField>
-          </div>
-
-          <div className="flex justify-end gap-3 mt-4">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => router.push("/dashboard/clients")}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary" disabled={loading}>
-              <i className="uil uil-save"></i>
-              {loading ? "Saving..." : "Save Client"}
-            </Button>
-          </div>
-        </form>
-      </Card>
+              <div className="flex flex-col gap-2 pt-2 border-0 border-t border-solid border-slate-100">
+                <Button type="submit" variant="primary" className="w-full justify-center" disabled={loading}>
+                  <i className="uil uil-save"></i>
+                  {loading ? "Saving..." : "Save Client"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-full justify-center"
+                  onClick={() => router.push("/dashboard/clients")}
+                  disabled={loading}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </form>
     </div>
   );
 }

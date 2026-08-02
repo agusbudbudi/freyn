@@ -10,6 +10,8 @@ import Button from "@/components/ui/Button";
 import BackButton from "@/components/ui/BackButton";
 import FormField from "@/components/ui/FormField";
 import Input from "@/components/ui/Input";
+import Modal from "@/components/ui/Modal";
+import PortfolioCard from "./PortfolioCard";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
@@ -47,7 +49,7 @@ const defaultForm = {
 };
 
 const fileInputClasses =
-  "border-0 text-sm text-slate-700 cursor-pointer file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:font-medium file:text-slate-900 hover:file:bg-slate-200 disabled:opacity-60 disabled:cursor-not-allowed";
+  "border-0 text-sm text-slate-700 cursor-pointer file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:font-medium file:text-slate-900 hover:file:bg-slate-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:file:cursor-not-allowed";
 
 function ensureLinks(links) {
   if (!Array.isArray(links) || links.length === 0) {
@@ -95,6 +97,8 @@ export default function PortfolioForm() {
   const [originalSlug, setOriginalSlug] = useState("");
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingLinkIndex, setUploadingLinkIndex] = useState(null);
+  const [ownerDisplayName, setOwnerDisplayName] = useState("");
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
     const fetchPortfolio = async () => {
@@ -145,6 +149,9 @@ export default function PortfolioForm() {
 
         setFormData(next);
         setOriginalSlug(next.slug || "");
+        setOwnerDisplayName(
+          portfolio?.ownerName || portfolio?.workspaceName || "Your Name"
+        );
       } catch (err) {
         console.error(err);
         setError("Failed to load portfolio");
@@ -169,6 +176,13 @@ export default function PortfolioForm() {
     }),
     []
   );
+
+  const previewProfileImage = useMemo(() => {
+    const seed = ownerDisplayName || formData.slug || "freyn-creator";
+    return `https://api.dicebear.com/9.x/personas/svg?backgroundColor=b6e3f4&scale=100&seed=${encodeURIComponent(
+      seed
+    )}`;
+  }, [ownerDisplayName, formData.slug]);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -287,6 +301,17 @@ export default function PortfolioForm() {
         return { ...prev, links: [{ name: "", url: "", icon: "" }] };
       }
       return { ...prev, links: prev.links.filter((_, idx) => idx !== index) };
+    });
+  };
+
+  const handleMoveLink = (index, direction) => {
+    setFormData((prev) => {
+      const targetIndex = index + direction;
+      if (targetIndex < 0 || targetIndex >= prev.links.length) return prev;
+
+      const updated = [...prev.links];
+      [updated[index], updated[targetIndex]] = [updated[targetIndex], updated[index]];
+      return { ...prev, links: updated };
     });
   };
 
@@ -526,221 +551,274 @@ export default function PortfolioForm() {
   }
 
   return (
-    <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
-      <Card>
-        <div className="p-6 flex items-center gap-3">
-          <BackButton onClick={() => router.push("/dashboard/portfolio")} />
-          <div>
-            <h2 className="text-base font-semibold text-slate-900 m-0">Portfolio</h2>
-            <p className="text-xs text-slate-500 mt-1 mb-0">
-              Manage your public portfolio page
-            </p>
+    <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px] grid grid-cols-1 xl:grid-cols-[1fr_480px] gap-6 items-start">
+      <form className="min-w-0" onSubmit={handleSubmit}>
+        {error && (
+          <div className="mb-4 p-3 rounded-lg border border-red-200 bg-red-50 text-red-800 text-sm flex items-center gap-2">
+            <i className="uil uil-exclamation-triangle"></i> {error}
           </div>
-        </div>
+        )}
 
-        <form className="p-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="mb-4 p-3 rounded-lg border border-red-200 bg-red-50 text-red-800 text-sm flex items-center gap-2">
-              <i className="uil uil-exclamation-triangle"></i> {error}
+        <div className="flex flex-col gap-4">
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <BackButton onClick={() => router.push("/dashboard/portfolio")} />
+              <div>
+                <h2 className="text-base font-semibold text-slate-900 m-0">Portfolio</h2>
+                <p className="text-xs text-slate-500 mt-1 mb-0">
+                  Manage your public portfolio page
+                </p>
+              </div>
             </div>
-          )}
 
-          <div className="flex flex-col gap-4">
-            <FormField label="Cover Image">
-              <div className="flex flex-col gap-3">
-                {formData.coverImage ? (
-                  <>
-                    <img
-                      src={formData.coverImage}
-                      alt="Portfolio Cover"
-                      className="w-full h-auto object-cover rounded-xl border border-slate-200"
-                    />
-                    <span className="text-sm text-slate-500 flex items-center gap-1.5">
-                      <i className="uil uil-info-circle"></i>
-                      <p className="m-0">Best size 960×300</p>
-                    </span>
-                  </>
-                ) : (
-                  <p className="text-sm text-slate-500">
-                    Add a cover image to make your work stand out. (Use PNG or JPG,
-                    best size 960×300)
-                  </p>
-                )}
-                <div className="flex items-center gap-3">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleCoverUpload}
-                    className={`${fileInputClasses} max-w-[260px]`}
-                    disabled={loading || uploadingCover}
-                  />
-                  {formData.coverImage && (
-                    <Button
-                      type="button"
-                      variant="danger"
-                      size="sm"
-                      className="ml-auto"
-                      disabled={loading || uploadingCover}
-                      onClick={() =>
-                        setFormData((prev) => ({ ...prev, coverImage: "" }))
-                      }
-                    >
-                      <i className="uil uil-trash-alt"></i>
-                      Remove
-                    </Button>
+            <div className="mt-5 pt-4 border-0 border-t border-solid border-slate-100">
+              <FormField label="Cover Image">
+                <div className="flex flex-col gap-3">
+                  {formData.coverImage ? (
+                    <>
+                      <img
+                        src={formData.coverImage}
+                        alt="Portfolio Cover"
+                        className="w-full h-auto object-cover rounded-xl border border-slate-200"
+                      />
+                      <span className="text-sm text-slate-500 flex items-center gap-1.5">
+                        <i className="uil uil-info-circle"></i>
+                        <p className="m-0">Best size 960×300</p>
+                      </span>
+                    </>
+                  ) : (
+                    <p className="text-sm text-slate-500">
+                      Add a cover image to make your work stand out. (Use PNG or JPG,
+                      best size 960×300)
+                    </p>
                   )}
-                </div>
-              </div>
-            </FormField>
-
-            <FormField label="Portfolio Title *">
-              <Input
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                required
-                placeholder="Enter portfolio title"
-                maxLength={140}
-              />
-            </FormField>
-
-            <FormField label="Portfolio Description">
-              <ReactQuill
-                theme="snow"
-                value={formData.description}
-                onChange={handleDescriptionChange}
-                modules={modules}
-                placeholder="Describe your portfolio..."
-              />
-            </FormField>
-
-            <FormField label="Slug *">
-              <Input
-                type="text"
-                name="slug"
-                value={formData.slug}
-                onChange={handleSlugChange}
-                onBlur={handleSlugBlur}
-                placeholder="e.g. john-doe"
-              />
-              <div
-                className={`text-sm mt-1.5 ${slugFeedback.type === "error"
-                  ? "text-red-600"
-                  : slugFeedback.type === "success"
-                    ? "text-emerald-600"
-                    : "text-slate-500"
-                  }`}
-              >
-                {checkingSlug
-                  ? "Checking slug availability..."
-                  : slugFeedback.message || "Customize your public portfolio URL"}
-              </div>
-            </FormField>
-
-            <FormField label="Social Media">
-              <p className="text-sm text-slate-500 mb-3 mt-0">
-                Add optional profiles to showcase where people can reach you.
-              </p>
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3">
-                {socialPlatforms.map((platform) => (
-                  <FormField key={platform.key} label={platform.label}>
-                    <Input
-                      type={platform.type}
-                      value={formData.socials?.[platform.key] || ""}
-                      onChange={(event) =>
-                        handleSocialChange(platform.key, event.target.value)
-                      }
-                      placeholder={platform.placeholder}
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleCoverUpload}
+                      className={`${fileInputClasses} max-w-[260px]`}
+                      disabled={loading || uploadingCover}
                     />
-                  </FormField>
-                ))}
-              </div>
-            </FormField>
+                    {formData.coverImage && (
+                      <Button
+                        type="button"
+                        variant="danger"
+                        size="sm"
+                        className="ml-auto"
+                        disabled={loading || uploadingCover}
+                        onClick={() =>
+                          setFormData((prev) => ({ ...prev, coverImage: "" }))
+                        }
+                      >
+                        <i className="uil uil-trash-alt"></i>
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </FormField>
+            </div>
+          </Card>
 
-            <FormField label="Links">
-              <div className="flex flex-col gap-4">
-                {formData.links.map((link, index) => (
-                  <div
-                    key={index}
-                    className="border border-slate-200 rounded-xl p-4 flex flex-col gap-3"
-                  >
-                    <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
-                      <FormField label="Link Name">
-                        <Input
-                          type="text"
-                          value={link.name}
-                          onChange={(event) =>
-                            handleLinkChange(index, "name", event.target.value)
-                          }
-                          placeholder="e.g. Behance"
+          <Card className="p-4">
+            <h3 className="text-sm font-semibold text-slate-900 mb-3">
+              Portfolio Details
+            </h3>
+            <div className="flex flex-col gap-4">
+              <FormField label="Portfolio Title *">
+                <Input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Enter portfolio title"
+                  maxLength={140}
+                />
+              </FormField>
+
+              <FormField label="Portfolio Description">
+                <ReactQuill
+                  theme="snow"
+                  value={formData.description}
+                  onChange={handleDescriptionChange}
+                  modules={modules}
+                  placeholder="Describe your portfolio..."
+                />
+              </FormField>
+
+              <FormField label="Slug *">
+                <Input
+                  type="text"
+                  name="slug"
+                  value={formData.slug}
+                  onChange={handleSlugChange}
+                  onBlur={handleSlugBlur}
+                  placeholder="e.g. john-doe"
+                />
+                <div
+                  className={`text-sm mt-1.5 ${slugFeedback.type === "error"
+                    ? "text-red-600"
+                    : slugFeedback.type === "success"
+                      ? "text-emerald-600"
+                      : "text-slate-500"
+                    }`}
+                >
+                  {checkingSlug
+                    ? "Checking slug availability..."
+                    : slugFeedback.message || "Customize your public portfolio URL"}
+                </div>
+              </FormField>
+            </div>
+          </Card>
+
+          <Card className="p-4">
+            <h3 className="text-sm font-semibold text-slate-900 mb-3">
+              Social Media
+            </h3>
+            <p className="text-sm text-slate-500 mb-3 mt-0">
+              Add optional profiles to showcase where people can reach you.
+            </p>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3">
+              {socialPlatforms.map((platform) => (
+                <FormField key={platform.key} label={platform.label}>
+                  <Input
+                    type={platform.type}
+                    value={formData.socials?.[platform.key] || ""}
+                    onChange={(event) =>
+                      handleSocialChange(platform.key, event.target.value)
+                    }
+                    placeholder={platform.placeholder}
+                  />
+                </FormField>
+              ))}
+            </div>
+          </Card>
+
+          <Card className="p-4">
+            <h3 className="text-sm font-semibold text-slate-900 mb-3">
+              Links
+            </h3>
+            <div className="flex flex-col gap-4">
+              {formData.links.map((link, index) => (
+                <div
+                  key={index}
+                  className="border border-slate-200 rounded-xl flex flex-col gap-3"
+                >
+                  <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
+                    <FormField label="Link Name">
+                      <Input
+                        type="text"
+                        value={link.name}
+                        onChange={(event) =>
+                          handleLinkChange(index, "name", event.target.value)
+                        }
+                        placeholder="e.g. Behance"
+                      />
+                    </FormField>
+                    <FormField label="URL">
+                      <Input
+                        type="url"
+                        value={link.url}
+                        onChange={(event) =>
+                          handleLinkChange(index, "url", event.target.value)
+                        }
+                        placeholder="https://"
+                      />
+                    </FormField>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-3 flex-1 min-w-[200px]">
+                      {link.icon ? (
+                        <img
+                          src={link.icon}
+                          alt={`${link.name || "Link"} icon`}
+                          className="w-10 h-10 object-cover rounded-lg border border-slate-200"
                         />
-                      </FormField>
-                      <FormField label="URL">
-                        <Input
-                          type="url"
-                          value={link.url}
-                          onChange={(event) =>
-                            handleLinkChange(index, "url", event.target.value)
-                          }
-                          placeholder="https://"
-                        />
-                      </FormField>
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-slate-400 text-xs">
+                          Icon
+                        </div>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(event) => handleLinkIconUpload(event, index)}
+                        className={`${fileInputClasses} max-w-[250px]`}
+                        disabled={loading || uploadingLinkIndex === index}
+                      />
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-4">
-                      <div className="flex items-center gap-3 flex-1 min-w-[200px]">
-                        {link.icon ? (
-                          <img
-                            src={link.icon}
-                            alt={`${link.name || "Link"} icon`}
-                            className="w-10 h-10 object-cover rounded-lg border border-slate-200"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-slate-400 text-xs">
-                            Icon
-                          </div>
-                        )}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(event) => handleLinkIconUpload(event, index)}
-                          className={`${fileInputClasses} max-w-[250px]`}
-                          disabled={loading || uploadingLinkIndex === index}
-                        />
-                      </div>
-
-                      <div className="flex gap-3 ml-auto justify-end flex-wrap">
+                    <div className="flex gap-3 ml-auto justify-end flex-wrap">
+                      <div className="flex gap-1">
                         <Button
                           type="button"
-                          variant="danger"
+                          variant="secondary"
                           size="sm"
-                          disabled={loading || uploadingLinkIndex === index}
-                          onClick={() => handleDeleteLink(index)}
+                          className="w-9 h-9 p-0 rounded-full text-lg"
+                          aria-label="Move link up"
+                          disabled={loading || index === 0}
+                          onClick={() => handleMoveLink(index, -1)}
                         >
-                          <i className="uil uil-trash-alt"></i>
-                          Delete
+                          <i className="uil uil-arrow-up"></i>
                         </Button>
-                        {index === formData.links.length - 1 && (
-                          <Button
-                            type="button"
-                            variant="primary"
-                            size="sm"
-                            disabled={loading || uploadingLinkIndex !== null}
-                            onClick={handleAddLink}
-                          >
-                            Add Link
-                          </Button>
-                        )}
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          className="w-9 h-9 p-0 rounded-full text-lg"
+                          aria-label="Move link down"
+                          disabled={loading || index === formData.links.length - 1}
+                          onClick={() => handleMoveLink(index, 1)}
+                        >
+                          <i className="uil uil-arrow-down"></i>
+                        </Button>
                       </div>
+                      <Button
+                        type="button"
+                        variant="danger"
+                        size="sm"
+                        className="w-9 h-9 p-0 rounded-full text-lg"
+                        aria-label="Delete link"
+                        disabled={loading || uploadingLinkIndex === index}
+                        onClick={() => handleDeleteLink(index)}
+                      >
+                        <i className="uil uil-trash-alt"></i>
+                      </Button>
+                      {index === formData.links.length - 1 && (
+                        <Button
+                          type="button"
+                          variant="primary"
+                          size="sm"
+                          disabled={loading || uploadingLinkIndex !== null}
+                          onClick={handleAddLink}
+                        >
+                          Add Link
+                        </Button>
+                      )}
                     </div>
                   </div>
-                ))}
-              </div>
-            </FormField>
-          </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
 
-          <div className="flex justify-end gap-3 mt-4">
+        <div className="flex justify-between mt-4 gap-3 flex-wrap">
+          <Button
+            type="button"
+            variant="outline"
+            className="xl:hidden"
+            onClick={() => setPreviewOpen(true)}
+            disabled={busy}
+          >
+            <i className="uil uil-eye"></i>
+            Preview
+          </Button>
+
+          <div className="flex gap-3 ml-auto">
             <Button
               type="button"
               variant="secondary"
@@ -754,8 +832,47 @@ export default function PortfolioForm() {
               {loading ? "Saving..." : "Save Portfolio"}
             </Button>
           </div>
-        </form>
-      </Card>
+        </div>
+      </form>
+
+      <div className="hidden xl:block sticky top-[86px] max-h-[calc(100vh-106px)] overflow-y-auto">
+        <div className="portfolio-preview-live relative rounded-xl overflow-hidden">
+          <span className="absolute top-0 right-0 rounded-bl-lg bg-signal-blue text-white text-[10px] font-semibold uppercase tracking-wide py-1 px-3 shadow-md z-10">
+            Live Preview
+          </span>
+          <PortfolioCard
+            title={formData.title}
+            description={formData.description}
+            coverImage={formData.coverImage}
+            slug={formData.slug}
+            links={formData.links}
+            socials={formData.socials}
+            displayName={ownerDisplayName}
+            profileImage={previewProfileImage}
+            clickable={false}
+          />
+        </div>
+      </div>
+
+      {previewOpen && (
+        <Modal
+          title="Preview Portfolio"
+          onClose={() => setPreviewOpen(false)}
+          fullScreenOnMobile
+        >
+          <PortfolioCard
+            title={formData.title}
+            description={formData.description}
+            coverImage={formData.coverImage}
+            slug={formData.slug}
+            links={formData.links}
+            socials={formData.socials}
+            displayName={ownerDisplayName}
+            profileImage={previewProfileImage}
+            clickable={false}
+          />
+        </Modal>
+      )}
     </div>
   );
 }

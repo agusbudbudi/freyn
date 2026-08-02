@@ -148,7 +148,7 @@ export default function InvoicesPage() {
               <table className="w-full border-collapse">
                 <thead>
                   <tr>
-                    {["Invoice Number", "Client", "Invoice Date", "Due Date", "Status", "Total", "Actions"].map((h) => (
+                    {["Invoice Number", "Client", "Invoice Date", "Due Date", "Status", "Total", "Public Page", "Actions"].map((h) => (
                       <th key={h} className="py-3.5 px-5 text-left bg-slate-100 border-y border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-[0.5px]">
                         {h}
                       </th>
@@ -187,6 +187,17 @@ export default function InvoicesPage() {
                       </td>
                       <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs font-bold text-emerald-600">
                         {formatCurrency(invoice.total ?? invoice.subtotal)}
+                      </td>
+                      <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">
+                        <a
+                          href={`/invoices/${invoice.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-blue-500 no-underline hover:underline"
+                        >
+                          <i className="uil uil-external-link-alt"></i>
+                          View Public Page
+                        </a>
                       </td>
                       <td className="py-2.5 pr-3 pl-5 border-b border-slate-100 text-xs">
                         <div className="flex gap-2">

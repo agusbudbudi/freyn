@@ -66,18 +66,18 @@ const RAW_NAV_SECTIONS = [
     section: "Settings",
     items: [
       {
-        href: "/dashboard/workspace",
-        icon: "uil-window",
-        label: "Workspace",
-        permission: "workspace-settings",
-      },
-      {
         href: "/dashboard/portfolio",
         icon: "uil-palette",
         label: "Portfolio",
         badge: "New",
         badgeStatus: "status-waiting",
         permission: "portfolio",
+      },
+      {
+        href: "/dashboard/workspace",
+        icon: "uil-window",
+        label: "Workspace",
+        permission: "workspace-settings",
       },
     ],
   },
@@ -636,7 +636,7 @@ export default function DashboardLayout({ children }) {
         </div>
 
         <div className="mt-auto py-4 px-5 text-[10px] text-pencil-gray text-center">
-          © 2025 Freyn | Freelance Management
+          © {new Date().getFullYear()} Freyn | Freelance Management
         </div>
       </div>
 

@@ -1,10 +1,11 @@
 import { inputClasses } from "./Input";
+import { cn } from "@/lib/cn";
 
 export default function Select({ className = "", children, ...props }) {
   return (
     <div className="relative inline-block w-full">
       <select
-        className={`${inputClasses(props.disabled)} appearance-none cursor-pointer pr-12 ${className}`}
+        className={cn(inputClasses(props.disabled), "appearance-none cursor-pointer pr-12", className)}
         {...props}
       >
         {children}

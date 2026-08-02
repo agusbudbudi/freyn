@@ -129,130 +129,140 @@ export default function ServiceForm({ mode = "create", initialService = null }) 
 
   return (
     <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
-      <Card>
-        <div className="p-6 flex items-center gap-3">
-          <BackButton onClick={() => router.push("/dashboard/services")} />
-          <div>
-            <h2 className="text-base font-semibold text-slate-900 m-0">
-              {isEditing ? "Edit Service" : "Add New Service"}
-            </h2>
-            <p className="text-xs text-slate-500 mt-1 mb-0">
-              Fill out the service details below
-            </p>
+      <form onSubmit={handleSubmit}>
+        {error && (
+          <div className="mb-4 p-3 rounded-lg border border-red-200 bg-red-50 text-red-800 text-sm flex items-center gap-2">
+            <i className="uil uil-exclamation-triangle"></i> {error}
           </div>
-        </div>
+        )}
 
-        <form className="p-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="mb-4 p-3 rounded-lg border border-red-200 bg-red-50 text-red-800 text-sm flex items-center gap-2">
-              <i className="uil uil-exclamation-triangle"></i> {error}
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-4 items-start">
+          {/* Main Content */}
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <BackButton onClick={() => router.push("/dashboard/services")} />
+              <div>
+                <h2 className="text-base font-semibold text-slate-900 m-0">
+                  {isEditing ? "Edit Service" : "Add New Service"}
+                </h2>
+                <p className="text-xs text-slate-500 mt-1 mb-0">
+                  Fill out the service details below
+                </p>
+              </div>
             </div>
-          )}
 
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-4">
-            {isEditing && (
-              <FormField label="Service ID">
-                <Input type="text" value={initialService.id} readOnly disabled />
+            <h3 className="text-sm font-semibold text-slate-900 mt-5 pt-4 mb-3 border-0 border-t border-solid border-slate-100">
+              Service Details
+            </h3>
+            <div className="flex flex-col gap-4">
+              <FormField label="Service Name *">
+                <Input
+                  type="text"
+                  name="serviceName"
+                  value={formData.serviceName}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Enter service name"
+                />
               </FormField>
-            )}
 
-            <FormField label="Service Name *">
-              <Input
-                type="text"
-                name="serviceName"
-                value={formData.serviceName}
-                onChange={handleInputChange}
-                required
-                placeholder="Enter service name"
-              />
-            </FormField>
-
-            <FormField label="Price (Rp) *">
-              <Input
-                type="number"
-                name="servicePrice"
-                value={formData.servicePrice}
-                onChange={handleInputChange}
-                min="0"
-                required
-                placeholder="0"
-              />
-            </FormField>
-
-            <FormField label="Duration of Work (days) *">
-              <Input
-                type="number"
-                name="durationOfWork"
-                value={formData.durationOfWork}
-                onChange={handleInputChange}
-                min="1"
-                required
-                placeholder="Enter duration in days"
-              />
-            </FormField>
-
-            <FormField label="Total Revision">
-              <div className="flex flex-col gap-2.5">
+              <FormField label="Price (Rp) *">
                 <Input
                   type="number"
-                  name="totalRevision"
-                  value={formData.totalRevision}
+                  name="servicePrice"
+                  value={formData.servicePrice}
                   onChange={handleInputChange}
                   min="0"
-                  placeholder="Enter number of revisions"
-                  disabled={isUnlimitedRevision}
+                  required
+                  placeholder="0"
                 />
-                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={isUnlimitedRevision}
-                    onChange={handleUnlimitedRevisionChange}
-                    className="w-4 h-4 accent-signal-blue cursor-pointer"
+              </FormField>
+
+              <FormField label="Duration of Work (days) *">
+                <Input
+                  type="number"
+                  name="durationOfWork"
+                  value={formData.durationOfWork}
+                  onChange={handleInputChange}
+                  min="1"
+                  required
+                  placeholder="Enter duration in days"
+                />
+              </FormField>
+
+              <FormField label="Total Revision">
+                <div className="flex flex-col gap-2.5">
+                  <Input
+                    type="number"
+                    name="totalRevision"
+                    value={formData.totalRevision}
+                    onChange={handleInputChange}
+                    min="0"
+                    placeholder="Enter number of revisions"
+                    disabled={isUnlimitedRevision}
                   />
-                  Unlimited Revision
-                </label>
+                  <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={isUnlimitedRevision}
+                      onChange={handleUnlimitedRevisionChange}
+                      className="w-4 h-4 accent-signal-blue cursor-pointer"
+                    />
+                    Unlimited Revision
+                  </label>
+                </div>
+              </FormField>
+            </div>
+          </Card>
+
+          {/* Sidebar */}
+          <Card className="p-4">
+            <div className="flex flex-col gap-4">
+              {isEditing && (
+                <FormField label="Service ID">
+                  <Input type="text" value={initialService.id} readOnly disabled />
+                </FormField>
+              )}
+
+              <FormField label="Description">
+                <ReactQuill
+                  theme="snow"
+                  value={formData.description}
+                  onChange={handleDescriptionChange}
+                  modules={modules}
+                  placeholder="Describe your service in detail..."
+                />
+              </FormField>
+
+              <FormField label="Deliverables">
+                <ReactQuill
+                  theme="snow"
+                  value={formData.deliverables}
+                  onChange={handleDeliverablesChange}
+                  modules={modules}
+                  placeholder="e.g., source files, revisions, etc."
+                />
+              </FormField>
+
+              <div className="flex flex-col gap-2 pt-2 border-0 border-t border-solid border-slate-100">
+                <Button type="submit" variant="primary" className="w-full justify-center" disabled={loading}>
+                  <i className="uil uil-save"></i>
+                  {loading ? "Saving..." : "Save Service"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-full justify-center"
+                  onClick={() => router.push("/dashboard/services")}
+                  disabled={loading}
+                >
+                  Cancel
+                </Button>
               </div>
-            </FormField>
-          </div>
-
-          <div className="mt-6">
-            <h3 className="text-sm font-semibold text-slate-900 mb-2">Description</h3>
-            <ReactQuill
-              theme="snow"
-              value={formData.description}
-              onChange={handleDescriptionChange}
-              modules={modules}
-              placeholder="Describe your service in detail..."
-            />
-          </div>
-
-          <div className="mt-8">
-            <h3 className="text-sm font-semibold text-slate-900 mb-2">Deliverables</h3>
-            <ReactQuill
-              theme="snow"
-              value={formData.deliverables}
-              onChange={handleDeliverablesChange}
-              modules={modules}
-              placeholder="e.g., source files, revisions, etc."
-            />
-          </div>
-
-          <div className="flex justify-end gap-3 mt-4">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => router.push("/dashboard/services")}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary" disabled={loading}>
-              <i className="uil uil-save"></i>
-              {loading ? "Saving..." : "Save Service"}
-            </Button>
-          </div>
-        </form>
-      </Card>
+            </div>
+          </Card>
+        </div>
+      </form>
     </div>
   );
 }
