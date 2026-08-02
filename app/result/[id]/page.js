@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
+import { inter } from "@/lib/fonts";
 import SiteHeader from "@/components/SiteHeader";
 import LoadingState from "@/components/LoadingState";
 import { toast } from "@/components/ui/toast";
@@ -251,7 +252,7 @@ export default function ResultPage() {
     return (
       <>
         <SiteHeader />
-        <div className="min-h-screen bg-slate-50">
+        <div className={`${inter.variable} font-inter min-h-screen bg-gradient-to-b from-signal-blue/15 via-white to-slate-50`}>
           <div className="max-w-[480px] mx-auto px-4 pt-20 pb-6 sm:pt-24">
             <div className="flex justify-center py-20 px-4">
               <LoadingState
@@ -269,7 +270,7 @@ export default function ResultPage() {
     return (
       <>
         <SiteHeader />
-        <div className="min-h-screen bg-slate-50">
+        <div className={`${inter.variable} font-inter min-h-screen bg-gradient-to-b from-signal-blue/15 via-white to-slate-50`}>
           <div className="max-w-[480px] mx-auto px-4 pt-20 pb-6 sm:pt-24">
             <div className="text-center py-24 px-5">
               <i className="uil uil-exclamation-triangle text-5xl text-red-500 mb-5 block"></i>
@@ -290,7 +291,7 @@ export default function ResultPage() {
   return (
     <>
       <SiteHeader />
-      <div className="min-h-screen bg-slate-50">
+      <div className={`${inter.variable} font-inter min-h-screen bg-gradient-to-b from-signal-blue/15 via-white to-slate-50`}>
         <div className="max-w-[480px] mx-auto px-4 pt-20 pb-6 sm:pt-24">
         {/* Hero Section */}
         <div className="text-center p-5 relative">

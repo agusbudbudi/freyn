@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { inter } from "@/lib/fonts";
 import SiteHeader from "@/components/SiteHeader";
 import InvoicePreview from "@/components/invoices/InvoicePreview";
 import InvoiceStatusBadge from "@/components/invoices/InvoiceStatusBadge";
@@ -81,7 +82,7 @@ export default function PublicInvoicePage() {
     return (
       <>
         <SiteHeader />
-        <div className="min-h-screen bg-slate-50 flex justify-center items-start p-0 sm:p-4 pt-16 sm:pt-24">
+        <div className={`${inter.variable} font-inter min-h-screen bg-gradient-to-b from-signal-blue/15 via-white to-slate-50 flex justify-center items-start p-0 sm:p-4 pt-16 sm:pt-24`}>
           <div className="w-full max-w-[960px] flex flex-col items-center justify-center gap-5 px-4 py-6 sm:p-6">
             <LoadingState
               message="Loading invoice..."
@@ -97,7 +98,7 @@ export default function PublicInvoicePage() {
     return (
       <>
         <SiteHeader />
-        <div className="min-h-screen bg-slate-50 flex justify-center items-start p-0 sm:p-4 pt-16 sm:pt-24">
+        <div className={`${inter.variable} font-inter min-h-screen bg-gradient-to-b from-signal-blue/15 via-white to-slate-50 flex justify-center items-start p-0 sm:p-4 pt-16 sm:pt-24`}>
           <div className="w-full max-w-[960px] flex flex-col items-center gap-4 px-4 py-6 sm:p-8 text-center">
             <p>{error || "Invoice not found"}</p>
             <Button variant="secondary" onClick={() => router.back()}>
@@ -112,7 +113,7 @@ export default function PublicInvoicePage() {
   return (
     <>
       <SiteHeader />
-      <div className="min-h-screen bg-slate-50 flex justify-center items-start p-0 sm:p-4 pt-16 sm:pt-24">
+      <div className={`${inter.variable} font-inter min-h-screen bg-gradient-to-b from-signal-blue/15 via-white to-slate-50 flex justify-center items-start p-0 sm:p-4 pt-16 sm:pt-24`}>
         <div className="w-full max-w-[960px] flex flex-col gap-5 px-4 py-6 sm:p-6">
         <header className="flex flex-col items-stretch gap-4">
           <div className="flex flex-col gap-3 flex-1">
@@ -138,7 +139,9 @@ export default function PublicInvoicePage() {
           </div> */}
         </header>
 
-        <InvoicePreview invoice={invoice} ref={previewRef} constrained={false} />
+        <div className="sm:shadow-card sm:rounded-2xl">
+          <InvoicePreview invoice={invoice} ref={previewRef} constrained={false} />
+        </div>
         </div>
       </div>
     </>
