@@ -90,9 +90,8 @@ const InvoicePreview = forwardRef(function InvoicePreview(
   return (
     <div
       ref={ref}
-      className={`invoice-preview bg-white flex flex-col gap-6 p-5 border-0 rounded-none sm:gap-8 sm:p-8 sm:rounded-2xl sm:border sm:border-slate-200 ${
-        constrained ? "max-w-[900px] mx-auto" : "w-full"
-      }`}
+      className={`invoice-preview bg-white flex flex-col gap-6 p-5 border-0 rounded-lg sm:gap-8 sm:p-8 sm:rounded-2xl sm:border sm:border-slate-200 ${constrained ? "max-w-[900px] mx-auto" : "w-full"
+        }`}
     >
       <div className="flex items-center justify-between gap-3 sm:items-start sm:gap-8">
         <div className="relative flex items-center justify-center overflow-hidden rounded-2xl border border-dashed border-slate-100 bg-slate-100 w-14 h-14 sm:w-[140px] sm:h-[140px] [&>span]:!flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-center">

@@ -47,7 +47,7 @@ const defaultForm = {
 };
 
 const fileInputClasses =
-  "text-sm text-slate-700 cursor-pointer file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:font-medium file:text-slate-900 hover:file:bg-slate-200 disabled:opacity-60 disabled:cursor-not-allowed";
+  "border-0 text-sm text-slate-700 cursor-pointer file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:font-medium file:text-slate-900 hover:file:bg-slate-200 disabled:opacity-60 disabled:cursor-not-allowed";
 
 function ensureLinks(links) {
   if (!Array.isArray(links) || links.length === 0) {

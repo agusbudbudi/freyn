@@ -156,24 +156,38 @@ export default function InvoiceDetailPage() {
 
   return (
     <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
-      <Card className="p-4">
-        <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 items-start">
+        <Card className="p-4 order-2 lg:order-1">
+          <div className="flex items-center gap-3 pb-4 mb-4 border-0 border-b border-solid border-slate-100">
             <BackButton onClick={() => router.push("/dashboard/invoices")} />
-            <div className="flex flex-row items-center gap-3 flex-wrap">
-              <h2 className="text-base font-semibold text-slate-900 m-0 flex flex-wrap gap-2 items-center">
-                <span>Invoice</span>
-                <span className="font-semibold text-slate-900">
-                  {invoice.invoiceNumber}
-                </span>
-              </h2>
-              <InvoiceStatusBadge status={invoice.status} />
+            <div>
+              <h1 className="text-lg font-semibold text-slate-900 m-0">Invoice Detail</h1>
+              {invoice.billedTo?.name && (
+                <p className="text-xs text-slate-500 mt-0.5 mb-0">
+                  For {invoice.billedTo.name}
+                </p>
+              )}
             </div>
           </div>
+          <InvoicePreview invoice={invoice} ref={previewRef} showStatus />
+        </Card>
 
-          <div className="flex gap-4 items-center flex-wrap justify-end flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 min-w-[160px]">
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-[0.5px]">Status</label>
+        <Card className="p-4 order-1 lg:order-2 lg:sticky lg:top-[78px]">
+          <div className="flex flex-col gap-4">
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.5px] mb-1">Invoice</p>
+              <h2 className="text-lg font-semibold text-slate-900 m-0 break-words">
+                {invoice.invoiceNumber}
+              </h2>
+              <div className="mt-2">
+                <InvoiceStatusBadge status={invoice.status} />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-[0.5px]">
+                Update status
+              </label>
               <Select
                 value={invoice.status}
                 disabled={updatingStatus}
@@ -186,9 +200,30 @@ export default function InvoiceDetailPage() {
                 ))}
               </Select>
             </div>
-            <div className="flex gap-3 flex-wrap">
+
+            <div className="flex flex-col gap-2 pt-2 border-0 border-t border-solid border-slate-100">
+              <Button
+                variant="primary"
+                className="w-full justify-center"
+                onClick={handleDownloadPdf}
+                disabled={downloading}
+              >
+                <i className="uil uil-import"></i>
+                {downloading ? "Exporting..." : "Download PDF"}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-center"
+                onClick={() =>
+                  window.open(`/invoices/${invoice.id}`, "_blank", "noopener,noreferrer")
+                }
+              >
+                <i className="uil uil-external-link-alt"></i>
+                Open Public Page
+              </Button>
               <Button
                 variant="secondary"
+                className="w-full justify-center"
                 onClick={() =>
                   router.push(`/dashboard/invoices/${invoice.id}/edit`)
                 }
@@ -196,20 +231,10 @@ export default function InvoiceDetailPage() {
                 <i className="uil uil-edit"></i>
                 Edit
               </Button>
-              <Button
-                variant="primary"
-                onClick={handleDownloadPdf}
-                disabled={downloading}
-              >
-                <i className="uil uil-import"></i>
-                {downloading ? "Exporting..." : "Export"}
-              </Button>
             </div>
           </div>
-        </div>
-
-        <InvoicePreview invoice={invoice} ref={previewRef} showStatus />
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }
