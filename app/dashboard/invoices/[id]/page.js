@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import InvoicePreview from "@/components/invoices/InvoicePreview";
-import InvoiceStatusBadge from "@/components/invoices/InvoiceStatusBadge";
+import { getInvoiceStatusColors } from "@/components/invoices/InvoiceStatusBadge";
 import { toast } from "@/components/ui/toast";
 import { Card } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -154,6 +154,8 @@ export default function InvoiceDetailPage() {
     );
   }
 
+  const statusFieldColors = getInvoiceStatusColors(invoice.status);
+
   return (
     <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px]">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 items-start">
@@ -179,9 +181,6 @@ export default function InvoiceDetailPage() {
               <h2 className="text-lg font-semibold text-slate-900 m-0 break-words">
                 {invoice.invoiceNumber}
               </h2>
-              <div className="mt-2">
-                <InvoiceStatusBadge status={invoice.status} />
-              </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -192,6 +191,12 @@ export default function InvoiceDetailPage() {
                 value={invoice.status}
                 disabled={updatingStatus}
                 onChange={(e) => handleStatusChange(e.target.value)}
+                className="font-medium capitalize"
+                style={{
+                  backgroundColor: statusFieldColors.bg,
+                  color: statusFieldColors.text,
+                  borderColor: "transparent",
+                }}
               >
                 {STATUS_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>

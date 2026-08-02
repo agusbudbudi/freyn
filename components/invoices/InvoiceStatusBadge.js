@@ -4,16 +4,24 @@ const STATUS_MAP = {
   draft: {
     label: "Draft",
     className: "bg-[#fef9c3] text-[#a16207]",
+    colors: { bg: "#fef9c3", text: "#a16207" },
   },
   sent: {
     label: "Sent",
     className: "bg-[#e0f2fe] text-[#0369a1]",
+    colors: { bg: "#e0f2fe", text: "#0369a1" },
   },
   paid: {
     label: "Paid",
     className: "bg-[#dcfce7] text-[#15803d]",
+    colors: { bg: "#dcfce7", text: "#15803d" },
   },
 };
+
+export function getInvoiceStatusColors(status) {
+  const normalized = (status || "").toLowerCase();
+  return (STATUS_MAP[normalized] || STATUS_MAP.draft).colors;
+}
 
 export default function InvoiceStatusBadge({ status }) {
   const normalized = (status || "").toLowerCase();

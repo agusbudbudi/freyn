@@ -807,23 +807,23 @@ export default function InvoiceForm({
 
   return (
     <div className="p-4 sm:p-6 mt-[72px] md:mt-[62px] grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
-      <Card>
-        <div className="p-6 flex justify-between items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <BackButton onClick={() => router.back()} />
-            <div>
-              <h2 className="text-base font-semibold text-slate-900 m-0">
-                {isEditing ? "Edit Invoice" : "Create Invoice"}
-              </h2>
-              <p className="text-xs text-slate-500 mt-1 mb-0">
-                Fill out the invoice details below
-              </p>
+      <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+        <Card className="p-6">
+          <div className="flex justify-between items-center gap-4 flex-wrap pb-4 mb-4 border-0 border-b border-solid border-slate-100">
+            <div className="flex items-center gap-3">
+              <BackButton onClick={() => router.back()} />
+              <div>
+                <h2 className="text-base font-semibold text-slate-900 m-0">
+                  {isEditing ? "Edit Invoice" : "Create Invoice"}
+                </h2>
+                <p className="text-xs text-slate-500 mt-1 mb-0">
+                  Fill out the invoice details below
+                </p>
+              </div>
             </div>
+            <InvoiceStatusBadge status={form.status} />
           </div>
-          <InvoiceStatusBadge status={form.status} />
-        </div>
 
-        <form className="p-6" onSubmit={handleSubmit}>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-4">
             <FormField label="Invoice Number">
               <Input
@@ -866,8 +866,10 @@ export default function InvoiceForm({
               />
             </FormField>
           </div>
+        </Card>
 
-          <div className="mt-6">
+        <Card className="p-6">
+          <div>
             <h3 className="text-sm font-semibold text-slate-900">
               Company Branding
             </h3>
@@ -924,8 +926,10 @@ export default function InvoiceForm({
               )}
             </div>
           </div>
+        </Card>
 
-          <div className="mt-8">
+        <Card className="p-6">
+          <div>
             <h3 className="text-sm font-semibold text-slate-900">
               Billed By
             </h3>
@@ -990,8 +994,10 @@ export default function InvoiceForm({
               {billedByLocked ? "Unlock fields" : "Lock fields"}
             </Button>
           </div>
+        </Card>
 
-          <div className="mt-8">
+        <Card className="p-6">
+          <div>
             <h3 className="text-sm font-semibold text-slate-900">
               Billed To
             </h3>
@@ -1050,8 +1056,10 @@ export default function InvoiceForm({
               </FormField>
             </div>
           </div>
+        </Card>
 
-          <div className="mt-8">
+        <Card className="p-6">
+          <div>
             <h3 className="text-sm font-semibold text-slate-900">
               Invoice Items
             </h3>
@@ -1165,8 +1173,10 @@ export default function InvoiceForm({
               </div>
             </div>
           </div>
+        </Card>
 
-          <div className="mt-8">
+        <Card className="p-6">
+          <div>
             <h3 className="text-sm font-semibold text-slate-900">
               Payment Method
             </h3>
@@ -1287,8 +1297,10 @@ export default function InvoiceForm({
               </div>
             )}
           </div>
+        </Card>
 
-          <div className="mt-8">
+        <Card className="p-6">
+          <div>
             <h3 className="text-sm font-semibold text-slate-900">
               Terms &amp; Conditions
             </h3>
@@ -1297,8 +1309,10 @@ export default function InvoiceForm({
               onChange={(value) => handleChange("terms", value)}
             />
           </div>
+        </Card>
 
-          <div className="mt-8">
+        <Card className="p-6">
+          <div>
             <h3 className="text-sm font-semibold text-slate-900">
               Footer Notes
             </h3>
@@ -1307,42 +1321,42 @@ export default function InvoiceForm({
               onChange={(value) => handleChange("footer", value)}
             />
           </div>
+        </Card>
 
-          <div className="flex justify-between mt-9 gap-4 flex-wrap">
+        <div className="flex justify-between gap-3 flex-wrap">
+          <Button
+            type="button"
+            variant="outline"
+            className="xl:hidden"
+            onClick={() => setPreviewOpen(true)}
+            disabled={loading}
+          >
+            <i className="uil uil-eye"></i>
+            Preview
+          </Button>
+
+          <div className="flex gap-3 ml-auto">
             <Button
               type="button"
-              variant="outline"
-              className="xl:hidden"
-              onClick={() => setPreviewOpen(true)}
+              variant="secondary"
+              onClick={() => router.back()}
               disabled={loading}
             >
-              <i className="uil uil-eye"></i>
-              Preview
+              Cancel
             </Button>
-
-            <div className="flex gap-3">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => router.back()}
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" variant="primary" disabled={loading}>
-                {loading
-                  ? "Saving..."
-                  : isEditing
-                    ? "Save Changes"
-                    : "Create Invoice"}
-              </Button>
-            </div>
+            <Button type="submit" variant="primary" disabled={loading}>
+              {loading
+                ? "Saving..."
+                : isEditing
+                  ? "Save Changes"
+                  : "Create Invoice"}
+            </Button>
           </div>
-        </form>
-      </Card>
+        </div>
+      </form>
 
       <div className="hidden xl:block sticky top-[86px] max-h-[calc(100vh-106px)] overflow-y-auto">
-        <div className="invoice-preview-live relative rounded-2xl overflow-hidden">
+        <div className="invoice-preview-live relative rounded-xl overflow-hidden">
           <span className="absolute top-0 right-0 rounded-bl-lg bg-signal-blue text-white text-[10px] font-semibold uppercase tracking-wide py-1 px-3 shadow-md z-10">
             Live Preview
           </span>
